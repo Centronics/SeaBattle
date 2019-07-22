@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SeaBattleForm</class>
+ <widget class="QWidget" name="SeaBattleForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>595</width>
+    <height>340</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Морской бой</string>
+  </property>
+  <widget class="QLineEdit" name="IPAddress">
+   <property name="geometry">
+    <rect>
+     <x>359</x>
+     <y>10</y>
+     <width>145</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>127.0.0.1</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnConnect">
+   <property name="geometry">
+    <rect>
+     <x>339</x>
+     <y>31</y>
+     <width>127</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Подключение</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="Port">
+   <property name="geometry">
+    <rect>
+     <x>540</x>
+     <y>10</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>2323</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnServerStart">
+   <property name="geometry">
+    <rect>
+     <x>465</x>
+     <y>31</y>
+     <width>127</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Запустить сервер</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnDisconnect">
+   <property name="geometry">
+    <rect>
+     <x>339</x>
+     <y>54</y>
+     <width>253</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Отключиться</string>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="lstShipArea">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>101</y>
+     <width>251</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string notr="true">Четырёхпалубный линкор                  (0/1)</string>
+    </property>
+    <property name="toolTip">
+     <string notr="true"/>
+    </property>
+    <property name="statusTip">
+     <string notr="true"/>
+    </property>
+    <property name="whatsThis">
+     <string notr="true"/>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string notr="true">Трёхпалубный крейсер                        (0/2)</string>
+    </property>
+    <property name="toolTip">
+     <string notr="true"/>
+    </property>
+    <property name="statusTip">
+     <string notr="true"/>
+    </property>
+    <property name="whatsThis">
+     <string notr="true"/>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string notr="true">Двухпалубный эсминец                       (0/3)</string>
+    </property>
+    <property name="toolTip">
+     <string notr="true"/>
+    </property>
+    <property name="statusTip">
+     <string notr="true"/>
+    </property>
+    <property name="whatsThis">
+     <string notr="true"/>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string notr="true">Однопалубный торпедный катер      (0/4)</string>
+    </property>
+    <property name="toolTip">
+     <string notr="true"/>
+    </property>
+    <property name="statusTip">
+     <string notr="true"/>
+    </property>
+    <property name="whatsThis">
+     <string notr="true"/>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+  </widget>
+  <widget class="QListWidget" name="lstDirection">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>184</y>
+     <width>251</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string notr="true">Смотрит вправо</string>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Смотрит вниз</string>
+    </property>
+    <property name="whatsThis">
+     <string notr="true"/>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+   </item>
+  </widget>
+  <widget class="QPushButton" name="btnClearShips">
+   <property name="geometry">
+    <rect>
+     <x>339</x>
+     <y>77</y>
+     <width>253</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Очистить поле</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>341</x>
+     <y>11</y>
+     <width>16</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>IP:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>507</x>
+     <y>11</y>
+     <width>31</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Порт:</string>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="SeaBattle.qrc"/>
+ </resources>
+ <connections/>
+</ui>
