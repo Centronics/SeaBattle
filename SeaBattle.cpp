@@ -3,7 +3,7 @@
 
 using namespace std;
 
-SeaBattle::SeaBattle(QWidget *parent) : QMainWindow(parent)
+SeaBattle::SeaBattle(QWidget *parent) : QWidget(parent)
 {
 	_mainForm.setupUi(this);
 	setMouseTracking(true);

@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include "Packet.h"
 
-class SeaBattle : public QMainWindow
+class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
