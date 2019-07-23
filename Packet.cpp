@@ -93,9 +93,9 @@ bool Packet::ReadData(DOIT& doit) const
 		return false;
 	switch (doit = static_cast<DOIT>(_massive[0]))
 	{
+	case DOIT::END:
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
-	case DOIT::END:
 		doit = static_cast<DOIT>(_massive[1]);
 		return true;
 	default: return false;

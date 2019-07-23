@@ -27,8 +27,7 @@ void Graphics::ClearRivalState()
 	for (int x = 0; x < 10; ++x)
 		for (int y = 0; y < 10; ++y)
 			if (Ship& ship = _screenObjects[(y * 10) + x]; ship.GetHolder() == Ship::SHIPHOLDER::RIVAL)
-				if (!AddOrRemove(x, y))
-					throw exception(__func__);
+				ship.Delete();
 }
 
 void Graphics::ClearField()

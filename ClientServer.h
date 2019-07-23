@@ -1,26 +1,12 @@
 #pragma once
 #include "Graphics.h"
+#include "Packet.h"
 
 class SeaBattle;
 
 class ClientServer
 {
 public:
-
-	enum class DOIT : unsigned char
-	{
-		PUSHMAP,
-		STARTGAME,
-		STOPGAME,
-		END,
-		HIT,
-		CONNECTIONERROR,
-		CONNECTED,
-		SHIPADDITION,
-		WAITRIVAL,
-		MYMOVE,
-		RIVALMOVE
-	};
 
 	ClientServer() = delete;
 	explicit ClientServer(Graphics& g, SeaBattle& c) : _graphics(g), _client(c) { }
@@ -29,8 +15,7 @@ public:
 	ClientServer(ClientServer&&) = delete;
 	ClientServer& operator=(const ClientServer&) = delete;
 	ClientServer& operator=(ClientServer&&) = delete;
-
-	void Send(const Packet& packet);
+	void SendHit(quint8 coord);
 	void Disconnect();
 	[[nodiscard]] bool StartServer(int port);
 	[[nodiscard]] bool StartClient(const QString& ip, int port);
@@ -43,10 +28,13 @@ public:
 protected:
 
 	bool Connect();
+	void Send();
+	void Receive();
 
 private:
 
 	Graphics& _graphics;
 	SeaBattle& _client;
 	DOIT _currentState = DOIT::STARTGAME;
+	Packet _packet;
 };

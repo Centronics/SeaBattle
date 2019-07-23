@@ -1,34 +1,63 @@
 #include "stdafx.h"
-#include "Packet.h"
 #include "ClientServer.h"
 
 using namespace std;
 
-void ClientServer::Send(const Packet& packet)
+void ClientServer::Send()
 {
-	switch(_currentState)
+	switch (_currentState)
 	{
-	case DOIT::PUSHMAP:
-		break;
 	case DOIT::STARTGAME:
+		_packet.WriteData(DOIT::STARTGAME);
+		//Œ“œ–¿¬ ¿
+		
+		break;
+	case DOIT::PUSHMAP:
+		
 		break;
 	case DOIT::STOPGAME:
+		
 		break;
-	case DOIT::END:
+	case DOIT::HIT:
+		_currentState = DOIT::WAITRIVAL;
+		break;
+	case DOIT::CONNECTIONERROR:
+		Connect();
+		break;
+	case DOIT::WAITRIVAL:
+
+		break;
+	case DOIT::MYMOVE:
+
+		break;
+	default:
+		throw exception(__func__);
+	}
+}
+
+void ClientServer::Receive()
+{
+	switch (_currentState)
+	{
+	case DOIT::STARTGAME:
+		_currentState = DOIT::CONNECTIONERROR;
+		_currentState = DOIT::PUSHMAP;
+		_currentState = DOIT::STOPGAME;
+		break;
+	case DOIT::PUSHMAP:
+		_currentState = DOIT::CONNECTIONERROR;
+		_currentState = DOIT::PUSHMAP;
+		_currentState = DOIT::STOPGAME;
+		break;
+	case DOIT::STOPGAME:
 		break;
 	case DOIT::HIT:
 		break;
 	case DOIT::CONNECTIONERROR:
 		break;
-	case DOIT::CONNECTED:
-		break;
-	case DOIT::SHIPADDITION:
-		break;
 	case DOIT::WAITRIVAL:
 		break;
 	case DOIT::MYMOVE:
-		break;
-	case DOIT::RIVALMOVE:
 		break;
 	default:
 		throw exception(__func__);
@@ -50,7 +79,14 @@ bool ClientServer::Connect()
 	return true;
 }
 
+void ClientServer::SendHit(const quint8 coord)
+{
+	if(_currentState != DOIT::MYMOVE)
+		return;
+	_packet.WriteData(DOIT::HIT, coord);
+}
+
 void ClientServer::Disconnect()
 {
-
+	_packet.WriteData(DOIT::STOPGAME);
 }

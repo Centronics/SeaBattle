@@ -1,6 +1,16 @@
 #pragma once
 #include "Ship.h"
-#include "ClientServer.h"
+
+enum class DOIT : unsigned char
+{
+	PUSHMAP,
+	STARTGAME,
+	STOPGAME,
+	HIT,
+	CONNECTIONERROR,
+	WAITRIVAL,
+	MYMOVE
+};
 
 class Packet
 {
@@ -8,8 +18,6 @@ class Packet
 	bool _isCorrect = true;
 
 public:
-
-	using DOIT = ClientServer::DOIT;
 
 	Packet() = default;
 
@@ -21,12 +29,12 @@ public:
 	Packet& operator=(const Packet&) = delete;
 	Packet& operator=(Packet&& packet) noexcept;
 
-	void WriteData(ClientServer::DOIT doit, quint8 param);
+	void WriteData(DOIT doit, quint8 param);
 	void WriteData(const std::vector<Ship>& mas);
-	void WriteData(ClientServer::DOIT doit);
-	[[nodiscard]] bool ReadData(ClientServer::DOIT& doit, quint8& param) const;
+	void WriteData(DOIT doit);
+	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
-	[[nodiscard]] bool ReadData(ClientServer::DOIT& doit) const;
+	[[nodiscard]] bool ReadData(DOIT& doit) const;
 
 	[[nodiscard]] bool IsCorrect() const noexcept
 	{
