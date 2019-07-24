@@ -22,7 +22,6 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 		return;
 	switch (doit)
 	{
-	case DOIT::END:
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
 		return;
@@ -93,7 +92,6 @@ bool Packet::ReadData(DOIT& doit) const
 		return false;
 	switch (doit = static_cast<DOIT>(_massive[0]))
 	{
-	case DOIT::END:
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
 		doit = static_cast<DOIT>(_massive[1]);

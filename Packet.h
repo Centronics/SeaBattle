@@ -14,8 +14,14 @@ enum class DOIT : unsigned char
 
 class Packet
 {
+	friend class ClientServer;
+
+protected:
+
 	std::vector<quint8> _massive{ 0 };
 	bool _isCorrect = true;
+
+	explicit Packet(const int elements) : _massive(elements) { }
 
 public:
 
@@ -24,7 +30,7 @@ public:
 	explicit Packet(const bool isCorrect) : _isCorrect(isCorrect) { }
 
 	~Packet() = default;
-	Packet(const Packet&) = delete;
+	Packet(const Packet&) = default;
 	Packet(Packet&& packet) noexcept;
 	Packet& operator=(const Packet&) = delete;
 	Packet& operator=(Packet&& packet) noexcept;

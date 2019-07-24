@@ -2,6 +2,7 @@
 #include "ui_SeaBattle.h"
 #include "Graphics.h"
 #include "Packet.h"
+#include "ClientServer.h"
 
 class SeaBattle : public QWidget
 {

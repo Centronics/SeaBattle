@@ -161,13 +161,13 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	const optional<quint8> coord = _graphics.GetCoord();
 	if (!Graphics::Clicked || !coord)
 		return;
-	if (_clientServer.GetGameState() == ClientServer::DOIT::STARTGAME)
+	if (_clientServer.GetGameState() == DOIT::STARTGAME)
 	{
 		AddShip();
 		repaint();
 		return;
 	}
-	_packet.WriteData(ClientServer::DOIT::HIT, *coord);
+	_packet.WriteData(DOIT::HIT, *coord);
 	_clientServer.Send(_packet);
 	repaint();
 }
@@ -180,7 +180,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
-		if (_clientServer.GetGameState() != ClientServer::DOIT::STARTGAME)
+		if (_clientServer.GetGameState() != DOIT::STARTGAME)
 			return;
 		_graphics.RemoveShip();
 		RenewShipCount();
