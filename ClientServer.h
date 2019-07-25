@@ -24,8 +24,7 @@ public:
 	void Disconnect();
 	[[nodiscard]] bool StartServer(int port);
 	[[nodiscard]] bool StartClient(const QString& ip, int port);
-	[[nodiscard]] bool Listen(int port);
-	[[nodiscard]] Packet GetFromQueue() const;
+	[[nodiscard]] std::optional<Packet> GetFromQueue();
 	void Send(const Packet& packet);
 
 	[[nodiscard]] QString GetErrorString() const
@@ -45,20 +44,18 @@ public slots:
 protected:
 
 	mutable std::recursive_mutex _lock;
-	mutable std::queue<Packet> _requests;
+	std::queue<Packet> _requests;
 
-	bool Connect();
 	void Send();
 	void Receive();
-	void AddToQueue(const Packet& packet);
 
 private:
 
 	Graphics& _graphics;
 	SeaBattle& _client;
 	DOIT _currentState = DOIT::STARTGAME;
-	Packet _packet;
+	Packet _senderPacket;
 	QTcpServer _server{ this };
 
-	void SendToClient(QTcpSocket* socket);
+	void SendToClient(QTcpSocket* socket) const;
 };

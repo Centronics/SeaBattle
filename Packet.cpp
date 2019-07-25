@@ -3,23 +3,58 @@
 
 using namespace std;
 
+Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
+{
+	quint8 doit;
+	data >> doit;
+	switch (const DOIT dt = static_cast<DOIT>(doit))
+	{
+	case DOIT::PUSHMAP:
+	{
+		if (blockSize != 101)
+			return;
+		_massive.resize(101);
+		quint8* ptr = _massive.data();
+		*ptr++ = static_cast<quint8>(DOIT::PUSHMAP);
+		for (quint16 k = 0; k < blockSize; k++, ptr++)
+			data >> *ptr;
+		return;
+	}
+	case DOIT::STARTGAME:
+	case DOIT::STOPGAME:
+	case DOIT::CONNECTIONERROR:
+	case DOIT::WAITRIVAL:
+	case DOIT::MYMOVE:
+		if (blockSize != 1)
+			return;
+		_massive.resize(1);
+		_massive[0] = static_cast<quint8>(dt);
+		return;
+	case DOIT::HIT:
+		if (blockSize != 2)
+			return;
+		_massive.resize(2);
+		_massive[0] = static_cast<quint8>(dt);
+		data >> _massive[1];
+		return;
+	default:
+		return;
+	}
+}
+
 Packet::Packet(Packet&& packet) noexcept
 {
-	_isCorrect = packet._isCorrect;
 	_massive = move(packet._massive);
 }
 
 Packet& Packet::operator=(Packet&& packet) noexcept
 {
-	_isCorrect = packet._isCorrect;
 	_massive = move(packet._massive);
 	return *this;
 }
 
 void Packet::WriteData(const DOIT doit, const quint8 param)
 {
-	if (!_isCorrect)
-		return;
 	switch (doit)
 	{
 	case DOIT::STARTGAME:
@@ -36,7 +71,7 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 
 void Packet::WriteData(const std::vector<Ship>& mas)
 {
-	if (!_isCorrect || mas.size() != 100)
+	if (mas.size() != 100)
 		return;
 	_massive.clear();
 	_massive.reserve(101);
@@ -47,8 +82,6 @@ void Packet::WriteData(const std::vector<Ship>& mas)
 
 void Packet::WriteData(const DOIT doit)
 {
-	if (!_isCorrect)
-		return;
 	switch (doit)
 	{
 	case DOIT::HIT:
@@ -64,7 +97,7 @@ void Packet::WriteData(const DOIT doit)
 
 bool Packet::ReadData(DOIT& doit, quint8& param) const
 {
-	if (!_isCorrect || _massive.size() != 2)
+	if (_massive.size() != 2)
 		return false;
 	if (const DOIT dt = static_cast<DOIT>(_massive[0]); dt == DOIT::HIT)
 	{
@@ -77,7 +110,7 @@ bool Packet::ReadData(DOIT& doit, quint8& param) const
 
 bool Packet::ReadData(std::vector<Ship>& mas) const
 {
-	if (!_isCorrect || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
+	if (_massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
 	mas.clear();
 	mas.reserve(100);
@@ -88,7 +121,7 @@ bool Packet::ReadData(std::vector<Ship>& mas) const
 
 bool Packet::ReadData(DOIT& doit) const
 {
-	if (!_isCorrect || _massive.size() != 1)
+	if (_massive.size() != 1)
 		return false;
 	switch (doit = static_cast<DOIT>(_massive[0]))
 	{

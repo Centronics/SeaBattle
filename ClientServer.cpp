@@ -8,7 +8,7 @@ void ClientServer::Send()
 	switch (_currentState)
 	{
 	case DOIT::STARTGAME:
-		_packet.WriteData(DOIT::STARTGAME);
+		_senderPacket.WriteData(DOIT::STARTGAME);
 		//Œ“œ–¿¬ ¿
 
 		break;
@@ -22,7 +22,7 @@ void ClientServer::Send()
 		_currentState = DOIT::WAITRIVAL;
 		break;
 	case DOIT::CONNECTIONERROR:
-		Connect();
+
 		break;
 	case DOIT::WAITRIVAL:
 
@@ -37,7 +37,7 @@ void ClientServer::Send()
 
 void ClientServer::Send(const Packet& packet)
 {
-	
+
 }
 
 void ClientServer::Receive()
@@ -69,20 +69,17 @@ void ClientServer::Receive()
 	}
 }
 
-void ClientServer::AddToQueue(const Packet& packet)
+void ClientServer::SendToClient(QTcpSocket* socket) const
 {
-	lock_guard<std::recursive_mutex> locker(_lock);
-
-}
-
-void ClientServer::SendToClient(QTcpSocket* socket)
-{
-
-}
-
-bool ClientServer::StartServer(const int port)
-{
-	return true;
+	QByteArray arrBlock;
+	QDataStream out(&arrBlock, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_5_10);
+	out << quint16(0);
+	if (!_senderPacket.WriteToQDataStream(out))
+		return;
+	out.device()->seek(0);
+	out << quint16(arrBlock.size() - 2);
+	socket->write(arrBlock);
 }
 
 bool ClientServer::StartClient(const QString& ip, int port)
@@ -90,17 +87,17 @@ bool ClientServer::StartClient(const QString& ip, int port)
 	return true;
 }
 
-bool ClientServer::Listen(const int port)
+bool ClientServer::StartServer(const int port)
 {
-	if (!_server.listen(QHostAddress::Any, port))
-		return false;
 	connect(&_server, SIGNAL(newConnection()), this, SLOT(SlotNewConnection()));
-	return true;
+	return _server.listen(QHostAddress::Any, port);
 }
 
-Packet ClientServer::GetFromQueue() const
+optional<Packet> ClientServer::GetFromQueue()
 {
-	lock_guard<recursive_mutex> locker(_lock);
+	lock_guard locker(_lock);
+	if (_requests.empty())
+		return nullopt;
 	const Packet element = _requests.front();
 	_requests.pop();
 	return element;
@@ -127,57 +124,19 @@ void ClientServer::SlotReadClient()
 	in >> blockSize;
 	if (pClientSocket->bytesAvailable() < blockSize)
 		return;
-	quint8 doit;
-	in >> doit;
-	lock_guard<recursive_mutex> locker(_lock);
-	switch (const DOIT dt = static_cast<DOIT>(doit)) // œ≈–≈Õ≈—“» ¬ PAKCET Ë Â‡ÎËÁÓ‚‡Ú¸ Ò‚ÓÈÒÚ‚Ó IsCorrect.
-	{
-	case DOIT::PUSHMAP:
-	{
-		Packet packet(101);
-		quint8* ptr = packet._massive.data();
-		*ptr = static_cast<quint8>(DOIT::PUSHMAP);
-		quint8* ptrMain = &ptr[1];
-		for (quint16 k = 0; k < blockSize; k++, ptrMain++)
-			in >> *ptrMain;
-		break;
-	}
-	case DOIT::STARTGAME:
-	case DOIT::STOPGAME:
-	case DOIT::CONNECTIONERROR:
-	case DOIT::WAITRIVAL:
-	case DOIT::MYMOVE:
-	{
-		Packet packet(1);
-		*(packet._massive.data()) = static_cast<quint8>(dt);
-		break;
-	}
-	case DOIT::HIT:
-	{
-		Packet packet(2);
-		quint8* p = packet._massive.data();
-		*p++ = static_cast<quint8>(dt);
-		in >> *p;
-		break;
-	}
-	default:
-		return;
-	}
-}
-
-bool ClientServer::Connect()
-{
-	return true;
+	lock_guard locker(_lock);
+	_requests.emplace(in, blockSize);
 }
 
 void ClientServer::SendHit(const quint8 coord)
 {
 	if (_currentState != DOIT::MYMOVE)
 		return;
-	_packet.WriteData(DOIT::HIT, coord);
+	_senderPacket.WriteData(DOIT::HIT, coord);
 }
 
 void ClientServer::Disconnect()
 {
-	_packet.WriteData(DOIT::STOPGAME);
+	_senderPacket.WriteData(DOIT::STOPGAME);
+	_server.close();
 }

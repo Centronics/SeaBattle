@@ -1,7 +1,7 @@
 #pragma once
 #include "Ship.h"
 
-enum class DOIT : unsigned char
+enum class DOIT : quint8
 {
 	PUSHMAP,
 	STARTGAME,
@@ -14,24 +14,15 @@ enum class DOIT : unsigned char
 
 class Packet
 {
-	friend class ClientServer;
-
-protected:
-
 	std::vector<quint8> _massive{ 0 };
-	bool _isCorrect = true;
-
-	explicit Packet(const int elements) : _massive(elements) { }
 
 public:
 
 	Packet() = default;
-
-	explicit Packet(const bool isCorrect) : _isCorrect(isCorrect) { }
-
-	~Packet() = default;
+	explicit Packet(QDataStream& data, quint16 blockSize);
 	Packet(const Packet&) = default;
 	Packet(Packet&& packet) noexcept;
+	~Packet() = default;
 	Packet& operator=(const Packet&) = delete;
 	Packet& operator=(Packet&& packet) noexcept;
 
@@ -42,8 +33,19 @@ public:
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
 
-	[[nodiscard]] bool IsCorrect() const noexcept
+	[[nodiscard]] bool WriteToQDataStream(QDataStream& data) const
 	{
-		return _isCorrect;
+		if (_massive.empty())
+			return false;
+		const int sz = static_cast<int>(_massive.size());
+		const int written = data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz);
+		if (written < 0)
+			return false;
+		return written == sz;
+	}
+
+	void Clear() noexcept
+	{
+		_massive.clear();
 	}
 };
