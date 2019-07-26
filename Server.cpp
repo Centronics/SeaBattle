@@ -1,14 +1,14 @@
 #include "stdafx.h"
-#include "ClientServer.h"
+#include "Server.h"
 
 using namespace std;
 
-void ClientServer::Send()
+void Server::Send()
 {
 	switch (_currentState)
 	{
 	case DOIT::STARTGAME:
-		_senderPacket.WriteData(DOIT::STARTGAME);
+		_packet.WriteData(DOIT::STARTGAME);
 		//Œ“œ–¿¬ ¿
 
 		break;
@@ -35,12 +35,7 @@ void ClientServer::Send()
 	}
 }
 
-void ClientServer::Send(const Packet& packet)
-{
-
-}
-
-void ClientServer::Receive()
+void Server::Receive()
 {
 	switch (_currentState)
 	{
@@ -69,31 +64,20 @@ void ClientServer::Receive()
 	}
 }
 
-void ClientServer::SendToClient(QTcpSocket* socket) const
+void Server::SendToClient(QTcpSocket* socket) const
 {
 	QByteArray arrBlock;
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
 	out << quint16(0);
-	if (!_senderPacket.WriteToQDataStream(out))
+	if (!_packet.WriteToQDataStream(out))
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);
 	socket->write(arrBlock);
 }
 
-bool ClientServer::StartClient(const QString& ip, int port)
-{
-	return true;
-}
-
-bool ClientServer::StartServer(const int port)
-{
-	connect(&_server, SIGNAL(newConnection()), this, SLOT(SlotNewConnection()));
-	return _server.listen(QHostAddress::Any, port);
-}
-
-optional<Packet> ClientServer::GetFromQueue()
+optional<Packet> Server::GetFromQueue()
 {
 	lock_guard locker(_lock);
 	if (_requests.empty())
@@ -103,7 +87,7 @@ optional<Packet> ClientServer::GetFromQueue()
 	return element;
 }
 
-void ClientServer::SlotNewConnection()
+void Server::SlotNewConnection()
 {
 	QTcpSocket* pClientSocket = _server.nextPendingConnection();
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
@@ -111,7 +95,7 @@ void ClientServer::SlotNewConnection()
 	SendToClient(pClientSocket);
 }
 
-void ClientServer::SlotReadClient()
+void Server::SlotReadClient()
 {
 	auto* pClientSocket = dynamic_cast<QTcpSocket*>(sender());
 	if (!pClientSocket)
@@ -128,15 +112,21 @@ void ClientServer::SlotReadClient()
 	_requests.emplace(in, blockSize);
 }
 
-void ClientServer::SendHit(const quint8 coord)
+Server::Server(Graphics& g, SeaBattle& c, QObject* const parent) : NetworkInterface(g, c, parent)
+{
+	connect(&_server, SIGNAL(newConnection()), this, SLOT(SlotNewConnection()));
+}
+
+void Server::SendHit(const quint8 coord)
 {
 	if (_currentState != DOIT::MYMOVE)
 		return;
-	_senderPacket.WriteData(DOIT::HIT, coord);
+	_packet.WriteData(DOIT::HIT, coord);
 }
 
-void ClientServer::Disconnect()
+bool Server::Listen(const int port)
 {
-	_senderPacket.WriteData(DOIT::STOPGAME);
-	_server.close();
+	if (_server.isListening())
+		_server.close();
+	return _isReady = _server.listen(QHostAddress::Any, port);
 }

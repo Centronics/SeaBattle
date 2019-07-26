@@ -9,7 +9,8 @@ enum class DOIT : quint8
 	HIT,
 	CONNECTIONERROR,
 	WAITRIVAL,
-	MYMOVE
+	MYMOVE,
+	INCORRECTMESSAGE
 };
 
 class Packet

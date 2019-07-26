@@ -2,7 +2,7 @@
 #include "ui_SeaBattle.h"
 #include "Graphics.h"
 #include "Packet.h"
-#include "ClientServer.h"
+#include "Server.h"
 
 class SeaBattle : public QWidget
 {
@@ -41,6 +41,6 @@ private:
 
 	Ui::SeaBattleForm _mainForm{};
 	Graphics _graphics;
-	ClientServer _clientServer{ _graphics, *this };
+	Server _clientServer{ _graphics, *this };
 	Packet _packet;
 };

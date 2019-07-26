@@ -3,7 +3,7 @@
 
 class Graphics
 {
-	friend class ClientServer;
+	friend class Server;
 
 protected:
 
