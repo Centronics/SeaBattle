@@ -14,10 +14,8 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 		if (blockSize != 101)
 			return;
 		_massive.resize(101);
-		quint8* ptr = _massive.data();
-		*ptr++ = static_cast<quint8>(DOIT::PUSHMAP);
-		for (quint16 k = 0; k < blockSize; k++, ptr++)
-			data >> *ptr;
+		if (data.readRawData(reinterpret_cast<char*>(_massive.data()), 101) != 101)
+			_massive.clear();
 		return;
 	}
 	case DOIT::STARTGAME:
@@ -40,6 +38,14 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	default:
 		return;
 	}
+}
+
+bool Packet::WriteToQDataStream(QDataStream& data) const
+{
+	if (_massive.empty())
+		return false;
+	const int sz = static_cast<int>(_massive.size());
+	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
 }
 
 Packet::Packet(Packet&& packet) noexcept

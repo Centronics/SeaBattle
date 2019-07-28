@@ -1,7 +1,6 @@
 #pragma once
 #include "Packet.h"
 #include <queue>
-#include "QTcpSocket"
 #include "Graphics.h"
 #include "SeaBattle.h"
 
@@ -20,11 +19,11 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	virtual void SendHit(quint8 coord) = 0;
-	[[nodiscard]] virtual QString GetErrorString() const = 0;
 
-	bool IsReady() const
+	[[nodiscard]] QString ErrorString() const
 	{
-		return _isReady;
+		const QString str = GetErrorString();
+		return str.isEmpty() ? "<Пусто>" : str;
 	}
 
 	[[nodiscard]] DOIT GetGameState() const noexcept
@@ -34,11 +33,15 @@ public:
 
 protected:
 
-	bool _isReady = false;
 	mutable std::recursive_mutex _lock;
 	std::queue<Packet> _requests;
 	DOIT _currentState = DOIT::STARTGAME;
 	Packet _packet;
 	Graphics& _graphics;
 	SeaBattle& _client;
+
+	[[nodiscard]] virtual QString GetErrorString() const = 0;
+
+	signals:
+	void Connected();
 };

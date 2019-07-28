@@ -64,8 +64,10 @@ void Server::Receive()
 	}
 }
 
-void Server::SendToClient(QTcpSocket* socket) const
+void Server::SendToClient() const
 {
+	if (!_socket)
+		return;
 	QByteArray arrBlock;
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
@@ -74,7 +76,7 @@ void Server::SendToClient(QTcpSocket* socket) const
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);
-	socket->write(arrBlock);
+	_socket->write(arrBlock);
 }
 
 optional<Packet> Server::GetFromQueue()
@@ -92,7 +94,7 @@ void Server::SlotNewConnection()
 	QTcpSocket* pClientSocket = _server.nextPendingConnection();
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(SlotReadClient()));
-	SendToClient(pClientSocket);
+	_socket = pClientSocket;
 }
 
 void Server::SlotReadClient()
@@ -122,11 +124,13 @@ void Server::SendHit(const quint8 coord)
 	if (_currentState != DOIT::MYMOVE)
 		return;
 	_packet.WriteData(DOIT::HIT, coord);
+	SendToClient();
 }
 
-bool Server::Listen(const int port)
+void Server::Listen(const int port)
 {
 	if (_server.isListening())
 		_server.close();
-	return _isReady = _server.listen(QHostAddress::Any, port);
+	if (_server.listen(QHostAddress::Any, port))
+		emit Connected();
 }

@@ -1,11 +1,14 @@
 #pragma once
 #include "NetworkInterface.h"
 #include "QTcpServer"
+#include "QTcpSocket"
 
 class SeaBattle;
 
 class Server : protected NetworkInterface
 {
+	Q_OBJECT
+
 public:
 
 	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
@@ -17,7 +20,7 @@ public:
 	Server& operator=(Server&&) = delete;
 
 	void SendHit(quint8 coord) override;
-	bool Listen(int port);
+	void Listen(int port);
 
 	[[nodiscard]] QString GetErrorString() const override
 	{
@@ -32,8 +35,10 @@ private slots:
 private:
 
 	QTcpServer _server{ this };
+	QTcpSocket* _socket = nullptr;
+
 	[[nodiscard]] std::optional<Packet> GetFromQueue();
-	void SendToClient(QTcpSocket* socket) const;
+	void SendToClient() const;
 	void Send();
 	void Receive();
 };

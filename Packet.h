@@ -33,17 +33,7 @@ public:
 	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
-
-	[[nodiscard]] bool WriteToQDataStream(QDataStream& data) const
-	{
-		if (_massive.empty())
-			return false;
-		const int sz = static_cast<int>(_massive.size());
-		const int written = data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz);
-		if (written < 0)
-			return false;
-		return written == sz;
-	}
+	[[nodiscard]] bool WriteToQDataStream(QDataStream& data) const;
 
 	void Clear() noexcept
 	{
