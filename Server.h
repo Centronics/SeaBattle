@@ -11,7 +11,7 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
+	explicit Server(Graphics& g, SeaBattle& c, QObject* parent, const std::vector<Ship>& mapData);
 	Server() = delete;
 	virtual ~Server() = default;
 	Server(const Server&) = delete;
@@ -32,8 +32,6 @@ private:
 	QTcpServer _server{ this };
 	QTcpSocket* _socket = nullptr;
 
-	[[nodiscard]] std::optional<Packet> GetFromQueue();
-	void SendToClient() const;
-	void Send();
-	void Receive();
+	void SendToClient(const Packet& packet) const;
+	void Send(const Packet& packet);
 };

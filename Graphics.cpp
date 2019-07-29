@@ -374,3 +374,8 @@ optional<quint8> Graphics::GetCoord() const
 		return nullopt;
 	return (get<2>(r) * 10) + get<1>(r);
 }
+
+const vector<Ship>& Graphics::GetData() const
+{
+	return _screenObjects;
+}

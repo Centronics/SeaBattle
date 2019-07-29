@@ -3,15 +3,26 @@
 
 using namespace std;
 
-void Server::Send()
+void Server::Send(const Packet& packet)
 {
 	switch (_currentState)
 	{
 	case DOIT::STARTGAME:
-		_packet.WriteData(DOIT::STARTGAME);
-		//ÎÒÏÐÀÂÊÀ
-
+	{
+		DOIT doit;
+		if (!packet.ReadData(doit))
+			if (doit != DOIT::STARTGAME)
+			{
+				_socket->close();
+				_socket = nullptr;
+				return;
+			}
+		Packet out;
+		out.WriteData(DOIT::STARTGAME);
+		SendToClient(out);
+		_currentState = DOIT::PUSHMAP;
 		break;
+	}
 	case DOIT::PUSHMAP:
 
 		break;
@@ -35,36 +46,7 @@ void Server::Send()
 	}
 }
 
-void Server::Receive()
-{
-	switch (_currentState)
-	{
-	case DOIT::STARTGAME:
-		_currentState = DOIT::CONNECTIONERROR;
-		_currentState = DOIT::PUSHMAP;
-		_currentState = DOIT::STOPGAME;
-		break;
-	case DOIT::PUSHMAP:
-		_currentState = DOIT::CONNECTIONERROR;
-		_currentState = DOIT::PUSHMAP;
-		_currentState = DOIT::STOPGAME;
-		break;
-	case DOIT::STOPGAME:
-		break;
-	case DOIT::HIT:
-		break;
-	case DOIT::CONNECTIONERROR:
-		break;
-	case DOIT::WAITRIVAL:
-		break;
-	case DOIT::MYMOVE:
-		break;
-	default:
-		throw exception(__func__);
-	}
-}
-
-void Server::SendToClient() const
+void Server::SendToClient(const Packet& packet) const
 {
 	if (!_socket)
 		return;
@@ -72,34 +54,30 @@ void Server::SendToClient() const
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
 	out << quint16(0);
-	if (!_packet.WriteToQDataStream(out))
+	if (!packet.WriteToQDataStream(out))
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);
 	_socket->write(arrBlock);
 }
 
-optional<Packet> Server::GetFromQueue()
-{
-	lock_guard locker(_lock);
-	if (_requests.empty())
-		return nullopt;
-	const Packet element = _requests.front();
-	_requests.pop();
-	return element;
-}
-
 void Server::SlotNewConnection()
 {
-	QTcpSocket* pClientSocket = _server.nextPendingConnection();
+	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
-	connect(pClientSocket, SIGNAL(readyRead()), this, SLOT(SlotReadClient()));
+	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
+	if (_socket)
+	{
+		_socket->close();
+		_socket = nullptr;
+		return;
+	}
 	_socket = pClientSocket;
 }
 
 void Server::SlotReadClient()
 {
-	auto* pClientSocket = dynamic_cast<QTcpSocket*>(sender());
+	QTcpSocket* const pClientSocket = dynamic_cast<QTcpSocket*>(sender());
 	if (!pClientSocket)
 		return;
 	QDataStream in(pClientSocket);
@@ -110,21 +88,21 @@ void Server::SlotReadClient()
 	in >> blockSize;
 	if (pClientSocket->bytesAvailable() < blockSize)
 		return;
-	lock_guard locker(_lock);
-	_requests.emplace(in, blockSize);
+	Send(Packet(in, blockSize));
 }
 
-Server::Server(Graphics& g, SeaBattle& c, QObject* const parent) : NetworkInterface(g, c, parent)
+Server::Server(Graphics& g, SeaBattle& c, QObject* const parent, const vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
 {
-	connect(&_server, SIGNAL(newConnection()), this, SLOT(SlotNewConnection()));
+	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 }
 
 void Server::SendHit(const quint8 coord)
 {
 	if (_currentState != DOIT::MYMOVE)
 		return;
-	_packet.WriteData(DOIT::HIT, coord);
-	SendToClient();
+	Packet packet;
+	packet.WriteData(DOIT::HIT, coord);
+	SendToClient(packet);
 }
 
 void Server::Listen(const quint16 port)

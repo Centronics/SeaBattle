@@ -40,4 +40,5 @@ public:
 	[[nodiscard]] bool IsReady(Ship::SHIPS ship = Ship::SHIPS::EMPTY) const;
 	[[nodiscard]] int GetShipCount(Ship::SHIPS ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
+	[[nodiscard]] const std::vector<Ship>& GetData() const;
 };

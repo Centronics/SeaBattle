@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Client::Client(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+Client::Client(Graphics& g, SeaBattle& c, QObject* parent, const vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
 {
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
@@ -14,14 +14,74 @@ inline void Client::SendHit(const quint8 coord)
 {
 	if (_currentState != DOIT::MYMOVE)
 		return;
-	_packet.WriteData(DOIT::HIT, coord);
-	SendToServer();
+	Packet packet;
+	packet.WriteData(DOIT::HIT, coord);
+	SendToServer(packet);
 }
 
 void Client::Connect(const QString& ip, const quint16 port)
 {
 	_tcpSocket.close();
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
+}
+
+void Client::Send(const Packet& packet)
+{
+	switch (_currentState)
+	{
+	case DOIT::STARTGAME:
+	{
+		Packet out;
+		out.WriteData(DOIT::STARTGAME);
+		SendToServer(out);
+		_currentState = DOIT::PUSHMAP;
+		break;
+	}
+	case DOIT::PUSHMAP:
+	{
+		SendToServer(RivalFlagInvert());
+		_currentState = DOIT::WAITMAP;
+		break;
+	}
+	case DOIT::WAITMAP:
+	{
+		SendToServer(RivalFlagInvert());
+		_currentState = DOIT::WAITRIVAL;
+		break;
+	}
+	case DOIT::STOPGAME:
+	{
+
+		break;
+	}
+	case DOIT::HIT:
+	{
+
+		break;
+	}
+	case DOIT::CONNECTIONERROR:
+	{
+
+		break;
+	}
+	case DOIT::WAITRIVAL:
+	{
+
+		break;
+	}
+	case DOIT::MYMOVE:
+	{
+
+		break;
+	}
+	case DOIT::INCORRECTMESSAGE:
+	{
+
+		break;
+	}
+	default:
+		throw exception(__func__);
+	}
 }
 
 void Client::SlotReadyRead()
@@ -34,17 +94,16 @@ void Client::SlotReadyRead()
 	in >> blockSize;
 	if (_tcpSocket.bytesAvailable() < blockSize)
 		return;
-	lock_guard locker(_lock);
-	_requests.emplace(in, blockSize);
+	Send(Packet(in, blockSize));
 }
 
-void Client::SendToServer()
+void Client::SendToServer(const Packet& packet)
 {
 	QByteArray arrBlock;
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
 	out << quint16(0);
-	if (!_packet.WriteToQDataStream(out))
+	if (!packet.WriteToQDataStream(out))
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);

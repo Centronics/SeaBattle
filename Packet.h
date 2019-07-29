@@ -4,6 +4,7 @@
 enum class DOIT : quint8
 {
 	PUSHMAP,
+	WAITMAP,
 	STARTGAME,
 	STOPGAME,
 	HIT,

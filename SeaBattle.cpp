@@ -48,7 +48,7 @@ void SeaBattle::BtnServerStartClicked()
 	_mainForm.btnServerStart->setEnabled(false);
 	_mainForm.btnDisconnect->setEnabled(true);
 	if (!_clientServer)
-		_clientServer.reset(new Server(_graphics, *this, this));
+		_clientServer.reset(new Server(_graphics, *this, this, _graphics.GetData()));
 	Initialize<Server>()->Listen(*port);
 }
 

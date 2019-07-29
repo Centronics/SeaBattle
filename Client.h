@@ -10,7 +10,7 @@ class Client : public NetworkInterface
 
 public:
 
-	explicit Client(Graphics& g, SeaBattle& c, QObject* parent);
+	explicit Client(Graphics& g, SeaBattle& c, QObject* parent, const std::vector<Ship>& mapData);
 	Client() = delete;
 	virtual ~Client() = default;
 	Client(const Client&) = delete;
@@ -23,11 +23,12 @@ public:
 
 protected:
 
-	void SendToServer();
+	void SendToServer(const Packet& packet);
 
 private:
 
 	QTcpSocket _tcpSocket{this};
+	void Send(const Packet& packet);
 
 private slots:
 
