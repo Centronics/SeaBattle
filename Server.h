@@ -5,7 +5,7 @@
 
 class SeaBattle;
 
-class Server : protected NetworkInterface
+class Server : public NetworkInterface
 {
 	Q_OBJECT
 
@@ -20,12 +20,7 @@ public:
 	Server& operator=(Server&&) = delete;
 
 	void SendHit(quint8 coord) override;
-	void Listen(int port);
-
-	[[nodiscard]] QString GetErrorString() const override
-	{
-		return _server.errorString();
-	}
+	void Listen(quint16 port);
 
 private slots:
 

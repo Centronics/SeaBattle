@@ -2,7 +2,9 @@
 #include "NetworkInterface.h"
 #include "QTcpSocket"
 
-class Client : protected NetworkInterface
+class SeaBattle;
+
+class Client : public NetworkInterface
 {
 	Q_OBJECT
 
@@ -18,7 +20,6 @@ public:
 
 	void SendHit(quint8 coord) override;
 	void Connect(const QString& ip, quint16 port);
-	QString GetErrorString() const override;
 
 protected:
 
@@ -27,7 +28,6 @@ protected:
 private:
 
 	QTcpSocket _tcpSocket{this};
-	QString _errorString;
 
 private slots:
 

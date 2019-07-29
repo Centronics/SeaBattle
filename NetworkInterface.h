@@ -2,7 +2,8 @@
 #include "Packet.h"
 #include <queue>
 #include "Graphics.h"
-#include "SeaBattle.h"
+
+class SeaBattle;
 
 class NetworkInterface : public QObject
 {
@@ -20,12 +21,6 @@ public:
 
 	virtual void SendHit(quint8 coord) = 0;
 
-	[[nodiscard]] QString ErrorString() const
-	{
-		const QString str = GetErrorString();
-		return str.isEmpty() ? "<Пусто>" : str;
-	}
-
 	[[nodiscard]] DOIT GetGameState() const noexcept
 	{
 		return _currentState;
@@ -40,8 +35,7 @@ protected:
 	Graphics& _graphics;
 	SeaBattle& _client;
 
-	[[nodiscard]] virtual QString GetErrorString() const = 0;
+signals:
 
-	signals:
-	void Connected();
+	void Connected(bool isOK, const QString& objName, const QString& message);
 };

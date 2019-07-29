@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "SeaBattle.h"
+#include "Server.h"
+#include "Client.h"
 
 using namespace std;
 
@@ -32,10 +34,7 @@ void SeaBattle::BtnConnectClicked()
 	_mainForm.btnDisconnect->setEnabled(true);
 	_mainForm.lstShipArea->setEnabled(false);
 	_mainForm.lstDirection->setEnabled(false);
-	if (_clientServer.StartClient(_mainForm.IPAddress->text(), *port))
-		Graphics::ShipAddition = false;
-	else
-		Message("Ошибка при запуске сервера.", "Попробуйте ещё раз.");
+	Initialize<Client>()->Connect(_mainForm.IPAddress->text(), *port);
 }
 
 void SeaBattle::BtnServerStartClicked()
@@ -48,10 +47,9 @@ void SeaBattle::BtnServerStartClicked()
 	_mainForm.btnConnect->setEnabled(false);
 	_mainForm.btnServerStart->setEnabled(false);
 	_mainForm.btnDisconnect->setEnabled(true);
-	if (_clientServer.StartServer(*port))
-		Graphics::ShipAddition = false;
-	else
-		Message("Ошибка при запуске сервера.", "Попробуйте ещё раз.");
+	if (!_clientServer)
+		_clientServer.reset(new Server(_graphics, *this, this));
+	Initialize<Server>()->Listen(*port);
 }
 
 bool SeaBattle::CheckGameReady()
@@ -66,9 +64,17 @@ void SeaBattle::BtnDisconnect()
 {
 	_mainForm.btnConnect->setEnabled(true);
 	_mainForm.btnServerStart->setEnabled(true);
-	_clientServer.Disconnect();
+	_clientServer.reset();
 	Graphics::ShipAddition = true;
 	_graphics.ClearRivalState();
+}
+
+void SeaBattle::Connected(const bool isOK, const QString& objName, const QString& message)
+{
+	if (isOK)
+		Graphics::ShipAddition = false;
+	else
+		Message(objName, message);
 }
 
 void SeaBattle::paintEvent(QPaintEvent *event)
@@ -161,14 +167,13 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	const optional<quint8> coord = _graphics.GetCoord();
 	if (!Graphics::Clicked || !coord)
 		return;
-	if (_clientServer.GetGameState() == DOIT::STARTGAME)
+	if (Graphics::ShipAddition)
 	{
 		AddShip();
 		repaint();
 		return;
 	}
-	_packet.WriteData(DOIT::HIT, *coord);
-	_clientServer.Send(_packet);
+	_clientServer->SendHit(*coord);
 	repaint();
 }
 
@@ -180,7 +185,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
-		if (_clientServer.GetGameState() != DOIT::STARTGAME)
+		if (!Graphics::ShipAddition)
 			return;
 		_graphics.RemoveShip();
 		RenewShipCount();
@@ -191,7 +196,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 	}
 }
 
-optional<int> SeaBattle::GetPort()
+optional<quint16> SeaBattle::GetPort()
 {
 	bool ok;
 	const int port = _mainForm.Port->text().toInt(&ok);

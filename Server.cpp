@@ -127,10 +127,12 @@ void Server::SendHit(const quint8 coord)
 	SendToClient();
 }
 
-void Server::Listen(const int port)
+void Server::Listen(const quint16 port)
 {
 	if (_server.isListening())
 		_server.close();
 	if (_server.listen(QHostAddress::Any, port))
-		emit Connected();
+		emit Connected(true, "Сервер.", QString());
+	else
+		emit Connected(false, "Сервер.", _server.errorString());
 }

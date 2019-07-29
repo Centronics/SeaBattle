@@ -43,3 +43,12 @@
 /.vs/SeaBattle/v15/Browse.VC.db
 /.vs/SeaBattle/v15/.suo
 /GeneratedFiles/ui_SeaBattle.h
+/x64/Debug/Server.obj
+/x64/Debug/moc_Server.obj
+/x64/Debug/moc_NetworkInterface.obj
+/x64/Debug/moc_Client.obj
+/x64/Debug/Client.obj
+/GeneratedFiles/Debug/moc_Server.cpp
+/GeneratedFiles/Debug/moc_NetworkInterface.cpp
+/GeneratedFiles/Debug/moc_ClientServer.cpp
+/GeneratedFiles/Debug/moc_Client.cpp

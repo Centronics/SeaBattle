@@ -3,10 +3,15 @@
 #include "Graphics.h"
 #include "Packet.h"
 #include "NetworkInterface.h"
+#include "Client.h"
 
 class SeaBattle : public QWidget
 {
 	Q_OBJECT
+
+	Ui::SeaBattleForm _mainForm{ };
+	Graphics _graphics;
+	std::unique_ptr<NetworkInterface> _clientServer{ };
 
 private slots:
 
@@ -15,6 +20,7 @@ private slots:
 	void BtnServerStartClicked();
 	bool CheckGameReady();
 	void BtnDisconnect();
+	void Connected(bool isOK, const QString& objName, const QString& message);
 
 public:
 
@@ -28,18 +34,37 @@ public:
 protected:
 
 	void paintEvent(QPaintEvent *event) override;
-	[[nodiscard]] std::tuple<bool, Ship::SHIPS, Ship::STATE, QListWidgetItem*> GetSelectedShip() const;
 	void AddShip();
 	void RenewShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
-	[[nodiscard]] std::optional<int> GetPort();
 	void Message(const QString& m1, const QString& infoMessage);
+	[[nodiscard]] std::tuple<bool, Ship::SHIPS, Ship::STATE, QListWidgetItem*> GetSelectedShip() const;
+	[[nodiscard]] std::optional<quint16> GetPort();
 
-private:
+	template<typename T> T* Initialize()
+	{
+		T* result = nullptr;
 
-	Ui::SeaBattleForm _mainForm{ };
-	Graphics _graphics;
-	std::unique_ptr<NetworkInterface> _clientServer{ };
+		const auto f = [&result, this]() -> void
+		{
+			result = new T(_graphics, *this, this);
+			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(Connected(const bool isOK, const QString& objName, const QString& message)));
+		};
+
+		if (!_clientServer)
+		{
+			f();
+			_clientServer.reset(result);
+			return result;
+		}
+		result = dynamic_cast<T*>(_clientServer.get());
+		if (!result)
+		{
+			f();
+			_clientServer.reset(result);
+		}
+		return result;
+	}
 };
