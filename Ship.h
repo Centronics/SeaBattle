@@ -96,6 +96,21 @@ public:
 		return static_cast<SHIPHOLDER>((_currentState & 0xC0u) >> 6u);
 	}
 
+	[[nodiscard]] bool GetIsMyHold() const
+	{
+		switch (GetHolder())
+		{
+		case SHIPHOLDER::BOTH:
+		case SHIPHOLDER::ME:
+			return true;
+		case SHIPHOLDER::NIL:
+		case SHIPHOLDER::RIVAL:
+			return false;
+		default:
+			throw std::exception(__func__);
+		}
+	}
+
 	void SetHolder(const SHIPHOLDER holder)
 	{
 		switch (holder)
@@ -175,7 +190,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] ROTATE GetState() const
+	[[nodiscard]] ROTATE GetRotate() const
 	{
 		const quint8 t = _currentState & 0x03u;
 		if (t > 2)
@@ -183,7 +198,7 @@ public:
 		return static_cast<ROTATE>(t);
 	}
 
-	void SetState(const ROTATE value)
+	void SetRotate(const ROTATE value)
 	{
 		switch (value)
 		{

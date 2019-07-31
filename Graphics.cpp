@@ -5,7 +5,7 @@ using namespace std;
 
 static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 4, QFont::Bold);
 
-void Graphics::Paint(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE state) const
+void Graphics::Paint(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE rotate) const
 {
 	DrawField(painter);
 	const int cx = CursorX, cy = CursorY;
@@ -18,7 +18,7 @@ void Graphics::Paint(QPainter& painter, const optional<Ship::SHIPS> ship, const 
 		}
 	CursorX = cx;
 	CursorY = cy;
-	DrawFrame(painter, ship, state);
+	DrawFrame(painter, ship, rotate);
 	Clicked = false;
 }
 
@@ -35,14 +35,14 @@ void Graphics::ClearField()
 	for_each(_screenObjects.begin(), _screenObjects.end(), [](Ship& ship) { ship.Delete(); });
 }
 
-bool Graphics::AddShip(const Ship::SHIPS ship, const Ship::ROTATE state)
+bool Graphics::AddShip(const Ship::SHIPS ship, const Ship::ROTATE rotate)
 {
 	if (IsReady() || !ShipAddition)
 		return false;
 	const auto xs = GetMassiveCoords();
 	if (!get<0>(xs))
 		return false;
-	return AddOrRemove(get<1>(xs), get<2>(xs), ship, state);
+	return AddOrRemove(get<1>(xs), get<2>(xs), ship, rotate);
 }
 
 void Graphics::RemoveShip()
@@ -65,7 +65,7 @@ bool Graphics::IsReady(const optional<Ship::SHIPS> ship) const
 	return Ship::GetMaxShipCount(*ship) == GetShipCount(*ship);
 }
 
-void Graphics::DrawFrame(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE state) const
+void Graphics::DrawFrame(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE rotate) const
 {
 	const auto drawNow = [&painter](const int x, const int y, const bool tempSelect = true, const int x1 = -1, const int y1 = -1)
 	{
@@ -93,28 +93,17 @@ void Graphics::DrawFrame(QPainter& painter, const optional<Ship::SHIPS> ship, co
 		drawFrame();
 		return;
 	}
-	if (const auto sr = GetShipRect(false, ship, state); get<0>(sr))
+	if (const auto sr = GetShipRect(false, ship, rotate); get<0>(sr))
 		drawNow(get<1>(sr), get<2>(sr), false, get<3>(sr), get<4>(sr));
 	else
 		drawFrame();
 }
 
-tuple<bool, int, int> Graphics::GetPhysicalCoords(const int cx, const int cy)
+tuple<bool, int, int> Graphics::GetPhysicalCoords()
 {
-	int cursorX, cursorY;
-	if (cx < 0 || cy < 0)
-	{
-		cursorX = CursorX;
-		cursorY = CursorY;
-	}
-	else
-	{
-		cursorX = cx;
-		cursorY = cy;
-	}
-	if (cursorX < Margin || cursorX >= MaxCoord || cursorY < Margin || cursorY >= MaxCoord)
+	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord)
 		return make_tuple(false, -1, -1);
-	int mx = cursorX - Margin, my = cursorY - Margin;
+	int mx = CursorX - Margin, my = CursorY - Margin;
 	mx = mx - (mx % ObjectWidth);
 	my = my - (my % ObjectWidth);
 	mx += Margin;
@@ -122,22 +111,11 @@ tuple<bool, int, int> Graphics::GetPhysicalCoords(const int cx, const int cy)
 	return make_tuple(true, mx, my);
 }
 
-tuple<bool, int, int> Graphics::GetMassiveCoords(const int cx, const int cy)
+tuple<bool, int, int> Graphics::GetMassiveCoords()
 {
-	int cursorX, cursorY;
-	if (cx < 0 || cy < 0)
-	{
-		cursorX = CursorX;
-		cursorY = CursorY;
-	}
-	else
-	{
-		cursorX = cx;
-		cursorY = cy;
-	}
-	if (cursorX < Margin || cursorX >= MaxCoord || cursorY < Margin || cursorY >= MaxCoord)
+	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord)
 		return make_tuple(false, -1, -1);
-	int mx = cursorX - Margin, my = cursorY - Margin;
+	int mx = CursorX - Margin, my = CursorY - Margin;
 	mx = mx - (mx % ObjectWidth);
 	my = my - (my % ObjectWidth);
 	mx /= ObjectWidth;
@@ -147,15 +125,9 @@ tuple<bool, int, int> Graphics::GetMassiveCoords(const int cx, const int cy)
 
 void Graphics::DrawShipState(QPainter& painter) const
 {
-	const optional<quint8> masCoord = GetCoord();
-	if (!masCoord)
-		return;
-	const Ship& pShip = _screenObjects[*masCoord];
-	const Ship::SHIPS ship = pShip.GetShip();
-
-	const auto mBeat = [&painter, &pShip](const int cursorX, const int cursorY) -> bool
+	const auto mBeat = [&painter](const int cursorX, const int cursorY, const Ship::BIT bit) -> bool // œŒ◊≈Ã” Õ≈ »—œŒÀ‹«”≈“—ﬂ???
 	{
-		switch (pShip.GetBit())
+		switch (bit)
 		{
 		case Ship::BIT::MYBEAT:
 		{
@@ -184,115 +156,86 @@ void Graphics::DrawShipState(QPainter& painter) const
 		return false;
 	};
 
-	switch (const Ship::ROTATE state = pShip.GetState())
-	{
-	case Ship::ROTATE::STARTRIGHT:
-	case Ship::ROTATE::STARTDOWN:
-	{
-		const int floors = Ship::GetFloors(ship);
-		auto shipRect = GetShipRect();
-		if (!get<0>(shipRect))
-			throw exception(__func__);
-		int deadFloors = 0;
-		switch (state)
-		{
-		case Ship::ROTATE::STARTRIGHT:
-			for (int x = get<1>(shipRect), k = 0, y = get<2>(shipRect); k < floors; k++, x += ObjectWidth)
-				deadFloors += mBeat(x, y);
-			break;
-		case Ship::ROTATE::STARTDOWN:
-			for (int x = get<1>(shipRect), k = 0, y = get<2>(shipRect); k < floors; k++, y += ObjectWidth)
-				deadFloors += mBeat(x, y);
-			break;
-		case Ship::ROTATE::NIL:
-		default:
-			break;
-		}
-		if (floors != deadFloors || IsRivalMove || pShip.GetHolder() != Ship::SHIPHOLDER::ME)
-			return;
-		const QColor col = Ship::GetColor(ship);
-		painter.setPen(QPen(col, BetweenObjects * 2));
-		painter.setBrush(QBrush(col, Qt::Dense6Pattern));
-		painter.drawRect(get<1>(shipRect), get<2>(shipRect), get<3>(shipRect), get<4>(shipRect));
-	}
-	case Ship::ROTATE::NIL:
-	default:
-		break;
-	}
+	auto shipRect = GetShipRect();
+	if (!get<0>(shipRect))
+		throw exception(__func__);
+
+	if (IsRivalMove || get<5>(shipRect)->GetIsMyHold())
+		return;
+	const QColor col = Ship::GetColor(get<5>(shipRect)->GetShip());
+	painter.setPen(QPen(col, BetweenObjects * 2));
+	painter.setBrush(QBrush(col, Qt::Dense6Pattern));
+	painter.drawRect(get<1>(shipRect), get<2>(shipRect), get<3>(shipRect), get<4>(shipRect));
 }
 
-bool Graphics::IsConflict(int objectX, int objectY) const
+tuple<bool, int, int, int, int, const Ship*> Graphics::GetShipRect(const bool realObject, optional<const Ship::SHIPS> ship, const Ship::ROTATE rotate) const
 {
-	objectX *= ObjectWidth;
-	objectY *= ObjectWidth;
-	for (int x = Margin; x < MaxCoord; x += ObjectWidth)
-		for (int y = Margin; y < MaxCoord; y += ObjectWidth)
-			if (get<0>(GetShipRect(true, nullopt, Ship::ROTATE::NIL, x, y, objectX, objectY)))
-				return true;
-	return false;
-}
-
-tuple<bool, int, int, int, int> Graphics::GetShipRect(const bool realObject, optional<const Ship::SHIPS> ship, const Ship::ROTATE state, const int cx, const int cy, const int coordX, const int coordY) const
-{
-	int cursorX, cursorY;
-	if (cx < 0 || cy < 0)
-	{
-		cursorX = CursorX;
-		cursorY = CursorY;
-	}
-	else
-	{
-		cursorX = cx;
-		cursorY = cy;
-	}
-	const auto inRange = [coordX, coordY](const int x1, const int y1, const int x2, const int y2) -> bool
-	{
-		return (coordX < 0 || coordY < 0) || (coordX >= x1 && coordX < x2 && coordY >= y1 && coordY < y2);
-	};
-	const auto phs = GetPhysicalCoords(cursorX, cursorY);
+	const auto phs = GetPhysicalCoords();
 	if (!get<0>(phs))
-		return make_tuple(false, -1, -1, -1, -1);
-	const auto pms = GetMassiveCoords(cursorX, cursorY);
-	if (!get<0>(pms) && realObject)
-		return make_tuple(false, -1, -1, -1, -1);
+		return make_tuple(false, -1, -1, -1, -1, nullptr);
+
 	if (!realObject)
 	{
-		if (!ship || state == Ship::ROTATE::NIL)
-			return make_tuple(false, -1, -1, -1, -1);
-		switch (const int fls = Ship::GetFloors(*ship) * ObjectWidth; state)
+		if (!ship || rotate == Ship::ROTATE::NIL)
+			return make_tuple(false, -1, -1, -1, -1, nullptr);
+		switch (const int fls = Ship::GetFloors(*ship) * ObjectWidth; rotate)
 		{
 		case Ship::ROTATE::STARTRIGHT:
 		{
 			const int x2 = get<1>(phs) + fls, y2 = get<2>(phs) + ObjectWidth;
 			if (x2 > MaxCoord || y2 > MaxCoord)
-				return make_tuple(false, -1, -1, -1, -1);
-			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2);
+				return make_tuple(false, -1, -1, -1, -1, nullptr);
+			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2, nullptr);
 		}
 		case Ship::ROTATE::STARTDOWN:
 		{
 			const int x2 = get<1>(phs) + ObjectWidth, y2 = get<2>(phs) + fls;
 			if (x2 > MaxCoord || y2 > MaxCoord)
-				return make_tuple(false, -1, -1, -1, -1);
-			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2);
+				return make_tuple(false, -1, -1, -1, -1, nullptr);
+			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2, nullptr);
 		}
 		case Ship::ROTATE::NIL:
 		default:
-			return make_tuple(false, -1, -1, -1, -1);
+			return make_tuple(false, -1, -1, -1, -1, nullptr);
 		}
 	}
-	const Ship& obj = _screenObjects[static_cast<unsigned int>((get<2>(pms) * 10) + get<1>(pms))];
-	const int fls = Ship::GetFloors(obj.GetShip()) * ObjectWidth;
-	switch (obj.GetState())
+
+	const auto inRange = [](const int x1, const int y1, const int x2, const int y2) -> bool
 	{
-	case Ship::ROTATE::STARTRIGHT:
-		return make_tuple(inRange(get<1>(phs), get<2>(phs), get<1>(phs) + fls, get<2>(phs) + ObjectWidth), get<1>(phs), get<2>(phs), fls, ObjectWidth);
-	case Ship::ROTATE::STARTDOWN:
-		return make_tuple(inRange(get<1>(phs), get<2>(phs), get<1>(phs) + ObjectWidth, get<2>(phs) + fls), get<1>(phs), get<2>(phs), ObjectWidth, fls);
-	case Ship::ROTATE::NIL:
-		return make_tuple(false, -1, -1, -1, -1);
-	default:
-		throw exception(__func__);
-	}
+		return CursorX >= x1 && CursorX < x2 && CursorY >= y1 && CursorY < y2;
+	};
+
+	for (int x = 0, p = 0, xc = Margin; x < 10; ++x, xc += ObjectWidth)
+		for (int y = 0, yc = Margin; y < 10; ++y, ++p, yc += ObjectWidth)
+		{
+			const Ship& s = _screenObjects[p];
+			if (!s.GetIsMyHold())
+				continue;
+			const int floors = Ship::GetFloors(s.GetShip()) * ObjectWidth;
+			switch (s.GetRotate())
+			{
+			case Ship::ROTATE::NIL:
+				continue;
+			case Ship::ROTATE::STARTRIGHT:
+			{
+				const int tx = xc + floors, ty = yc + ObjectWidth;
+				if (inRange(xc, yc, tx, ty))
+					return make_tuple(true, xc, yc, tx, ty, &s);
+				continue;
+			}
+			case Ship::ROTATE::STARTDOWN:
+			{
+				const int tx = xc + ObjectWidth, ty = yc + floors;
+				if (inRange(xc, yc, tx, ty))
+					return make_tuple(true, xc, yc, tx, ty, &s);
+				continue;
+			}
+			default:
+				throw exception("GetShipRect");
+			}
+		}
+
+	return make_tuple(false, -1, -1, -1, -1, nullptr);
 }
 
 bool Graphics::IsFree(const int sx, const int sy) const
@@ -302,7 +245,11 @@ bool Graphics::IsFree(const int sx, const int sy) const
 
 	const auto coord = [this](const int x, const int y) -> bool
 	{
-		return (x < 0 || x > 9 || y < 0 || y > 9) || !IsConflict(x, y);
+		if (x < 0 || x > 9 || y < 0 || y > 9)
+			return true;
+		const Ship& ship = _screenObjects[static_cast<unsigned int>((y * 10) + x)];
+		const Ship::SHIPHOLDER s = ship.GetHolder();
+		return s != Ship::SHIPHOLDER::BOTH && s != Ship::SHIPHOLDER::ME;
 	};
 
 	if (!coord(sx - 1, sy))
@@ -319,21 +266,22 @@ bool Graphics::IsFree(const int sx, const int sy) const
 	return true;
 }
 
-bool Graphics::AddOrRemove(const int startX, const int startY, optional<Ship::SHIPS> ship, const Ship::ROTATE state)
+bool Graphics::AddOrRemove(const int startX, const int startY, const optional<Ship::SHIPS> ship, const Ship::ROTATE rotate)
 {
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)
 		throw exception(__func__);
 
-	const auto fSet = [](Ship& obj, const Ship::ROTATE state, const Ship::SHIPS sp)
+	const auto fSet = [](Ship& obj, const Ship::ROTATE rotate, const Ship::SHIPS sp)
 	{
-		obj.SetState(state);
+		obj.SetRotate(rotate);
 		obj.SetBit(Ship::BIT::NIL);
+		obj.SetHolder(Ship::SHIPHOLDER::ME);
 		obj.SetShip(sp);
 	};
 
 	auto i = static_cast<unsigned int>((startY * 10) + startX);
 
-	switch (state)
+	switch (rotate)
 	{
 	case Ship::ROTATE::STARTDOWN:
 	{
@@ -356,7 +304,7 @@ bool Graphics::AddOrRemove(const int startX, const int startY, optional<Ship::SH
 		if (max > 10)
 			return false;
 		for (int k = startX; k < max; ++k)
-			if (!IsFree(startX, k))
+			if (!IsFree(k, startY))
 				return false;
 		for (int k = startX; k < max; ++k, ++i)
 			if (ship)
@@ -396,7 +344,7 @@ int Graphics::GetShipCount(const Ship::SHIPS ship) const
 {
 	int result = 0;
 	for (const auto& obj : _screenObjects)
-		if (const Ship::ROTATE state = obj.GetState(); obj.GetShip() == ship && (state == Ship::ROTATE::STARTRIGHT || state == Ship::ROTATE::STARTDOWN))
+		if (const Ship::ROTATE rotate = obj.GetRotate(); obj.GetShip() == ship && (rotate == Ship::ROTATE::STARTRIGHT || rotate == Ship::ROTATE::STARTDOWN))
 			result++;
 	return result;
 }

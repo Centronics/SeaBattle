@@ -24,7 +24,6 @@ public:
 protected:
 
 	void SendToServer(const Packet& packet);
-	void RivalFlagInvert(const Packet& packet) const;
 
 private:
 

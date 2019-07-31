@@ -136,7 +136,7 @@ bool Packet::ReadData(DOIT& doit) const
 	default: return false;
 	}
 }
-/*
+
 bool Packet::ReadEnemies(std::vector<Ship>& mas) const
 {
 	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
@@ -144,11 +144,8 @@ bool Packet::ReadEnemies(std::vector<Ship>& mas) const
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
 	{
 		Ship ship = Ship(_massive[n]);
-		if (ship.GetShip() == Ship::SHIPS::EMPTY)
-			continue;
 		if (ship.GetHolder() == Ship::SHIPHOLDER::ME)
 			mas[k].SetHolder(Ship::SHIPHOLDER::RIVAL);
 	}
 	return true;
 }
-*/

@@ -25,11 +25,6 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }
 
-void Client::RivalFlagInvert(const Packet& packet) const
-{
-	
-}
-
 void Client::Send(const Packet& packet)
 {
 	switch (_currentState)
@@ -171,7 +166,7 @@ void Client::SlotError(const QAbstractSocket::SocketError err)
 		errorString = "The connection negotiation with the proxy server failed, because the response from the proxy server could not be understood.";
 		break;
 	case QAbstractSocket::OperationError:
-		errorString = "An operation was attempted while the socket was in a state that did not permit it.";
+		errorString = "An operation was attempted while the socket was in a rotate that did not permit it.";
 		break;
 	case QAbstractSocket::SslInternalError:
 		errorString = "The SSL library being used reported an internal error. This is probably the result of a bad installation or misconfiguration of the library.";

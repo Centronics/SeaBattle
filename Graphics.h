@@ -10,14 +10,13 @@ protected:
 	std::vector<Ship> _screenObjects{ 100 };
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
-	void DrawFrame(QPainter& painter, std::optional<Ship::SHIPS> ship, Ship::ROTATE state) const;
+	void DrawFrame(QPainter& painter, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate) const;
 	void DrawShipState(QPainter& painter) const;
-	[[nodiscard]] bool IsConflict(int objectX, int objectY) const;
-	[[nodiscard]] std::tuple<bool, int, int, int, int> GetShipRect(bool realObject = true, std::optional<const Ship::SHIPS> ship = std::nullopt, Ship::ROTATE state = Ship::ROTATE::NIL, int cx = -1, int cy = -1, int coordX = -1, int coordY = -1) const;
-	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE state = Ship::ROTATE::NIL);
+	[[nodiscard]] std::tuple<bool, int, int, int, int, const Ship*> GetShipRect(bool realObject = true, std::optional<const Ship::SHIPS> ship = std::nullopt, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
+	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate = Ship::ROTATE::NIL);
 	static void DrawField(QPainter& painter);
-	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords(int cx = -1, int cy = -1);
-	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords(int cx = -1, int cy = -1);
+	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
+	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 
 public:
 
@@ -33,10 +32,10 @@ public:
 	inline static bool Clicked = false, ShipAddition = true, IsRivalMove = false;
 	inline static int CursorX = -1, CursorY = 0;
 
-	void Paint(QPainter& painter, std::optional<Ship::SHIPS> ship = std::nullopt, Ship::ROTATE state = Ship::ROTATE::NIL) const;
+	void Paint(QPainter& painter, std::optional<Ship::SHIPS> ship = std::nullopt, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
 	void ClearRivalState();
 	void ClearField();
-	[[nodiscard]] bool AddShip(Ship::SHIPS ship, Ship::ROTATE state);
+	[[nodiscard]] bool AddShip(Ship::SHIPS ship, Ship::ROTATE rotate);
 	void RemoveShip();
 	[[nodiscard]] bool IsReady(std::optional<Ship::SHIPS> ship = std::nullopt) const;
 	[[nodiscard]] int GetShipCount(Ship::SHIPS ship) const;

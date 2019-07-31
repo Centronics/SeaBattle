@@ -93,7 +93,7 @@ tuple<optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelec
 	if (_graphics.IsReady())
 		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	Ship::SHIPS ship;
-	Ship::ROTATE state;
+	Ship::ROTATE rotate;
 	switch (_mainForm.lstShipArea->currentRow())
 	{
 	case 0:
@@ -114,15 +114,15 @@ tuple<optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelec
 	switch (_mainForm.lstDirection->currentRow())
 	{
 	case 0:
-		state = Ship::ROTATE::STARTRIGHT;
+		rotate = Ship::ROTATE::STARTRIGHT;
 		break;
 	case 1:
-		state = Ship::ROTATE::STARTDOWN;
+		rotate = Ship::ROTATE::STARTDOWN;
 		break;
 	default:
 		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	}
-	return make_tuple(ship, state, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
+	return make_tuple(ship, rotate, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
 }
 
 void SeaBattle::AddShip()
