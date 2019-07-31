@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Client::Client(Graphics& g, SeaBattle& c, QObject* parent, const vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
+Client::Client(Graphics& g, SeaBattle& c, QObject* parent, vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
 {
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
@@ -12,7 +12,7 @@ Client::Client(Graphics& g, SeaBattle& c, QObject* parent, const vector<Ship>& m
 
 inline void Client::SendHit(const quint8 coord)
 {
-	if (_currentState != DOIT::MYMOVE)
+	if (_currentState != DOIT::HIT)
 		return;
 	Packet packet;
 	packet.WriteData(DOIT::HIT, coord);
@@ -23,6 +23,11 @@ void Client::Connect(const QString& ip, const quint16 port)
 {
 	_tcpSocket.close();
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
+}
+
+void Client::RivalFlagInvert(const Packet& packet) const
+{
+	
 }
 
 void Client::Send(const Packet& packet)
@@ -39,17 +44,19 @@ void Client::Send(const Packet& packet)
 	}
 	case DOIT::PUSHMAP:
 	{
-		SendToServer(RivalFlagInvert());
+		Packet out;
+		out.WriteData(_mapData);
+		SendToServer(out);
 		_currentState = DOIT::WAITMAP;
 		break;
 	}
 	case DOIT::WAITMAP:
 	{
-		SendToServer(RivalFlagInvert());
+
 		_currentState = DOIT::WAITRIVAL;
 		break;
 	}
-	case DOIT::STOPGAME:
+	case DOIT::WAITRIVAL:
 	{
 
 		break;
@@ -59,24 +66,10 @@ void Client::Send(const Packet& packet)
 
 		break;
 	}
-	case DOIT::CONNECTIONERROR:
+	case DOIT::STOPGAME:
 	{
-
-		break;
-	}
-	case DOIT::WAITRIVAL:
-	{
-
-		break;
-	}
-	case DOIT::MYMOVE:
-	{
-
-		break;
-	}
-	case DOIT::INCORRECTMESSAGE:
-	{
-
+		_tcpSocket.close();
+		_currentState = DOIT::STARTGAME;
 		break;
 	}
 	default:

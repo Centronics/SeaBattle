@@ -11,7 +11,7 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent, const std::vector<Ship>& mapData);
+	explicit Server(Graphics& g, SeaBattle& c, QObject* parent, std::vector<Ship>& mapData);
 	Server() = delete;
 	virtual ~Server() = default;
 	Server(const Server&) = delete;

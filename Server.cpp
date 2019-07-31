@@ -26,19 +26,14 @@ void Server::Send(const Packet& packet)
 	case DOIT::PUSHMAP:
 
 		break;
-	case DOIT::STOPGAME:
-
-		break;
 	case DOIT::HIT:
-		_currentState = DOIT::WAITRIVAL;
-		break;
-	case DOIT::CONNECTIONERROR:
 
+		_currentState = DOIT::WAITRIVAL;
 		break;
 	case DOIT::WAITRIVAL:
 
 		break;
-	case DOIT::MYMOVE:
+	case DOIT::STOPGAME:
 
 		break;
 	default:
@@ -91,14 +86,14 @@ void Server::SlotReadClient()
 	Send(Packet(in, blockSize));
 }
 
-Server::Server(Graphics& g, SeaBattle& c, QObject* const parent, const vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
+Server::Server(Graphics& g, SeaBattle& c, QObject* const parent, vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
 {
 	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 }
 
 void Server::SendHit(const quint8 coord)
 {
-	if (_currentState != DOIT::MYMOVE)
+	if (_currentState != DOIT::HIT)
 		return;
 	Packet packet;
 	packet.WriteData(DOIT::HIT, coord);

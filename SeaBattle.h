@@ -40,7 +40,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void Message(const QString& m1, const QString& infoMessage);
-	[[nodiscard]] std::tuple<bool, Ship::SHIPS, Ship::STATE, QListWidgetItem*> GetSelectedShip() const;
+	[[nodiscard]] std::tuple<std::optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort();
 
 	template<typename T> T* Initialize()
@@ -49,7 +49,7 @@ protected:
 
 		const auto f = [&result, this]() -> void
 		{
-			result = new T(_graphics, *this, this);
+			result = new T(_graphics, *this, this, _graphics.GetData());
 			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(Connected(const bool isOK, const QString& objName, const QString& message)));
 		};
 

@@ -3,15 +3,12 @@
 
 enum class DOIT : quint8
 {
+	STARTGAME,
 	PUSHMAP,
 	WAITMAP,
-	STARTGAME,
-	STOPGAME,
 	HIT,
-	CONNECTIONERROR,
 	WAITRIVAL,
-	MYMOVE,
-	INCORRECTMESSAGE
+	STOPGAME
 };
 
 class Packet
@@ -34,6 +31,7 @@ public:
 	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
+	[[nodiscard]] bool ReadEnemies(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool WriteToQDataStream(QDataStream& data) const;
 
 	void Clear() noexcept

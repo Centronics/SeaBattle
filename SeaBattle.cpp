@@ -83,17 +83,17 @@ void SeaBattle::paintEvent(QPaintEvent *event)
 	QPainter painter(this);
 	const auto ship = GetSelectedShip();
 	if (get<0>(ship))
-		_graphics.Paint(painter, get<1>(ship), get<2>(ship));
+		_graphics.Paint(painter, get<0>(ship), get<1>(ship));
 	else
-		_graphics.Paint(painter, Ship::SHIPS::EMPTY, Ship::STATE::NIL);
+		_graphics.Paint(painter);
 }
 
-tuple<bool, Ship::SHIPS, Ship::STATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
+tuple<optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
 {
 	if (_graphics.IsReady())
-		return make_tuple(false, Ship::SHIPS::EMPTY, Ship::STATE::NIL, nullptr);
+		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	Ship::SHIPS ship;
-	Ship::STATE state;
+	Ship::ROTATE state;
 	switch (_mainForm.lstShipArea->currentRow())
 	{
 	case 0:
@@ -109,20 +109,20 @@ tuple<bool, Ship::SHIPS, Ship::STATE, QListWidgetItem*> SeaBattle::GetSelectedSh
 		ship = Ship::SHIPS::VEDETTE;
 		break;
 	default:
-		return make_tuple(false, Ship::SHIPS::EMPTY, Ship::STATE::NIL, nullptr);
+		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	}
 	switch (_mainForm.lstDirection->currentRow())
 	{
 	case 0:
-		state = Ship::STATE::STARTRIGHT;
+		state = Ship::ROTATE::STARTRIGHT;
 		break;
 	case 1:
-		state = Ship::STATE::STARTDOWN;
+		state = Ship::ROTATE::STARTDOWN;
 		break;
 	default:
-		return make_tuple(false, Ship::SHIPS::EMPTY, Ship::STATE::NIL, nullptr);
+		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	}
-	return make_tuple(true, ship, state, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
+	return make_tuple(ship, state, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
 }
 
 void SeaBattle::AddShip()
@@ -130,12 +130,12 @@ void SeaBattle::AddShip()
 	const auto selShip = GetSelectedShip();
 	if (!get<0>(selShip))
 		return;
-	if (Ship::GetMaxShipCount(get<1>(selShip)) == _graphics.GetShipCount(get<1>(selShip)))
+	if (Ship::GetMaxShipCount(*get<0>(selShip)) == _graphics.GetShipCount(*get<0>(selShip)))
 	{
 		Message("Таких кораблей поставлено достаточно!", "Невозможно поставить корабль!");
 		return;
 	}
-	if (!_graphics.AddShip(get<1>(selShip), get<2>(selShip)))
+	if (!_graphics.AddShip(*get<0>(selShip), get<1>(selShip)))
 	{
 		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 		return;
@@ -148,10 +148,10 @@ void SeaBattle::RenewShipCount() const
 	const auto selShip = GetSelectedShip();
 	if (!get<0>(selShip))
 		return;
-	const int shipCount = _graphics.GetShipCount(get<1>(selShip));
-	QString str = get<3>(selShip)->text();
+	const int shipCount = _graphics.GetShipCount(*get<0>(selShip));
+	QString str = get<2>(selShip)->text();
 	str[39] = QString::number(shipCount)[0];
-	get<3>(selShip)->setText(str);
+	get<2>(selShip)->setText(str);
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)

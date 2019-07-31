@@ -20,9 +20,7 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	}
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
-	case DOIT::CONNECTIONERROR:
 	case DOIT::WAITRIVAL:
-	case DOIT::MYMOVE:
 		if (blockSize != 1)
 			return;
 		_massive.resize(1);
@@ -75,7 +73,7 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 	_massive.emplace_back(param);
 }
 
-void Packet::WriteData(const std::vector<Ship>& mas)
+void Packet::WriteData(const vector<Ship>& mas)
 {
 	if (mas.size() != 100)
 		return;
@@ -114,7 +112,7 @@ bool Packet::ReadData(DOIT& doit, quint8& param) const
 	return false;
 }
 
-bool Packet::ReadData(std::vector<Ship>& mas) const
+bool Packet::ReadData(vector<Ship>& mas) const
 {
 	if (_massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
@@ -138,3 +136,19 @@ bool Packet::ReadData(DOIT& doit) const
 	default: return false;
 	}
 }
+/*
+bool Packet::ReadEnemies(std::vector<Ship>& mas) const
+{
+	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
+		return false;
+	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
+	{
+		Ship ship = Ship(_massive[n]);
+		if (ship.GetShip() == Ship::SHIPS::EMPTY)
+			continue;
+		if (ship.GetHolder() == Ship::SHIPHOLDER::ME)
+			mas[k].SetHolder(Ship::SHIPHOLDER::RIVAL);
+	}
+	return true;
+}
+*/
