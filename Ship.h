@@ -96,7 +96,7 @@ public:
 		return static_cast<SHIPHOLDER>((_currentState & 0xC0u) >> 6u);
 	}
 
-	[[nodiscard]] bool GetIsMyHold() const
+	[[nodiscard]] bool GetIsMyHolding() const
 	{
 		switch (GetHolder())
 		{

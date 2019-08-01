@@ -8,17 +8,7 @@ static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 4, QFont::Bold);
 void Graphics::Paint(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE rotate) const
 {
 	DrawField(painter);
-	const int cx = CursorX, cy = CursorY;
-	for (int x = 0; x < MaxCoord; x += ObjectWidth)
-		for (int y = 0; y < MaxCoord; y += ObjectWidth)
-		{
-			CursorX = x;
-			CursorY = y;
-			DrawShipState(painter);
-		}
-	CursorX = cx;
-	CursorY = cy;
-	DrawFrame(painter, ship, rotate);
+	DrawShipRect(painter, ship, rotate);
 	Clicked = false;
 }
 
@@ -65,40 +55,6 @@ bool Graphics::IsReady(const optional<Ship::SHIPS> ship) const
 	return Ship::GetMaxShipCount(*ship) == GetShipCount(*ship);
 }
 
-void Graphics::DrawFrame(QPainter& painter, const optional<Ship::SHIPS> ship, const Ship::ROTATE rotate) const
-{
-	const auto drawNow = [&painter](const int x, const int y, const bool tempSelect = true, const int x1 = -1, const int y1 = -1)
-	{
-		static constexpr int Wh = ObjectWidth + (BetweenObjects * 2);
-		static const QPen P(Qt::red, BetweenObjects);
-		static const QPen G(Qt::gray, BetweenObjects);
-		painter.setPen(tempSelect ? G : P);
-		static const QBrush B(Qt::red, Qt::Dense6Pattern);
-		static const QBrush D(Qt::gray, Qt::Dense6Pattern);
-		painter.setBrush(tempSelect ? D : B);
-		if (x1 < 0 || y1 < 0)
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, Wh, Wh);
-		else
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, x1 + BetweenObjects, y1 + BetweenObjects);
-	};
-
-	const auto drawFrame = [&drawNow]
-	{
-		if (const auto res = GetPhysicalCoords(); get<0>(res))
-			drawNow(get<1>(res), get<2>(res));
-	};
-
-	if (!ShipAddition)
-	{
-		drawFrame();
-		return;
-	}
-	if (const auto sr = GetShipRect(false, ship, rotate); get<0>(sr))
-		drawNow(get<1>(sr), get<2>(sr), false, get<3>(sr), get<4>(sr));
-	else
-		drawFrame();
-}
-
 tuple<bool, int, int> Graphics::GetPhysicalCoords()
 {
 	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord)
@@ -123,9 +79,14 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 	return make_tuple(true, mx, my);
 }
 
-void Graphics::DrawShipState(QPainter& painter) const
+void Graphics::DrawShipRect(QPainter& painter, optional<const Ship::SHIPS> ship, const Ship::ROTATE rotate) const
 {
-	const auto mBeat = [&painter](const int cursorX, const int cursorY, const Ship::BIT bit) -> bool // ÏÎ×ÅÌÓ ÍÅ ÈÑÏÎËÜÇÓÅÒÑß???
+	const auto inRange = [](const int x1, const int y1, const int x2, const int y2) -> bool
+	{
+		return CursorX >= x1 && CursorX < x2 && CursorY >= y1 && CursorY < y2;
+	};
+
+	const auto mBeat = [&painter](const int cursorX, const int cursorY, const Ship::BIT bit) -> bool
 	{
 		switch (bit)
 		{
@@ -150,92 +111,120 @@ void Graphics::DrawShipState(QPainter& painter) const
 			return true;
 		}
 		case Ship::BIT::NIL:
+			return false;
 		default:
-			break;
+			throw exception("DrawShipState");
 		}
-		return false;
 	};
 
-	auto shipRect = GetShipRect();
-	if (!get<0>(shipRect))
-		throw exception(__func__);
-
-	if (IsRivalMove || get<5>(shipRect)->GetIsMyHold())
-		return;
-	const QColor col = Ship::GetColor(get<5>(shipRect)->GetShip());
-	painter.setPen(QPen(col, BetweenObjects * 2));
-	painter.setBrush(QBrush(col, Qt::Dense6Pattern));
-	painter.drawRect(get<1>(shipRect), get<2>(shipRect), get<3>(shipRect), get<4>(shipRect));
-}
-
-tuple<bool, int, int, int, int, const Ship*> Graphics::GetShipRect(const bool realObject, optional<const Ship::SHIPS> ship, const Ship::ROTATE rotate) const
-{
-	const auto phs = GetPhysicalCoords();
-	if (!get<0>(phs))
-		return make_tuple(false, -1, -1, -1, -1, nullptr);
-
-	if (!realObject)
+	const auto drawMyShipAndFrame = [&painter](const int x, const int y, const bool tempSelect, const QColor& shipColor, const int w = -1, const int h = -1)
 	{
-		if (!ship || rotate == Ship::ROTATE::NIL)
-			return make_tuple(false, -1, -1, -1, -1, nullptr);
-		switch (const int fls = Ship::GetFloors(*ship) * ObjectWidth; rotate)
+		if (IsRivalMove)
+			return;
+		static constexpr int W = BetweenObjects * 2;
+		static constexpr int Wh = ObjectWidth + W;
+		static const QPen P(Qt::red, BetweenObjects);
+		static const QPen G(Qt::gray, BetweenObjects);
+		static const QBrush B(Qt::red, Qt::Dense6Pattern);
+		static const QBrush D(Qt::gray, Qt::Dense6Pattern);
+		if (w < 0 || h < 0)
+		{
+			painter.setPen(tempSelect ? G : P);
+			painter.setBrush(tempSelect ? D : B);
+			painter.drawRect(x - BetweenObjects, y - BetweenObjects, Wh, Wh);
+			return;
+		}
+		painter.setPen(shipColor);
+		painter.setBrush(Qt::NoBrush);
+		painter.drawRect(x, y, w, h);
+		painter.setPen(tempSelect ? G : P);
+		painter.setBrush(tempSelect ? D : B);
+		painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
+	};
+
+	const auto drawEnemyShip = [&painter, &mBeat](const int px, const int py, const int sizeX, const int sizeY, const Ship* pShip)
+	{
+		if (IsRivalMove)
+			return;
+		const int floors = Ship::GetFloors(pShip->GetShip());
+		int deadFloors = 0;
+		switch (pShip->GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-		{
-			const int x2 = get<1>(phs) + fls, y2 = get<2>(phs) + ObjectWidth;
-			if (x2 > MaxCoord || y2 > MaxCoord)
-				return make_tuple(false, -1, -1, -1, -1, nullptr);
-			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2, nullptr);
-		}
+			for (int x = px, k = 0, y = py; k < floors; k++, x += ObjectWidth)
+				deadFloors += mBeat(x, y, pShip->GetBit());
+			break;
 		case Ship::ROTATE::STARTDOWN:
-		{
-			const int x2 = get<1>(phs) + ObjectWidth, y2 = get<2>(phs) + fls;
-			if (x2 > MaxCoord || y2 > MaxCoord)
-				return make_tuple(false, -1, -1, -1, -1, nullptr);
-			return make_tuple(true, get<1>(phs), get<2>(phs), x2, y2, nullptr);
-		}
+			for (int x = px, k = 0, y = py; k < floors; k++, y += ObjectWidth)
+				deadFloors += mBeat(x, y, pShip->GetBit());
+			break;
 		case Ship::ROTATE::NIL:
 		default:
-			return make_tuple(false, -1, -1, -1, -1, nullptr);
+			throw exception("GetShipRect");
 		}
-	}
-
-	const auto inRange = [](const int x1, const int y1, const int x2, const int y2) -> bool
-	{
-		return CursorX >= x1 && CursorX < x2 && CursorY >= y1 && CursorY < y2;
+		if (floors != deadFloors)
+			return;
+		const QColor col = Ship::GetColor(pShip->GetShip());
+		painter.setPen(QPen(col, BetweenObjects * 2));
+		painter.setBrush(QBrush(col, Qt::Dense6Pattern));
+		painter.drawRect(px, py, sizeX, sizeY);
 	};
 
 	for (int x = 0, p = 0, xc = Margin; x < 10; ++x, xc += ObjectWidth)
 		for (int y = 0, yc = Margin; y < 10; ++y, ++p, yc += ObjectWidth)
 		{
 			const Ship& s = _screenObjects[p];
-			if (!s.GetIsMyHold())
+			if (!s.GetIsMyHolding())
 				continue;
 			const int floors = Ship::GetFloors(s.GetShip()) * ObjectWidth;
+			int tx, ty;
 			switch (s.GetRotate())
 			{
+				int x2, y2;
 			case Ship::ROTATE::NIL:
+			{
+				if (!ShipAddition)
+				{
+					drawMyShipAndFrame(xc, yc, false, Qt::black);
+					continue;
+				}
+				if (!ship || rotate == Ship::ROTATE::NIL)
+					continue;
+				const auto phs = GetPhysicalCoords();
+				if (!get<0>(phs))
+					continue;
+				switch (const int fls = Ship::GetFloors(*ship) * ObjectWidth; rotate)
+				{
+				case Ship::ROTATE::STARTRIGHT:
+					x2 = fls;
+					y2 = ObjectWidth;
+					break;
+				case Ship::ROTATE::STARTDOWN:
+					x2 = ObjectWidth;
+					y2 = fls;
+					break;
+				default:
+					throw exception(__func__);
+				}
+				if (x2 > MaxCoord || y2 > MaxCoord)
+					continue;
+				drawMyShipAndFrame(get<1>(phs), get<2>(phs), true, Ship::GetColor(*ship), x2, y2);
 				continue;
+			}
 			case Ship::ROTATE::STARTRIGHT:
-			{
-				const int tx = xc + floors, ty = yc + ObjectWidth;
-				if (inRange(xc, yc, tx, ty))
-					return make_tuple(true, xc, yc, tx, ty, &s);
-				continue;
-			}
+				tx = xc + floors;
+				ty = yc + ObjectWidth;
+				break;
 			case Ship::ROTATE::STARTDOWN:
-			{
-				const int tx = xc + ObjectWidth, ty = yc + floors;
-				if (inRange(xc, yc, tx, ty))
-					return make_tuple(true, xc, yc, tx, ty, &s);
-				continue;
-			}
+				tx = xc + ObjectWidth;
+				ty = yc + floors;
+				break;
 			default:
-				throw exception("GetShipRect");
+				throw exception(__func__);
 			}
+			drawEnemyShip(xc, yc, tx, ty, &s);
+			drawMyShipAndFrame(xc, yc, !inRange(xc, yc, tx, ty), Ship::GetColor(s.GetShip()), tx, ty);
 		}
-
-	return make_tuple(false, -1, -1, -1, -1, nullptr);
 }
 
 bool Graphics::IsFree(const int sx, const int sy) const

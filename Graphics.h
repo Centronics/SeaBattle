@@ -10,9 +10,7 @@ protected:
 	std::vector<Ship> _screenObjects{ 100 };
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
-	void DrawFrame(QPainter& painter, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate) const;
-	void DrawShipState(QPainter& painter) const;
-	[[nodiscard]] std::tuple<bool, int, int, int, int, const Ship*> GetShipRect(bool realObject = true, std::optional<const Ship::SHIPS> ship = std::nullopt, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
+	void DrawShipRect(QPainter& painter, std::optional<const Ship::SHIPS> ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate = Ship::ROTATE::NIL);
 	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
