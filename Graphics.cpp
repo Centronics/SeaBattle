@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Packet.h"
 #include "Graphics.h"
 
 using namespace std;
@@ -349,4 +350,11 @@ optional<quint8> Graphics::GetCoord() const
 vector<Ship>& Graphics::GetData()
 {
 	return _screenObjects;
+}
+
+bool Graphics::ReadEnemies(const Packet& packet)
+{
+	if (ShipAddition)
+		return false;
+	return packet.ReadEnemies(_screenObjects);
 }

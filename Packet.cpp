@@ -38,7 +38,7 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	}
 }
 
-bool Packet::WriteToQDataStream(QDataStream& data) const
+bool Packet::SerializeToQDataStream(QDataStream& data) const
 {
 	if (_massive.empty())
 		return false;
@@ -142,10 +142,11 @@ bool Packet::ReadEnemies(std::vector<Ship>& mas) const
 	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
-	{
-		Ship ship = Ship(_massive[n]);
-		if (ship.GetHolder() == Ship::SHIPHOLDER::ME)
-			mas[k].SetHolder(Ship::SHIPHOLDER::RIVAL);
-	}
+		if (Ship& to = mas[k]; Ship(_massive[n]).GetHolder() == Ship::SHIPHOLDER::ME)
+			if (to.GetHolder() == Ship::SHIPHOLDER::ME)
+				to.SetHolder(Ship::SHIPHOLDER::BOTH);
+			else
+				if (to.GetHolder() == Ship::SHIPHOLDER::NIL)
+					to.SetHolder(Ship::SHIPHOLDER::RIVAL);
 	return true;
 }

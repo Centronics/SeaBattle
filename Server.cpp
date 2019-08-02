@@ -23,6 +23,9 @@ void Server::Send(const Packet& packet)
 		_currentState = DOIT::PUSHMAP;
 		break;
 	}
+	case DOIT::WAITMAP:
+		emit Connected(true, "Сервер.", QString());
+		break;
 	case DOIT::PUSHMAP:
 
 		break;
@@ -49,7 +52,7 @@ void Server::SendToClient(const Packet& packet) const
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
 	out << quint16(0);
-	if (!packet.WriteToQDataStream(out))
+	if (!packet.SerializeToQDataStream(out))
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);
@@ -86,7 +89,7 @@ void Server::SlotReadClient()
 	Send(Packet(in, blockSize));
 }
 
-Server::Server(Graphics& g, SeaBattle& c, QObject* const parent, vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
+Server::Server(Graphics& g, SeaBattle& c, QObject* const parent) : NetworkInterface(g, c, parent)
 {
 	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 }
@@ -104,8 +107,6 @@ void Server::Listen(const quint16 port)
 {
 	if (_server.isListening())
 		_server.close();
-	if (_server.listen(QHostAddress::Any, port))
-		emit Connected(true, "Сервер.", QString());
-	else
+	if (!_server.listen(QHostAddress::Any, port))
 		emit Connected(false, "Сервер.", _server.errorString());
 }

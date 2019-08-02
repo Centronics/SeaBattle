@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Client::Client(Graphics& g, SeaBattle& c, QObject* parent, vector<Ship>& mapData) : NetworkInterface(g, c, parent, mapData)
+Client::Client(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
 {
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
@@ -25,12 +25,14 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }
 
-void Client::Send(const Packet& packet)
+void Client::Send(const Packet* packet)
 {
 	switch (_currentState)
 	{
 	case DOIT::STARTGAME:
 	{
+		if (packet != nullptr)
+			throw exception(__func__);
 		Packet out;
 		out.WriteData(DOIT::STARTGAME);
 		SendToServer(out);
@@ -39,16 +41,38 @@ void Client::Send(const Packet& packet)
 	}
 	case DOIT::PUSHMAP:
 	{
+		if (packet == nullptr)
+			throw exception(__func__);
+		DOIT doit;
+		if (!packet->ReadData(doit) || doit != DOIT::STARTGAME)
+		{
+			_tcpSocket.close();
+			break;
+		}
 		Packet out;
-		out.WriteData(_mapData);
+		out.WriteData(_graphics.GetData());
 		SendToServer(out);
 		_currentState = DOIT::WAITMAP;
 		break;
 	}
 	case DOIT::WAITMAP:
 	{
-
+		if (packet == nullptr)
+			throw exception(__func__);
+		DOIT doit;
+		if (!packet->ReadData(doit) || doit != DOIT::PUSHMAP)
+		{
+			_tcpSocket.close();
+			break;
+		}
+		if (!_graphics.ReadEnemies(*packet))
+		{
+			_currentState = DOIT::STARTGAME;
+			_tcpSocket.close();
+			return;
+		}
 		_currentState = DOIT::WAITRIVAL;
+		emit Connected(true, "Клиент.", QString());
 		break;
 	}
 	case DOIT::WAITRIVAL:
@@ -58,7 +82,7 @@ void Client::Send(const Packet& packet)
 	}
 	case DOIT::HIT:
 	{
-
+		_currentState = DOIT::WAITRIVAL;
 		break;
 	}
 	case DOIT::STOPGAME:
@@ -82,7 +106,8 @@ void Client::SlotReadyRead()
 	in >> blockSize;
 	if (_tcpSocket.bytesAvailable() < blockSize)
 		return;
-	Send(Packet(in, blockSize));
+	Packet packet(in, blockSize);
+	Send(&packet);
 }
 
 void Client::SendToServer(const Packet& packet)
@@ -91,7 +116,7 @@ void Client::SendToServer(const Packet& packet)
 	QDataStream out(&arrBlock, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_5_10);
 	out << quint16(0);
-	if (!packet.WriteToQDataStream(out))
+	if (!packet.SerializeToQDataStream(out))
 		return;
 	out.device()->seek(0);
 	out << quint16(arrBlock.size() - 2);
@@ -100,7 +125,7 @@ void Client::SendToServer(const Packet& packet)
 
 void Client::SlotConnected()
 {
-	emit Connected(true, "Клиент.", QString());
+	Send();
 }
 
 void Client::SlotError(const QAbstractSocket::SocketError err)

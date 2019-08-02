@@ -10,7 +10,7 @@ class NetworkInterface : public QObject
 
 public:
 
-	explicit NetworkInterface(Graphics& g, SeaBattle& c, QObject* parent, std::vector<Ship>& mapData) : QObject(parent), _graphics(g), _client(c), _mapData(mapData) { }
+	explicit NetworkInterface(Graphics& g, SeaBattle& c, QObject* parent) : QObject(parent), _graphics(g), _client(c) { }
 	NetworkInterface() = delete;
 	virtual ~NetworkInterface() = default;
 	NetworkInterface(const NetworkInterface&) = delete;
@@ -30,7 +30,6 @@ protected:
 	DOIT _currentState = DOIT::STARTGAME;
 	Graphics& _graphics;
 	SeaBattle& _client;
-	std::vector<Ship>& _mapData;
 
 signals:
 

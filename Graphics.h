@@ -3,15 +3,13 @@
 
 class Graphics
 {
-	friend class Server;
-
 protected:
 
 	std::vector<Ship> _screenObjects{ 100 };
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
 	void DrawShipRect(QPainter& painter, std::optional<const Ship::SHIPS> ship, Ship::ROTATE rotate) const;
-	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate = Ship::ROTATE::NIL);
+	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate);
 	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
@@ -39,4 +37,5 @@ public:
 	[[nodiscard]] int GetShipCount(Ship::SHIPS ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
+	[[nodiscard]] bool ReadEnemies(const Packet& packet);
 };

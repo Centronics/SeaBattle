@@ -32,7 +32,7 @@ public:
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
 	[[nodiscard]] bool ReadEnemies(std::vector<Ship>& mas) const;
-	[[nodiscard]] bool WriteToQDataStream(QDataStream& data) const;
+	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
 
 	void Clear() noexcept
 	{

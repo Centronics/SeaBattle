@@ -45,26 +45,18 @@ protected:
 
 	template<typename T> T* Initialize()
 	{
-		T* result = nullptr;
-
-		const auto f = [&result, this]() -> void
+		const auto f = [this]() -> T*
 		{
-			result = new T(_graphics, *this, this, _graphics.GetData());
+			T* const result = new T(_graphics, *this, this);
 			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(Connected(const bool isOK, const QString& objName, const QString& message)));
+			return result;
 		};
 
 		if (!_clientServer)
-		{
-			f();
-			_clientServer.reset(result);
-			return result;
-		}
-		result = dynamic_cast<T*>(_clientServer.get());
-		if (!result)
-		{
-			f();
-			_clientServer.reset(result);
-		}
-		return result;
+			_clientServer.reset(f());
+		else
+			if (!dynamic_cast<T*>(_clientServer.get()))
+				_clientServer.reset(f());
+		return _clientServer.get();
 	}
 };
