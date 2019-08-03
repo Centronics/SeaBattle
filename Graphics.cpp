@@ -116,7 +116,7 @@ void Graphics::DrawShipRect(QPainter& painter, optional<const Ship::SHIPS> ship,
 			painter.setPen(Cpen);
 			static constexpr int W = ObjectWidth / 2;
 			painter.drawPoint(x + W, y + W);
-			drawShipAndFrame(x, y, nullptr);
+			drawShipAndFrame(x, y, nullptr, ObjectWidth, ObjectWidth);
 			return;
 		}
 		case Ship::BIT::RIVALBEAT:
@@ -148,7 +148,7 @@ void Graphics::DrawShipRect(QPainter& painter, optional<const Ship::SHIPS> ship,
 				int x2, y2;
 			case Ship::ROTATE::NIL:
 			{
-				if (!ShipAddition)
+				if (!_shipsAddition)
 				{
 					drawShipAndFrame(xc, yc, nullptr);
 					continue;
@@ -318,7 +318,10 @@ vector<Ship>& Graphics::GetData()
 
 bool Graphics::ReadEnemies(const Packet& packet)
 {
-	if (ShipAddition)
-		return false;
 	return packet.ReadEnemies(_screenObjects);
+}
+
+void Graphics::SlotShipsAdded(const bool added)
+{
+	_shipsAddition = !added;
 }

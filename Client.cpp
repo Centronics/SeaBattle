@@ -70,7 +70,7 @@ void Client::Send(const Packet* packet)
 			return;
 		}
 		_currentState = DOIT::WAITRIVAL;
-		emit Connected(true, "Клиент.", QString());
+		emit SignalConnected(true, "Клиент.", QString());
 		break;
 	}
 	case DOIT::WAITRIVAL:
@@ -207,5 +207,5 @@ void Client::SlotError(const QAbstractSocket::SocketError err)
 		errorString = _tcpSocket.errorString();
 		break;
 	}
-	emit Connected(false, "Клиент.", errorString);
+	emit SignalConnected(false, "Клиент.", errorString);
 }

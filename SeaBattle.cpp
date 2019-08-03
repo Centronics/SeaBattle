@@ -5,26 +5,27 @@
 
 using namespace std;
 
-SeaBattle::SeaBattle(QWidget *parent) : QWidget(parent)
+SeaBattle::SeaBattle(QWidget *parent) : QWidget(parent), _graphics(this)
 {
 	_mainForm.setupUi(this);
 	setMouseTracking(true);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
-	connect(_mainForm.btnConnect, SIGNAL(clicked()), this, SLOT(BtnConnectClicked()));
-	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(BtnServerStartClicked()));
-	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(BtnDisconnect()));
-	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(BtnClearShips()));
+	connect(_mainForm.btnConnect, SIGNAL(clicked()), this, SLOT(SlotBtnConnectClicked()));
+	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(SlotBtnServerStartClicked()));
+	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnect()));
+	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(SlotBtnClearShips()));
+	connect(this, SIGNAL(SignalShipsAdded(bool)), &_graphics, SLOT(SlotShipsAdded(bool)));
 	_mainForm.btnDisconnect->setEnabled(false);
 }
 
-void SeaBattle::BtnClearShips()
+void SeaBattle::SlotBtnClearShips()
 {
 	_graphics.ClearField();
 }
 
-void SeaBattle::BtnConnectClicked()
+void SeaBattle::SlotBtnConnectClicked()
 {
-	if (!CheckGameReady())
+	if (!SlotCheckGameReady())
 		return;
 	const auto port = GetPort();
 	if (!port)
@@ -37,9 +38,9 @@ void SeaBattle::BtnConnectClicked()
 	Initialize<Client>()->Connect(_mainForm.IPAddress->text(), *port);
 }
 
-void SeaBattle::BtnServerStartClicked()
+void SeaBattle::SlotBtnServerStartClicked()
 {
-	if (!CheckGameReady())
+	if (!SlotCheckGameReady())
 		return;
 	const auto port = GetPort();
 	if (!port)
@@ -50,7 +51,7 @@ void SeaBattle::BtnServerStartClicked()
 	Initialize<Server>()->Listen(*port);
 }
 
-bool SeaBattle::CheckGameReady()
+bool SeaBattle::SlotCheckGameReady()
 {
 	if (_graphics.IsReadyToPlay())
 		return true;
@@ -58,7 +59,7 @@ bool SeaBattle::CheckGameReady()
 	return false;
 }
 
-void SeaBattle::BtnDisconnect()
+void SeaBattle::SlotBtnDisconnect()
 {
 	_mainForm.btnConnect->setEnabled(true);
 	_mainForm.btnServerStart->setEnabled(true);
@@ -66,10 +67,10 @@ void SeaBattle::BtnDisconnect()
 	_graphics.ClearRivalState();
 }
 
-void SeaBattle::Connected(const bool isOK, const QString& objName, const QString& message)
+void SeaBattle::SlotConnected(const bool isOK, const QString& objName, const QString& message)
 {
 	if (isOK)
-		Graphics::ShipAddition = false;
+		emit SignalShipsAdded(true);
 	else
 		Message(objName, message);
 }
@@ -164,7 +165,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	const optional<quint8> coord = _graphics.GetCoord();
 	if (!Graphics::Clicked || !coord)
 		return;
-	if (Graphics::ShipAddition)
+	if (_graphics.IsShipsAddition())
 	{
 		AddShip();
 		repaint();
@@ -182,7 +183,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
-		if (!Graphics::ShipAddition)
+		if (!_graphics.IsShipsAddition())
 			return;
 		_graphics.RemoveShip();
 		RenewShipCount();

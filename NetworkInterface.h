@@ -33,5 +33,5 @@ protected:
 
 signals:
 
-	void Connected(bool isOK, const QString& objName, const QString& message);
+	void SignalConnected(bool isOK, const QString& objName, const QString& message);
 };

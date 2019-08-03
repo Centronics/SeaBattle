@@ -1,8 +1,12 @@
 #pragma once
 #include "Ship.h"
 
-class Graphics
+class Graphics : public QObject
 {
+	Q_OBJECT
+
+	bool _shipsAddition = true;
+
 protected:
 
 	std::vector<Ship> _screenObjects{ 100 };
@@ -18,14 +22,14 @@ public:
 
 	static constexpr int Margin = 10, BetweenObjects = 5, ObjectWidth = 32, MaxCoord = (ObjectWidth * 10) + Margin;
 
-	Graphics() = default;
+	explicit Graphics(QObject* parent) : QObject(parent) { }
 	~Graphics() = default;
 	Graphics(const Graphics&) = delete;
 	Graphics(Graphics&&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
 
-	inline static bool Clicked = false, ShipAddition = true, IsRivalMove = false;
+	inline static bool Clicked = false, IsRivalMove = false;
 	inline static int CursorX = -1, CursorY = 0;
 
 	void Paint(QPainter& painter, std::optional<Ship::SHIPS> ship = std::nullopt, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
@@ -38,4 +42,9 @@ public:
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
 	[[nodiscard]] bool ReadEnemies(const Packet& packet);
+	[[nodiscard]] bool IsShipsAddition() const { return _shipsAddition; }
+
+public slots:
+
+	void SlotShipsAdded(bool added);
 };

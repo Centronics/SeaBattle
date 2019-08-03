@@ -53,3 +53,5 @@
 /GeneratedFiles/Debug/moc_ClientServer.cpp
 /GeneratedFiles/Debug/moc_Client.cpp
 /x64/Debug/moc_ClientServer.obj
+/x64/Debug/moc_Graphics.obj
+/GeneratedFiles/Debug/moc_Graphics.cpp

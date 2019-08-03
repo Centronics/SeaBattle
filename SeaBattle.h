@@ -15,12 +15,16 @@ class SeaBattle : public QWidget
 
 private slots:
 
-	void BtnClearShips();
-	void BtnConnectClicked();
-	void BtnServerStartClicked();
-	bool CheckGameReady();
-	void BtnDisconnect();
-	void Connected(bool isOK, const QString& objName, const QString& message);
+	void SlotBtnClearShips();
+	void SlotBtnConnectClicked();
+	void SlotBtnServerStartClicked();
+	bool SlotCheckGameReady();
+	void SlotBtnDisconnect();
+	void SlotConnected(bool isOK, const QString& objName, const QString& message);
+
+signals:
+
+	void SignalShipsAdded(bool added);
 
 public:
 
@@ -48,7 +52,7 @@ protected:
 		const auto f = [this]() -> T*
 		{
 			T* const result = new T(_graphics, *this, this);
-			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(Connected(const bool isOK, const QString& objName, const QString& message)));
+			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(SlotConnected(const bool isOK, const QString& objName, const QString& message)));
 			return result;
 		};
 

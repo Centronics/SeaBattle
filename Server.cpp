@@ -24,7 +24,7 @@ void Server::Send(const Packet& packet)
 		break;
 	}
 	case DOIT::WAITMAP:
-		emit Connected(true, "Сервер.", QString());
+		emit SignalConnected(true, "Сервер.", QString());
 		break;
 	case DOIT::PUSHMAP:
 
@@ -108,5 +108,5 @@ void Server::Listen(const quint16 port)
 	if (_server.isListening())
 		_server.close();
 	if (!_server.listen(QHostAddress::Any, port))
-		emit Connected(false, "Сервер.", _server.errorString());
+		emit SignalConnected(false, "Сервер.", _server.errorString());
 }
