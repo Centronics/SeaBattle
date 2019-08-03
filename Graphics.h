@@ -33,7 +33,7 @@ public:
 	void ClearField();
 	[[nodiscard]] bool AddShip(Ship::SHIPS ship, Ship::ROTATE rotate);
 	void RemoveShip();
-	[[nodiscard]] bool IsReady(std::optional<Ship::SHIPS> ship = std::nullopt) const;
+	[[nodiscard]] bool IsReadyToPlay(std::optional<Ship::SHIPS> ship = std::nullopt) const;
 	[[nodiscard]] int GetShipCount(Ship::SHIPS ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();

@@ -57,6 +57,6 @@ protected:
 		else
 			if (!dynamic_cast<T*>(_clientServer.get()))
 				_clientServer.reset(f());
-		return _clientServer.get();
+		return reinterpret_cast<T*>(_clientServer.get());
 	}
 };

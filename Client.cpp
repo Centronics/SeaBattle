@@ -43,8 +43,7 @@ void Client::Send(const Packet* packet)
 	{
 		if (packet == nullptr)
 			throw exception(__func__);
-		DOIT doit;
-		if (!packet->ReadData(doit) || doit != DOIT::STARTGAME)
+		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::STARTGAME)
 		{
 			_tcpSocket.close();
 			break;
@@ -59,8 +58,7 @@ void Client::Send(const Packet* packet)
 	{
 		if (packet == nullptr)
 			throw exception(__func__);
-		DOIT doit;
-		if (!packet->ReadData(doit) || doit != DOIT::PUSHMAP)
+		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::PUSHMAP)
 		{
 			_tcpSocket.close();
 			break;

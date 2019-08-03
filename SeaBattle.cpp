@@ -52,7 +52,7 @@ void SeaBattle::BtnServerStartClicked()
 
 bool SeaBattle::CheckGameReady()
 {
-	if (_graphics.IsReady())
+	if (_graphics.IsReadyToPlay())
 		return true;
 	Message("", "Необходимо расставить все корабли.");
 	return false;
@@ -63,7 +63,6 @@ void SeaBattle::BtnDisconnect()
 	_mainForm.btnConnect->setEnabled(true);
 	_mainForm.btnServerStart->setEnabled(true);
 	_clientServer.reset();
-	Graphics::ShipAddition = true;
 	_graphics.ClearRivalState();
 }
 
@@ -88,7 +87,7 @@ void SeaBattle::paintEvent(QPaintEvent *event)
 
 tuple<optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
 {
-	if (_graphics.IsReady())
+	if (_graphics.IsReadyToPlay())
 		return make_tuple(nullopt, Ship::ROTATE::NIL, nullptr);
 	Ship::SHIPS ship;
 	Ship::ROTATE rotate;

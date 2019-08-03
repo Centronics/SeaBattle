@@ -127,13 +127,14 @@ bool Packet::ReadData(DOIT& doit) const
 {
 	if (_massive.size() != 1)
 		return false;
-	switch (doit = static_cast<DOIT>(_massive[0]))
+	switch (const DOIT dt = static_cast<DOIT>(_massive[0]))
 	{
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
-		doit = static_cast<DOIT>(_massive[1]);
+		doit = dt;
 		return true;
-	default: return false;
+	default:
+		return false;
 	}
 }
 

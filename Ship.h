@@ -26,7 +26,8 @@ public:
 		LINKOR,
 		CRUISER,
 		ESMINEC,
-		VEDETTE
+		VEDETTE,
+		EMPTY
 	};
 
 	enum class ROTATE : unsigned char
@@ -60,6 +61,7 @@ public:
 		case SHIPS::CRUISER: return 3;
 		case SHIPS::ESMINEC: return 2;
 		case SHIPS::VEDETTE: return 1;
+		case SHIPS::EMPTY: return 0;
 		default:
 			throw std::exception(__func__);
 		}
@@ -105,6 +107,21 @@ public:
 			return true;
 		case SHIPHOLDER::NIL:
 		case SHIPHOLDER::RIVAL:
+			return false;
+		default:
+			throw std::exception(__func__);
+		}
+	}
+
+	[[nodiscard]] bool GetIsEnemyHolding() const
+	{
+		switch (GetHolder())
+		{
+		case SHIPHOLDER::BOTH:
+		case SHIPHOLDER::RIVAL:
+			return true;
+		case SHIPHOLDER::NIL:
+		case SHIPHOLDER::ME:
 			return false;
 		default:
 			throw std::exception(__func__);
@@ -164,6 +181,8 @@ public:
 
 	[[nodiscard]] SHIPS GetShip() const
 	{
+		if (GetHolder() == SHIPHOLDER::NIL)
+			return SHIPS::EMPTY;
 		return static_cast<SHIPS>((_currentState & 0x0Cu) >> 2u);
 	}
 
