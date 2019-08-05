@@ -20,7 +20,7 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	}
 	case DOIT::STARTGAME:
 	case DOIT::STOPGAME:
-	case DOIT::WAITRIVAL:
+	case DOIT::WAITHIT:
 		if (blockSize != 1)
 			return;
 		_massive.resize(1);

@@ -11,7 +11,11 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
+	explicit Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+	{
+		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+	}
+
 	Server() = delete;
 	virtual ~Server() = default;
 	Server(const Server&) = delete;
@@ -20,18 +24,24 @@ public:
 	Server& operator=(Server&&) = delete;
 
 	void SendHit(quint8 coord) override;
+	void SendStopGame() override;
+	void Close() override;
 	void Listen(quint16 port);
 
-private slots:
+protected:
 
-	void SlotNewConnection();
-	void SlotReadClient();
+	void SendToClient(const Packet& packet) const;
 
 private:
 
 	QTcpServer _server{ this };
 	QTcpSocket* _socket = nullptr;
 
-	void SendToClient(const Packet& packet) const;
-	void Send(const Packet& packet);
+	void SendAnswerToClient(const Packet& packet);
+	void SocketClose();
+
+private slots:
+
+	void SlotNewConnection();
+	void SlotReadClient();
 };

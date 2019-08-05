@@ -19,6 +19,8 @@ public:
 	Client& operator=(Client&&) = delete;
 
 	void SendHit(quint8 coord) override;
+	void SendStopGame() override;
+	void Close() override;
 	void Connect(const QString& ip, quint16 port);
 
 protected:
@@ -28,7 +30,7 @@ protected:
 private:
 
 	QTcpSocket _tcpSocket{ this };
-	void Send(const Packet* packet = nullptr);
+	void SendAnswerToServer(const Packet* packet = nullptr);
 
 private slots:
 

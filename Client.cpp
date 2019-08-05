@@ -17,6 +17,21 @@ inline void Client::SendHit(const quint8 coord)
 	Packet packet;
 	packet.WriteData(DOIT::HIT, coord);
 	SendToServer(packet);
+	_currentState = DOIT::WAITHIT;
+}
+
+void Client::SendStopGame()
+{
+	Packet packet;
+	packet.WriteData(DOIT::STOPGAME);
+	SendToServer(packet);
+	Close();
+}
+
+void Client::Close()
+{
+	_currentState = DOIT::STARTGAME;
+	_tcpSocket.close();
 }
 
 void Client::Connect(const QString& ip, const quint16 port)
@@ -25,70 +40,79 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }
 
-void Client::Send(const Packet* packet)
+void Client::SendAnswerToServer(const Packet* const packet)
 {
-	switch (_currentState)
+	if (!packet)
+	{
+		_currentState = DOIT::STARTGAME;
+		emit SignalReceive(Packet("Подключен."));
+		return;
+	}
+	if (packet && !(*packet))
+	{
+		_currentState = DOIT::STARTGAME;
+		_tcpSocket.close();
+		emit SignalReceive(Packet("Неизвестная ошибка сети."));
+		return;
+	}
+	if (DOIT doit; packet && packet->ReadData(doit) && doit == DOIT::STOPGAME)
+	{
+		_currentState = DOIT::STARTGAME;
+		_tcpSocket.close();
+		emit SignalReceive(Packet("Соперник прекратил игру."));
+		return;
+	}
+	switch (Packet out; _currentState)
 	{
 	case DOIT::STARTGAME:
-	{
-		if (packet != nullptr)
-			throw exception(__func__);
-		Packet out;
 		out.WriteData(DOIT::STARTGAME);
 		SendToServer(out);
 		_currentState = DOIT::PUSHMAP;
 		break;
-	}
 	case DOIT::PUSHMAP:
-	{
-		if (packet == nullptr)
-			throw exception(__func__);
 		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::STARTGAME)
 		{
+			_currentState = DOIT::STARTGAME;
 			_tcpSocket.close();
+			emit SignalReceive(Packet("PUSHMAP error."));
 			break;
 		}
-		Packet out;
 		out.WriteData(_graphics.GetData());
 		SendToServer(out);
 		_currentState = DOIT::WAITMAP;
 		break;
-	}
 	case DOIT::WAITMAP:
-	{
-		if (packet == nullptr)
-			throw exception(__func__);
 		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::PUSHMAP)
 		{
+			_currentState = DOIT::STARTGAME;
 			_tcpSocket.close();
+			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
 		if (!_graphics.ReadEnemies(*packet))
 		{
 			_currentState = DOIT::STARTGAME;
 			_tcpSocket.close();
-			return;
+			emit SignalReceive(Packet("Enemies not readed."));
+			break;
 		}
-		_currentState = DOIT::WAITRIVAL;
-		emit SignalConnected(true, "Клиент.", QString());
+		_currentState = DOIT::HIT;
+		emit SignalReceive(Packet());
 		break;
-	}
-	case DOIT::WAITRIVAL:
-	{
-
+	case DOIT::WAITHIT:
+		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::HIT)
+		{
+			_currentState = DOIT::STARTGAME;
+			_tcpSocket.close();
+			emit SignalReceive(Packet("HIT error."));
+			break;
+		}
+		_currentState = DOIT::HIT;
+		emit SignalReceive(*packet);
 		break;
-	}
 	case DOIT::HIT:
-	{
-		_currentState = DOIT::WAITRIVAL;
-		break;
-	}
 	case DOIT::STOPGAME:
-	{
-		_tcpSocket.close();
-		_currentState = DOIT::STARTGAME;
 		break;
-	}
 	default:
 		throw exception(__func__);
 	}
@@ -105,25 +129,17 @@ void Client::SlotReadyRead()
 	if (_tcpSocket.bytesAvailable() < blockSize)
 		return;
 	Packet packet(in, blockSize);
-	Send(&packet);
+	SendAnswerToServer(&packet);
 }
 
 void Client::SendToServer(const Packet& packet)
 {
-	QByteArray arrBlock;
-	QDataStream out(&arrBlock, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_5_10);
-	out << quint16(0);
-	if (!packet.SerializeToQDataStream(out))
-		return;
-	out.device()->seek(0);
-	out << quint16(arrBlock.size() - 2);
-	_tcpSocket.write(arrBlock);
+	_tcpSocket.write(GetBytes(packet));//Проверить ошибку??
 }
 
 void Client::SlotConnected()
 {
-	Send();
+	SendAnswerToServer();
 }
 
 void Client::SlotError(const QAbstractSocket::SocketError err)
@@ -207,5 +223,6 @@ void Client::SlotError(const QAbstractSocket::SocketError err)
 		errorString = _tcpSocket.errorString();
 		break;
 	}
-	emit SignalConnected(false, "Клиент.", errorString);
+	const Packet packet(errorString);
+	SendAnswerToServer(&packet);
 }

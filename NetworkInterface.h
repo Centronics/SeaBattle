@@ -19,6 +19,8 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	virtual void SendHit(quint8 coord) = 0;
+	virtual void SendStopGame() = 0;
+	virtual void Close() = 0;
 
 	[[nodiscard]] DOIT GetGameState() const noexcept
 	{
@@ -31,7 +33,20 @@ protected:
 	Graphics& _graphics;
 	SeaBattle& _client;
 
+	static QByteArray GetBytes(const Packet& packet)
+	{
+		QByteArray arrBlock;
+		QDataStream out(&arrBlock, QIODevice::WriteOnly);
+		out.setVersion(QDataStream::Qt_5_10);
+		out << quint16(0);
+		if (!packet.SerializeToQDataStream(out))
+			return;
+		out.device()->seek(0);
+		out << quint16(arrBlock.size() - 2);
+		return arrBlock;
+	}
+
 signals:
 
-	void SignalConnected(bool isOK, const QString& objName, const QString& message);
+	void SignalReceive(const Packet& packet);
 };

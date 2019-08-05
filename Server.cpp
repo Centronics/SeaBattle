@@ -3,60 +3,71 @@
 
 using namespace std;
 
-void Server::Send(const Packet& packet)
+void Server::SendAnswerToClient(const Packet& packet)
 {
-	switch (_currentState)
+	switch (Packet out; _currentState)
 	{
 	case DOIT::STARTGAME:
-	{
-		DOIT doit;
-		if (!packet.ReadData(doit))
-			if (doit != DOIT::STARTGAME)
-			{
-				_socket->close();
-				_socket = nullptr;
-				return;
-			}
-		Packet out;
+		if (DOIT doit; !packet.ReadData(doit) && doit != DOIT::STARTGAME)
+		{
+			SocketClose();
+			return;
+		}
 		out.WriteData(DOIT::STARTGAME);
 		SendToClient(out);
-		_currentState = DOIT::PUSHMAP;
+		_currentState = DOIT::WAITMAP;
 		break;
-	}
 	case DOIT::WAITMAP:
-		emit SignalConnected(true, "Сервер.", QString());
+		if (DOIT doit; !packet.ReadData(doit) || doit != DOIT::PUSHMAP)
+		{
+			_currentState = DOIT::STARTGAME;
+			SocketClose();
+			emit SignalReceive(Packet("WAITMAP error."));
+			break;
+		}
+		if (!_graphics.ReadEnemies(packet))
+		{
+			_currentState = DOIT::STARTGAME;
+			SocketClose();
+			emit SignalReceive(Packet("Enemies not readed."));
+			break;
+		}
+		out.WriteData(_graphics.GetData());
+		SendToClient(out);
+		_currentState = DOIT::WAITHIT;
+		emit SignalReceive(Packet());
 		break;
-	case DOIT::PUSHMAP:
-
+	case DOIT::WAITHIT:
+		if (DOIT doit; !packet.ReadData(doit) || doit != DOIT::HIT)
+		{
+			_currentState = DOIT::STARTGAME;
+			SocketClose();
+			emit SignalReceive(Packet("HIT error."));
+			break;
+		}
+		_currentState = DOIT::HIT;
+		emit SignalReceive(packet);
 		break;
 	case DOIT::HIT:
-
-		_currentState = DOIT::WAITRIVAL;
-		break;
-	case DOIT::WAITRIVAL:
-
-		break;
 	case DOIT::STOPGAME:
-
 		break;
 	default:
 		throw exception(__func__);
 	}
 }
 
-void Server::SendToClient(const Packet& packet) const
+void Server::SocketClose()
 {
 	if (!_socket)
 		return;
-	QByteArray arrBlock;
-	QDataStream out(&arrBlock, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_5_10);
-	out << quint16(0);
-	if (!packet.SerializeToQDataStream(out))
-		return;
-	out.device()->seek(0);
-	out << quint16(arrBlock.size() - 2);
-	_socket->write(arrBlock);
+	_socket->close();
+	_socket = nullptr;
+}
+
+void Server::SendToClient(const Packet& packet) const
+{
+	if (_socket)
+		_socket->write(GetBytes(packet));//Проверить ошибку??
 }
 
 void Server::SlotNewConnection()
@@ -65,12 +76,12 @@ void Server::SlotNewConnection()
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	if (_socket)
+		pClientSocket->close();
+	else
 	{
-		_socket->close();
-		_socket = nullptr;
-		return;
+		_socket = pClientSocket;
+		_currentState = DOIT::STARTGAME;
 	}
-	_socket = pClientSocket;
 }
 
 void Server::SlotReadClient()
@@ -86,12 +97,7 @@ void Server::SlotReadClient()
 	in >> blockSize;
 	if (pClientSocket->bytesAvailable() < blockSize)
 		return;
-	Send(Packet(in, blockSize));
-}
-
-Server::Server(Graphics& g, SeaBattle& c, QObject* const parent) : NetworkInterface(g, c, parent)
-{
-	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+	SendAnswerToClient(Packet(in, blockSize));
 }
 
 void Server::SendHit(const quint8 coord)
@@ -103,10 +109,25 @@ void Server::SendHit(const quint8 coord)
 	SendToClient(packet);
 }
 
+void Server::SendStopGame()
+{
+	Packet packet;
+	packet.WriteData(DOIT::STOPGAME);
+	SendToClient(packet);
+	SocketClose();
+}
+
+void Server::Close()
+{
+	_server.close();
+	SocketClose();
+	_currentState = DOIT::STARTGAME;
+}
+
 void Server::Listen(const quint16 port)
 {
 	if (_server.isListening())
 		_server.close();
 	if (!_server.listen(QHostAddress::Any, port))
-		emit SignalConnected(false, "Сервер.", _server.errorString());
+		emit SignalReceive(Packet(_server.errorString()));
 }
