@@ -21,7 +21,7 @@ public:
 		RIVALBEAT
 	};
 
-	enum class SHIPS : unsigned char
+	enum class SHIPTYPES : unsigned char
 	{
 		LINKOR,
 		CRUISER,
@@ -53,41 +53,41 @@ protected:
 
 public:
 
-	[[nodiscard]] static int GetFloors(const SHIPS ship)
+	[[nodiscard]] static int GetFloors(const SHIPTYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPS::LINKOR: return 4;
-		case SHIPS::CRUISER: return 3;
-		case SHIPS::ESMINEC: return 2;
-		case SHIPS::VEDETTE: return 1;
-		case SHIPS::EMPTY: return 0;
+		case SHIPTYPES::LINKOR: return 4;
+		case SHIPTYPES::CRUISER: return 3;
+		case SHIPTYPES::ESMINEC: return 2;
+		case SHIPTYPES::VEDETTE: return 1;
+		case SHIPTYPES::EMPTY: return 0;
 		default:
 			throw std::exception(__func__);
 		}
 	}
 
-	[[nodiscard]] static QColor GetColor(const SHIPS ship)
+	[[nodiscard]] static QColor GetColor(const SHIPTYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPS::LINKOR: return Qt::darkMagenta;
-		case SHIPS::CRUISER: return Qt::green;
-		case SHIPS::ESMINEC: return Qt::darkYellow;
-		case SHIPS::VEDETTE: return Qt::cyan;
+		case SHIPTYPES::LINKOR: return Qt::darkMagenta;
+		case SHIPTYPES::CRUISER: return Qt::green;
+		case SHIPTYPES::ESMINEC: return Qt::darkYellow;
+		case SHIPTYPES::VEDETTE: return Qt::cyan;
 		default:
 			throw std::exception(__func__);
 		}
 	}
 
-	[[nodiscard]] static int GetMaxShipCount(const SHIPS ship)
+	[[nodiscard]] static int GetMaxShipCount(const SHIPTYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPS::LINKOR: return 1;
-		case SHIPS::CRUISER: return 2;
-		case SHIPS::ESMINEC: return 3;
-		case SHIPS::VEDETTE: return 4;
+		case SHIPTYPES::LINKOR: return 1;
+		case SHIPTYPES::CRUISER: return 2;
+		case SHIPTYPES::ESMINEC: return 3;
+		case SHIPTYPES::VEDETTE: return 4;
 		default:
 			throw std::exception(__func__);
 		}
@@ -113,7 +113,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] bool GetIsEnemyHolding() const
+	[[nodiscard]] bool GetIsRivalHolding() const
 	{
 		switch (GetHolder())
 		{
@@ -179,29 +179,29 @@ public:
 		}
 	}
 
-	[[nodiscard]] SHIPS GetShip() const
+	[[nodiscard]] SHIPTYPES GetShipType() const
 	{
 		if (GetHolder() == SHIPHOLDER::NIL)
-			return SHIPS::EMPTY;
-		return static_cast<SHIPS>((_currentState & 0x0Cu) >> 2u);
+			return SHIPTYPES::EMPTY;
+		return static_cast<SHIPTYPES>((_currentState & 0x0Cu) >> 2u);
 	}
 
-	void SetShip(const SHIPS value)
+	void SetShip(const SHIPTYPES value)
 	{
 		switch (value)
 		{
-		case SHIPS::LINKOR:
+		case SHIPTYPES::LINKOR:
 			_currentState &= 0xF3u;
 			return;
-		case SHIPS::CRUISER:
+		case SHIPTYPES::CRUISER:
 			_currentState &= 0xF7u;
 			_currentState |= 0x04u;
 			return;
-		case SHIPS::ESMINEC:
+		case SHIPTYPES::ESMINEC:
 			_currentState |= 0x08u;
 			_currentState &= 0xFBu;
 			return;
-		case SHIPS::VEDETTE:
+		case SHIPTYPES::VEDETTE:
 			_currentState |= 0x0Cu;
 			return;
 		default:

@@ -12,11 +12,12 @@ protected:
 	std::vector<Ship> _screenObjects{ 100 };
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
-	void DrawShipRect(QPainter& painter, std::optional<const Ship::SHIPS> ship, Ship::ROTATE rotate) const;
-	[[nodiscard]] bool AddOrRemove(int startX, int startY, std::optional<Ship::SHIPS> ship, Ship::ROTATE rotate);
+	void DrawShipRect(QPainter& painter, Ship::SHIPTYPES ship, Ship::ROTATE rotate) const;
+	[[nodiscard]] bool AddOrRemove(int startX, int startY, Ship::SHIPTYPES ship, Ship::ROTATE rotate);
 	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
+	[[nodiscard]] bool IsKilled(unsigned int k, Ship::BIT bit) const;
 
 public:
 
@@ -32,16 +33,18 @@ public:
 	inline static bool Clicked = false, IsRivalMove = false;
 	inline static int CursorX = -1, CursorY = 0;
 
-	void Paint(QPainter& painter, std::optional<Ship::SHIPS> ship = std::nullopt, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
+	void Paint(QPainter& painter, Ship::SHIPTYPES ship = Ship::SHIPTYPES::EMPTY, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
 	void ClearRivalState();
 	void ClearField();
-	[[nodiscard]] bool AddShip(Ship::SHIPS ship, Ship::ROTATE rotate);
+	[[nodiscard]] bool AddShip(Ship::SHIPTYPES ship, Ship::ROTATE rotate);
 	void RemoveShip();
-	[[nodiscard]] bool IsReadyToPlay(std::optional<Ship::SHIPS> ship = std::nullopt) const;
-	[[nodiscard]] int GetShipCount(Ship::SHIPS ship) const;
+	[[nodiscard]] bool IsReadyToPlay(Ship::SHIPTYPES ship = Ship::SHIPTYPES::EMPTY) const;
+	[[nodiscard]] bool IsRivalBroken() const;
+	[[nodiscard]] bool IsIamBroken() const;
+	[[nodiscard]] int GetShipCount(Ship::SHIPTYPES ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
-	[[nodiscard]] bool ReadEnemies(const Packet& packet);
+	[[nodiscard]] bool ReadRivals(const Packet& packet);
 	[[nodiscard]] bool IsShipsAddition() const { return _shipsAddition; }
 
 public slots:

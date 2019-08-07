@@ -25,11 +25,11 @@ void Server::SendAnswerToClient(const Packet& packet)
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
-		if (!_graphics.ReadEnemies(packet))
+		if (!_graphics.ReadRivals(packet))
 		{
 			_currentState = DOIT::STARTGAME;
 			SocketClose();
-			emit SignalReceive(Packet("Enemies not readed."));
+			emit SignalReceive(Packet("Rivals not readed."));
 			break;
 		}
 		out.WriteData(_graphics.GetData());

@@ -89,11 +89,11 @@ void Client::SendAnswerToServer(const Packet* const packet)
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
-		if (!_graphics.ReadEnemies(*packet))
+		if (!_graphics.ReadRivals(*packet))
 		{
 			_currentState = DOIT::STARTGAME;
 			_tcpSocket.close();
-			emit SignalReceive(Packet("Enemies not readed."));
+			emit SignalReceive(Packet("Rivals not readed."));
 			break;
 		}
 		_currentState = DOIT::HIT;

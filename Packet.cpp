@@ -138,7 +138,7 @@ bool Packet::ReadData(DOIT& doit) const
 	}
 }
 
-bool Packet::ReadEnemies(std::vector<Ship>& mas) const
+bool Packet::ReadRivals(std::vector<Ship>& mas) const
 {
 	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;

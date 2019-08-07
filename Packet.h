@@ -35,7 +35,7 @@ public:
 	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
 	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
-	[[nodiscard]] bool ReadEnemies(std::vector<Ship>& mas) const;
+	[[nodiscard]] bool ReadRivals(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
 
 	[[nodiscard]] const QString& ErrorString() const

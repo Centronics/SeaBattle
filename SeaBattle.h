@@ -20,7 +20,7 @@ private slots:
 	void SlotBtnServerStartClicked();
 	bool SlotCheckGameReady();
 	void SlotBtnDisconnect();
-	void SlotConnected(bool isOK, const QString& objName, const QString& message);
+	void SlotReceive(const Packet& packet);
 
 signals:
 
@@ -43,8 +43,8 @@ protected:
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
-	void Message(const QString& m1, const QString& infoMessage);
-	[[nodiscard]] std::tuple<std::optional<Ship::SHIPS>, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
+	void Message(const QString& comment, const QString& infoMessage);
+	[[nodiscard]] std::tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort();
 
 	template<typename T> T* Initialize()
@@ -52,7 +52,7 @@ protected:
 		const auto f = [this]() -> T*
 		{
 			T* const result = new T(_graphics, *this, this);
-			connect(result, SIGNAL(Connected(bool isOK, const QString& objName, const QString& message)), SLOT(SlotConnected(const bool isOK, const QString& objName, const QString& message)));
+			connect(result, SIGNAL(SignalReceive(const Packet&)), this, SLOT(SlotReceive(const Packet&)));
 			return result;
 		};
 
