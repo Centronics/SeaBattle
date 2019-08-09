@@ -17,8 +17,9 @@ public:
 	enum class BIT : unsigned char
 	{
 		NIL,
-		MYBEAT,
-		RIVALBEAT
+		ME,
+		RIVAL,
+		BOTH
 	};
 
 	enum class SHIPTYPES : unsigned char
@@ -34,7 +35,7 @@ public:
 	{
 		NIL,
 		STARTRIGHT,
-		STARTDOWN,
+		STARTDOWN
 	};
 
 	Ship() = default;
@@ -93,14 +94,14 @@ public:
 		}
 	}
 
-	[[nodiscard]] SHIPHOLDER GetHolder() const
+	[[nodiscard]] SHIPHOLDER GetShipHolder() const
 	{
 		return static_cast<SHIPHOLDER>((_currentState & 0xC0u) >> 6u);
 	}
 
 	[[nodiscard]] bool GetIsMyHolding() const
 	{
-		switch (GetHolder())
+		switch (GetShipHolder())
 		{
 		case SHIPHOLDER::BOTH:
 		case SHIPHOLDER::ME:
@@ -115,7 +116,7 @@ public:
 
 	[[nodiscard]] bool GetIsRivalHolding() const
 	{
-		switch (GetHolder())
+		switch (GetShipHolder())
 		{
 		case SHIPHOLDER::BOTH:
 		case SHIPHOLDER::RIVAL:
@@ -128,7 +129,7 @@ public:
 		}
 	}
 
-	void SetHolder(const SHIPHOLDER holder)
+	void SetShipHolder(const SHIPHOLDER holder)
 	{
 		switch (holder)
 		{
@@ -153,10 +154,37 @@ public:
 
 	[[nodiscard]] BIT GetBit() const
 	{
-		const quint8 t = (_currentState & 0x30u) >> 4u;
-		if (t > 2)
+		return static_cast<BIT>((_currentState & 0x30u) >> 4u);
+	}
+
+	[[nodiscard]] bool GetIsMyBeat() const
+	{
+		switch (GetBit())
+		{
+		case BIT::BOTH:
+		case BIT::ME:
+			return true;
+		case BIT::NIL:
+		case BIT::RIVAL:
+			return false;
+		default:
 			throw std::exception(__func__);
-		return static_cast<BIT>(t);
+		}
+	}
+
+	[[nodiscard]] bool GetIsRivalBeat() const
+	{
+		switch (GetBit())
+		{
+		case BIT::BOTH:
+		case BIT::RIVAL:
+			return true;
+		case BIT::NIL:
+		case BIT::ME:
+			return false;
+		default:
+			throw std::exception(__func__);
+		}
 	}
 
 	void SetBit(const BIT value)
@@ -166,13 +194,16 @@ public:
 		case BIT::NIL:
 			_currentState &= 0xCFu;
 			return;
-		case BIT::MYBEAT:
+		case BIT::ME:
 			_currentState &= 0xDFu;
 			_currentState |= 0x10u;
 			return;
-		case BIT::RIVALBEAT:
+		case BIT::RIVAL:
 			_currentState |= 0x20u;
 			_currentState &= 0xEFu;
+			return;
+		case BIT::BOTH:
+			_currentState |= 0x30u;
 			return;
 		default:
 			throw std::exception(__func__);
@@ -181,12 +212,12 @@ public:
 
 	[[nodiscard]] SHIPTYPES GetShipType() const
 	{
-		if (GetHolder() == SHIPHOLDER::NIL)
+		if (GetShipHolder() == SHIPHOLDER::NIL)
 			return SHIPTYPES::EMPTY;
 		return static_cast<SHIPTYPES>((_currentState & 0x0Cu) >> 2u);
 	}
 
-	void SetShip(const SHIPTYPES value)
+	void SetShipType(const SHIPTYPES value)
 	{
 		switch (value)
 		{

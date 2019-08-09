@@ -22,13 +22,9 @@ private slots:
 	void SlotBtnDisconnect();
 	void SlotReceive(const Packet& packet);
 
-signals:
-
-	void SignalShipsAdded(bool added);
-
 public:
 
-	explicit SeaBattle(QWidget *parent = Q_NULLPTR);
+	explicit SeaBattle(QWidget* parent = Q_NULLPTR);
 	SeaBattle(const SeaBattle&) = delete;
 	SeaBattle(SeaBattle&&) = delete;
 	~SeaBattle() = default;
@@ -37,13 +33,14 @@ public:
 
 protected:
 
-	void paintEvent(QPaintEvent *event) override;
+	void paintEvent(QPaintEvent* event) override;
 	void AddShip();
 	void RenewShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void Message(const QString& comment, const QString& infoMessage);
+	void Impact();
 	[[nodiscard]] std::tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort();
 

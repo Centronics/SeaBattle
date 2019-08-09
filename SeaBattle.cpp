@@ -5,7 +5,7 @@
 
 using namespace std;
 
-SeaBattle::SeaBattle(QWidget *parent) : QWidget(parent), _graphics(this)
+SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 {
 	_mainForm.setupUi(this);
 	setMouseTracking(true);
@@ -14,7 +14,6 @@ SeaBattle::SeaBattle(QWidget *parent) : QWidget(parent), _graphics(this)
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(SlotBtnServerStartClicked()));
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnect()));
 	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(SlotBtnClearShips()));
-	connect(this, SIGNAL(SignalShipsAdded(bool)), &_graphics, SLOT(SlotShipsAdded(bool)));
 	_mainForm.btnDisconnect->setEnabled(false);
 }
 
@@ -36,6 +35,8 @@ void SeaBattle::SlotBtnConnectClicked()
 	_mainForm.lstShipArea->setEnabled(false);
 	_mainForm.lstDirection->setEnabled(false);
 	Initialize<Client>()->Connect(_mainForm.IPAddress->text(), *port);
+	Graphics::ShipAddition = false;
+	Graphics::IsRivalMove = false;
 }
 
 void SeaBattle::SlotBtnServerStartClicked()
@@ -49,6 +50,8 @@ void SeaBattle::SlotBtnServerStartClicked()
 	_mainForm.btnServerStart->setEnabled(false);
 	_mainForm.btnDisconnect->setEnabled(true);
 	Initialize<Server>()->Listen(*port);
+	Graphics::ShipAddition = false;
+	Graphics::IsRivalMove = true;
 }
 
 bool SeaBattle::SlotCheckGameReady()
@@ -63,8 +66,13 @@ void SeaBattle::SlotBtnDisconnect()
 {
 	_mainForm.btnConnect->setEnabled(true);
 	_mainForm.btnServerStart->setEnabled(true);
+	_mainForm.btnClearShips->setEnabled(true);
+	_mainForm.btnDisconnect->setEnabled(false);
 	_clientServer.reset();
 	_graphics.ClearRivalState();
+	Graphics::ShipAddition = true;
+	Graphics::IsRivalMove = false;
+	repaint();
 }
 
 void SeaBattle::SlotReceive(const Packet& packet)
@@ -72,12 +80,36 @@ void SeaBattle::SlotReceive(const Packet& packet)
 	if (!packet)
 	{
 		Message("Ошибка.", packet.ErrorString());
+		Graphics::ShipAddition = true;
+		Graphics::IsRivalMove = false;
+		repaint();
 		return;
 	}
-
+	DOIT doit;
+	if (packet.ReadData(doit))
+	{
+		if (doit != DOIT::STOPGAME)
+			throw exception("Некорректный пакет.");
+		Message("Игра прекращена.", "Соперник прекратил игру.");
+		Graphics::ShipAddition = true;
+		Graphics::IsRivalMove = false;
+		repaint();
+		return;
+	}
+	quint8 param;
+	if (!packet.ReadData(doit, param))
+		return;
+	if (doit != DOIT::HIT)
+		throw exception("Некорректный пакет.");
+	if (!Graphics::IsRivalMove)
+		return;
+	_graphics.RivalHit(param);
+	Graphics::IsRivalMove = false;
+	Impact();
+	repaint();
 }
 
-void SeaBattle::paintEvent(QPaintEvent *event)
+void SeaBattle::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
 	QPainter painter(this);
@@ -130,17 +162,26 @@ void SeaBattle::AddShip()
 	const auto selShip = GetSelectedShip();
 	if (get<0>(selShip) == Ship::SHIPTYPES::EMPTY)
 		return;
-	if (Ship::GetMaxShipCount(get<0>(selShip)) == _graphics.GetShipCount(get<0>(selShip)))
+	switch (_graphics.AddShip(get<0>(selShip), get<1>(selShip)))
 	{
-		Message("Таких кораблей поставлено достаточно!", "Невозможно поставить корабль!");
+	case Graphics::SHIPADDITION::OK:
+		RenewShipCount();
 		return;
-	}
-	if (!_graphics.AddShip(get<0>(selShip), get<1>(selShip)))
-	{
+	case Graphics::SHIPADDITION::MANY:
+		Message("Таких кораблей поставлено достаточно.", "Невозможно поставить корабль.");
+		return;
+	case Graphics::SHIPADDITION::NOCOORD:
 		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 		return;
+	case Graphics::SHIPADDITION::NOTFREE:
+		Message("Место занято.", "Другие корабли стоят слишком близко.");
+		return;
+	case Graphics::SHIPADDITION::INCORRECTMODE:
+		Message("Неверный режим.", "Корабли добавлять или удалять можно только до начала игры.");
+		return;
+	default:
+		throw exception(__func__);
 	}
-	RenewShipCount();
 }
 
 void SeaBattle::RenewShipCount() const
@@ -167,13 +208,17 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	const optional<quint8> coord = _graphics.GetCoord();
 	if (!Graphics::Clicked || !coord)
 		return;
-	if (_graphics.IsShipsAddition())
-	{
+	if (Graphics::ShipAddition)
 		AddShip();
-		repaint();
-		return;
+	else
+	{
+		if (Graphics::IsRivalMove)
+			return;
+		Graphics::IsRivalMove = true;
+		_graphics.MyHit(*coord);
+		_clientServer->SendHit(*coord);
+		Impact();
 	}
-	_clientServer->SendHit(*coord);
 	repaint();
 }
 
@@ -185,12 +230,24 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
-		if (!_graphics.IsShipsAddition())
+		switch (_graphics.RemoveShip())
+		{
+		case Graphics::SHIPADDITION::OK:
+			RenewShipCount();
+			repaint();
 			return;
-		_graphics.RemoveShip();
-		RenewShipCount();
-		repaint();
-		return;
+		case Graphics::SHIPADDITION::NOCOORD:
+			Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
+			return;
+		case Graphics::SHIPADDITION::NOSHIP:
+			Message("", "В указанном месте корабля нет.");
+			return;
+		case Graphics::SHIPADDITION::INCORRECTMODE:
+			Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
+			return;
+		default:
+			throw exception(__func__);
+		}
 	default:
 		return;
 	}
@@ -216,4 +273,21 @@ void SeaBattle::Message(const QString& comment, const QString& infoMessage)
 	msgBox.setStandardButtons(QMessageBox::Ok);
 	msgBox.setDefaultButton(QMessageBox::Ok);
 	msgBox.exec();
+}
+
+void SeaBattle::Impact()
+{
+	const auto pStop = [this]
+	{
+		Graphics::ShipAddition = true;
+		Graphics::IsRivalMove = false;
+		_clientServer->Close();
+		_clientServer.reset();
+	};
+
+	if (_graphics.IsRivalBroken())
+		pStop();
+	else
+		if (_graphics.IsIamBroken())
+			pStop();
 }

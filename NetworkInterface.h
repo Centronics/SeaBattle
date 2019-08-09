@@ -22,11 +22,6 @@ public:
 	virtual void SendStopGame() = 0;
 	virtual void Close() = 0;
 
-	[[nodiscard]] DOIT GetGameState() const noexcept
-	{
-		return _currentState;
-	}
-
 protected:
 
 	DOIT _currentState = DOIT::STARTGAME;
@@ -40,7 +35,7 @@ protected:
 		out.setVersion(QDataStream::Qt_5_10);
 		out << quint16(0);
 		if (!packet.SerializeToQDataStream(out))
-			return;
+			throw std::exception("Не могу сериализовать пакет.");
 		out.device()->seek(0);
 		out << quint16(arrBlock.size() - 2);
 		return arrBlock;
