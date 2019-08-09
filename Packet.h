@@ -8,8 +8,7 @@ enum class DOIT : quint8
 	PUSHMAP,
 	WAITMAP,
 	HIT,
-	WAITHIT,
-	STOPGAME
+	WAITHIT
 };
 
 class Packet
@@ -33,7 +32,6 @@ public:
 	void WriteData(const std::vector<Ship>& mas);
 	void WriteData(DOIT doit);
 	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
-	[[nodiscard]] bool ReadData(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool ReadData(DOIT& doit) const;
 	[[nodiscard]] bool ReadRivals(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
@@ -46,10 +44,5 @@ public:
 	[[nodiscard]] explicit operator bool() const
 	{
 		return !_error;
-	}
-
-	void Clear() noexcept
-	{
-		_massive.clear();
 	}
 };

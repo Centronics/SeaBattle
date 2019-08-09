@@ -24,7 +24,6 @@ public:
 	Server& operator=(Server&&) = delete;
 
 	void SendHit(quint8 coord) override;
-	void SendStopGame() override;
 	void Close() override;
 	void Listen(quint16 port);
 

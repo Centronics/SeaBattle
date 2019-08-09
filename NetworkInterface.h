@@ -19,7 +19,6 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	virtual void SendHit(quint8 coord) = 0;
-	virtual void SendStopGame() = 0;
 	virtual void Close() = 0;
 
 protected:

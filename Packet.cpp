@@ -19,7 +19,6 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 		return;
 	}
 	case DOIT::STARTGAME:
-	case DOIT::STOPGAME:
 	case DOIT::WAITHIT:
 		if (blockSize != 1)
 			return;
@@ -62,7 +61,6 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 	switch (doit)
 	{
 	case DOIT::STARTGAME:
-	case DOIT::STOPGAME:
 		return;
 	default:
 		break;
@@ -112,17 +110,6 @@ bool Packet::ReadData(DOIT& doit, quint8& param) const
 	return false;
 }
 
-bool Packet::ReadData(vector<Ship>& mas) const
-{
-	if (_massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
-		return false;
-	mas.clear();
-	mas.reserve(100);
-	for (unsigned int k = 1; k < 101; ++k)
-		mas.emplace_back(Ship(_massive[k]));
-	return true;
-}
-
 bool Packet::ReadData(DOIT& doit) const
 {
 	if (_massive.size() != 1)
@@ -130,7 +117,6 @@ bool Packet::ReadData(DOIT& doit) const
 	switch (const DOIT dt = static_cast<DOIT>(_massive[0]))
 	{
 	case DOIT::STARTGAME:
-	case DOIT::STOPGAME:
 		doit = dt;
 		return true;
 	default:

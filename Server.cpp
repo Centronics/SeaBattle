@@ -49,7 +49,6 @@ void Server::SendAnswerToClient(const Packet& packet)
 		emit SignalReceive(packet);
 		break;
 	case DOIT::HIT:
-	case DOIT::STOPGAME:
 		break;
 	default:
 		throw exception(__func__);
@@ -107,14 +106,6 @@ void Server::SendHit(const quint8 coord)
 	Packet packet;
 	packet.WriteData(DOIT::HIT, coord);
 	SendToClient(packet);
-}
-
-void Server::SendStopGame()
-{
-	Packet packet;
-	packet.WriteData(DOIT::STOPGAME);
-	SendToClient(packet);
-	SocketClose();
 }
 
 void Server::Close()

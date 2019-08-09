@@ -20,14 +20,6 @@ inline void Client::SendHit(const quint8 coord)
 	_currentState = DOIT::WAITHIT;
 }
 
-void Client::SendStopGame()
-{
-	Packet packet;
-	packet.WriteData(DOIT::STOPGAME);
-	SendToServer(packet);
-	Close();
-}
-
 void Client::Close()
 {
 	_currentState = DOIT::STARTGAME;
@@ -53,13 +45,6 @@ void Client::SendAnswerToServer(const Packet* const packet)
 		_currentState = DOIT::STARTGAME;
 		_tcpSocket.close();
 		emit SignalReceive(Packet("Неизвестная ошибка сети."));
-		return;
-	}
-	if (DOIT doit; packet && packet->ReadData(doit) && doit == DOIT::STOPGAME)
-	{
-		_currentState = DOIT::STARTGAME;
-		_tcpSocket.close();
-		emit SignalReceive(Packet("Соперник прекратил игру."));
 		return;
 	}
 	switch (Packet out; _currentState)
@@ -111,7 +96,6 @@ void Client::SendAnswerToServer(const Packet* const packet)
 		emit SignalReceive(*packet);
 		break;
 	case DOIT::HIT:
-	case DOIT::STOPGAME:
 		break;
 	default:
 		throw exception(__func__);

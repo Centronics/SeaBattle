@@ -85,18 +85,7 @@ void SeaBattle::SlotReceive(const Packet& packet)
 		repaint();
 		return;
 	}
-	DOIT doit;
-	if (packet.ReadData(doit))
-	{
-		if (doit != DOIT::STOPGAME)
-			throw exception("Некорректный пакет.");
-		Message("Игра прекращена.", "Соперник прекратил игру.");
-		Graphics::ShipAddition = true;
-		Graphics::IsRivalMove = false;
-		repaint();
-		return;
-	}
-	quint8 param;
+	DOIT doit; quint8 param;
 	if (!packet.ReadData(doit, param))
 		return;
 	if (doit != DOIT::HIT)
