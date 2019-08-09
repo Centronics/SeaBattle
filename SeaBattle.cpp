@@ -10,21 +10,21 @@ SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 	_mainForm.setupUi(this);
 	setMouseTracking(true);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
+	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(SlotBtnClearShipsClicked()));
 	connect(_mainForm.btnConnect, SIGNAL(clicked()), this, SLOT(SlotBtnConnectClicked()));
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(SlotBtnServerStartClicked()));
-	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnect()));
-	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(SlotBtnClearShips()));
+	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnectClicked()));
 	_mainForm.btnDisconnect->setEnabled(false);
 }
 
-void SeaBattle::SlotBtnClearShips()
+void SeaBattle::SlotBtnClearShipsClicked()
 {
 	_graphics.ClearField();
 }
 
 void SeaBattle::SlotBtnConnectClicked()
 {
-	if (!SlotCheckGameReady())
+	if (!CheckGameReady())
 		return;
 	const auto port = GetPort();
 	if (!port)
@@ -41,7 +41,7 @@ void SeaBattle::SlotBtnConnectClicked()
 
 void SeaBattle::SlotBtnServerStartClicked()
 {
-	if (!SlotCheckGameReady())
+	if (!CheckGameReady())
 		return;
 	const auto port = GetPort();
 	if (!port)
@@ -54,7 +54,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	Graphics::IsRivalMove = true;
 }
 
-bool SeaBattle::SlotCheckGameReady()
+bool SeaBattle::CheckGameReady()
 {
 	if (_graphics.IsReadyToPlay())
 		return true;
@@ -62,7 +62,7 @@ bool SeaBattle::SlotCheckGameReady()
 	return false;
 }
 
-void SeaBattle::SlotBtnDisconnect()
+void SeaBattle::SlotBtnDisconnectClicked()
 {
 	_mainForm.btnConnect->setEnabled(true);
 	_mainForm.btnServerStart->setEnabled(true);
@@ -102,9 +102,9 @@ void SeaBattle::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
 	QPainter painter(this);
-	const auto ship = GetSelectedShip();
-	if (get<0>(ship) != Ship::SHIPTYPES::EMPTY)
-		_graphics.Paint(painter, get<0>(ship), get<1>(ship));
+	const auto selShip = GetSelectedShip();
+	if (get<0>(selShip) != Ship::SHIPTYPES::EMPTY)
+		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
 	else
 		_graphics.Paint(painter);
 }

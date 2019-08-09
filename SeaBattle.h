@@ -15,11 +15,10 @@ class SeaBattle : public QWidget
 
 private slots:
 
-	void SlotBtnClearShips();
+	void SlotBtnClearShipsClicked();
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
-	bool SlotCheckGameReady();
-	void SlotBtnDisconnect();
+	void SlotBtnDisconnectClicked();
 	void SlotReceive(const Packet& packet);
 
 public:
@@ -33,6 +32,7 @@ public:
 
 protected:
 
+	bool CheckGameReady();
 	void paintEvent(QPaintEvent* event) override;
 	void AddShip();
 	void RenewShipCount() const;
