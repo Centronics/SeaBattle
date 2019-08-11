@@ -43,4 +43,13 @@ protected:
 signals:
 
 	void SignalReceive(const Packet& packet);
+
+protected slots:
+
+	void SlotClosed()
+	{
+		Packet p;
+		p.WriteData(DOIT::STOPGAME);
+		emit SignalReceive(p);
+	}
 };

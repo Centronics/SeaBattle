@@ -6,7 +6,19 @@ class Ship
 
 public:
 
-	enum class SHIPHOLDER : unsigned char
+	enum class BEAT
+	{
+		ME,
+		RIVAL
+	};
+
+	enum class HOLDING
+	{
+		ME,
+		RIVAL
+	};
+
+	enum class HOLDER : unsigned char
 	{
 		NIL,
 		ME,
@@ -22,7 +34,7 @@ public:
 		BOTH
 	};
 
-	enum class SHIPTYPES : unsigned char
+	enum class TYPES : unsigned char
 	{
 		LINKOR,
 		CRUISER,
@@ -54,97 +66,77 @@ protected:
 
 public:
 
-	[[nodiscard]] static int GetFloors(const SHIPTYPES ship)
+	[[nodiscard]] static int GetFloors(const TYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPTYPES::LINKOR: return 4;
-		case SHIPTYPES::CRUISER: return 3;
-		case SHIPTYPES::ESMINEC: return 2;
-		case SHIPTYPES::VEDETTE: return 1;
-		case SHIPTYPES::EMPTY: return 0;
+		case TYPES::LINKOR: return 4;
+		case TYPES::CRUISER: return 3;
+		case TYPES::ESMINEC: return 2;
+		case TYPES::VEDETTE: return 1;
+		case TYPES::EMPTY: return 0;
 		default:
 			throw std::exception(__func__);
 		}
 	}
 
-	[[nodiscard]] static QColor GetColor(const SHIPTYPES ship)
+	[[nodiscard]] static QColor GetColor(const TYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPTYPES::LINKOR: return Qt::darkMagenta;
-		case SHIPTYPES::CRUISER: return Qt::green;
-		case SHIPTYPES::ESMINEC: return Qt::darkYellow;
-		case SHIPTYPES::VEDETTE: return Qt::cyan;
+		case TYPES::LINKOR: return Qt::darkMagenta;
+		case TYPES::CRUISER: return Qt::green;
+		case TYPES::ESMINEC: return Qt::darkYellow;
+		case TYPES::VEDETTE: return Qt::cyan;
 		default:
 			throw std::exception(__func__);
 		}
 	}
 
-	[[nodiscard]] static int GetMaxShipCount(const SHIPTYPES ship)
+	[[nodiscard]] static int GetMaxShipCount(const TYPES ship)
 	{
 		switch (ship)
 		{
-		case SHIPTYPES::LINKOR: return 1;
-		case SHIPTYPES::CRUISER: return 2;
-		case SHIPTYPES::ESMINEC: return 3;
-		case SHIPTYPES::VEDETTE: return 4;
+		case TYPES::LINKOR: return 1;
+		case TYPES::CRUISER: return 2;
+		case TYPES::ESMINEC: return 3;
+		case TYPES::VEDETTE: return 4;
 		default:
 			throw std::exception(__func__);
 		}
 	}
 
-	[[nodiscard]] SHIPHOLDER GetShipHolder() const
+	[[nodiscard]] HOLDER GetShipHolder() const
 	{
-		return static_cast<SHIPHOLDER>((_currentState & 0xC0u) >> 6u);
+		return static_cast<HOLDER>((_currentState & 0xC0u) >> 6u);
 	}
 
-	[[nodiscard]] bool GetIsMyHolding() const
+	[[nodiscard]] bool GetHolding(const HOLDING holding) const
 	{
-		switch (GetShipHolder())
-		{
-		case SHIPHOLDER::BOTH:
-		case SHIPHOLDER::ME:
+		const HOLDER h = GetShipHolder();
+		if ((h == HOLDER::BOTH || h == HOLDER::ME) && holding == HOLDING::ME)
 			return true;
-		case SHIPHOLDER::NIL:
-		case SHIPHOLDER::RIVAL:
-			return false;
-		default:
-			throw std::exception(__func__);
-		}
-	}
-
-	[[nodiscard]] bool GetIsRivalHolding() const
-	{
-		switch (GetShipHolder())
-		{
-		case SHIPHOLDER::BOTH:
-		case SHIPHOLDER::RIVAL:
+		if ((h == HOLDER::BOTH || h == HOLDER::RIVAL) && holding == HOLDING::RIVAL)
 			return true;
-		case SHIPHOLDER::NIL:
-		case SHIPHOLDER::ME:
-			return false;
-		default:
-			throw std::exception(__func__);
-		}
+		return false;
 	}
 
-	void SetShipHolder(const SHIPHOLDER holder)
+	void SetShipHolder(const HOLDER holder)
 	{
 		switch (holder)
 		{
-		case SHIPHOLDER::NIL:
+		case HOLDER::NIL:
 			_currentState &= 0x3Fu;
 			return;
-		case SHIPHOLDER::ME:
+		case HOLDER::ME:
 			_currentState &= 0x7Fu;
 			_currentState |= 0x40u;
 			return;
-		case SHIPHOLDER::RIVAL:
+		case HOLDER::RIVAL:
 			_currentState |= 0x80u;
 			_currentState &= 0xBFu;
 			return;
-		case SHIPHOLDER::BOTH:
+		case HOLDER::BOTH:
 			_currentState |= 0xC0u;
 			return;
 		default:
@@ -157,34 +149,14 @@ public:
 		return static_cast<BIT>((_currentState & 0x30u) >> 4u);
 	}
 
-	[[nodiscard]] bool GetIsMyBeat() const
+	[[nodiscard]] bool GetBeat(const BEAT beat) const
 	{
-		switch (GetBit())
-		{
-		case BIT::BOTH:
-		case BIT::ME:
+		const BIT b = GetBit();
+		if ((b == BIT::BOTH || b == BIT::ME) && beat == BEAT::ME)
 			return true;
-		case BIT::NIL:
-		case BIT::RIVAL:
-			return false;
-		default:
-			throw std::exception(__func__);
-		}
-	}
-
-	[[nodiscard]] bool GetIsRivalBeat() const
-	{
-		switch (GetBit())
-		{
-		case BIT::BOTH:
-		case BIT::RIVAL:
+		if ((b == BIT::BOTH || b == BIT::RIVAL) && beat == BEAT::RIVAL)
 			return true;
-		case BIT::NIL:
-		case BIT::ME:
-			return false;
-		default:
-			throw std::exception(__func__);
-		}
+		return false;
 	}
 
 	void SetBit(const BIT value)
@@ -210,29 +182,29 @@ public:
 		}
 	}
 
-	[[nodiscard]] SHIPTYPES GetShipType() const
+	[[nodiscard]] TYPES GetShipType() const
 	{
-		if (GetShipHolder() == SHIPHOLDER::NIL)
-			return SHIPTYPES::EMPTY;
-		return static_cast<SHIPTYPES>((_currentState & 0x0Cu) >> 2u);
+		if (GetShipHolder() == HOLDER::NIL)
+			return TYPES::EMPTY;
+		return static_cast<TYPES>((_currentState & 0x0Cu) >> 2u);
 	}
 
-	void SetShipType(const SHIPTYPES value)
+	void SetShipType(const TYPES value)
 	{
 		switch (value)
 		{
-		case SHIPTYPES::LINKOR:
+		case TYPES::LINKOR:
 			_currentState &= 0xF3u;
 			return;
-		case SHIPTYPES::CRUISER:
+		case TYPES::CRUISER:
 			_currentState &= 0xF7u;
 			_currentState |= 0x04u;
 			return;
-		case SHIPTYPES::ESMINEC:
+		case TYPES::ESMINEC:
 			_currentState |= 0x08u;
 			_currentState &= 0xFBu;
 			return;
-		case SHIPTYPES::VEDETTE:
+		case TYPES::VEDETTE:
 			_currentState |= 0x0Cu;
 			return;
 		default:

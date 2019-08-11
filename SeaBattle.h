@@ -9,7 +9,7 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-	Ui::SeaBattleForm _mainForm{ };
+		Ui::SeaBattleForm _mainForm{ };
 	Graphics _graphics;
 	std::unique_ptr<NetworkInterface> _clientServer{ };
 
@@ -40,8 +40,8 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void Message(const QString& comment, const QString& infoMessage);
-	void Impact();
-	[[nodiscard]] std::tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
+	void Impact(bool disconnect);
+	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort();
 
 	template<typename T> T* Initialize()

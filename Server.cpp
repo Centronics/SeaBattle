@@ -72,6 +72,7 @@ void Server::SendToClient(const Packet& packet) const
 void Server::SlotNewConnection()
 {
 	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
+	connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	if (_socket)

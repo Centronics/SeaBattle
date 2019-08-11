@@ -8,7 +8,8 @@ enum class DOIT : quint8
 	PUSHMAP,
 	WAITMAP,
 	HIT,
-	WAITHIT
+	WAITHIT,
+	STOPGAME
 };
 
 class Packet

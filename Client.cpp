@@ -8,6 +8,7 @@ Client::Client(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g,
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
 	connect(&_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
 }
 
 inline void Client::SendHit(const quint8 coord)

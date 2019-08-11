@@ -61,6 +61,10 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 	switch (doit)
 	{
 	case DOIT::STARTGAME:
+	case DOIT::WAITMAP:
+	case DOIT::STOPGAME:
+	case DOIT::WAITHIT:
+	case DOIT::PUSHMAP:
 		return;
 	default:
 		break;
@@ -74,7 +78,7 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 void Packet::WriteData(const vector<Ship>& mas)
 {
 	if (mas.size() != 100)
-		return;
+		throw exception("Неправильная длина пакета.");
 	_massive.clear();
 	_massive.reserve(101);
 	_massive.emplace_back(static_cast<quint8>(DOIT::PUSHMAP));
@@ -88,6 +92,8 @@ void Packet::WriteData(const DOIT doit)
 	{
 	case DOIT::HIT:
 	case DOIT::PUSHMAP:
+	case DOIT::WAITHIT:
+	case DOIT::WAITMAP:
 		return;
 	default:
 		break;
@@ -117,6 +123,7 @@ bool Packet::ReadData(DOIT& doit) const
 	switch (const DOIT dt = static_cast<DOIT>(_massive[0]))
 	{
 	case DOIT::STARTGAME:
+	case DOIT::STOPGAME:
 		doit = dt;
 		return true;
 	default:
@@ -129,11 +136,11 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
-		if (Ship& to = mas[k]; Ship(_massive[n]).GetShipHolder() == Ship::SHIPHOLDER::ME)
-			if (to.GetShipHolder() == Ship::SHIPHOLDER::ME)
-				to.SetShipHolder(Ship::SHIPHOLDER::BOTH);
+		if (Ship& to = mas[k]; Ship(_massive[n]).GetShipHolder() == Ship::HOLDER::ME)
+			if (to.GetShipHolder() == Ship::HOLDER::ME)
+				to.SetShipHolder(Ship::HOLDER::BOTH);
 			else
-				if (to.GetShipHolder() == Ship::SHIPHOLDER::NIL)
-					to.SetShipHolder(Ship::SHIPHOLDER::RIVAL);
+				if (to.GetShipHolder() == Ship::HOLDER::NIL)
+					to.SetShipHolder(Ship::HOLDER::RIVAL);
 	return true;
 }

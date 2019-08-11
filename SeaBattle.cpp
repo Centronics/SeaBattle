@@ -85,7 +85,15 @@ void SeaBattle::SlotReceive(const Packet& packet)
 		repaint();
 		return;
 	}
-	DOIT doit; quint8 param;
+	DOIT doit;
+	if (packet.ReadData(doit))
+	{
+		if (doit != DOIT::STOPGAME)
+			return;
+		Impact(true);
+		return;
+	}
+	quint8 param;
 	if (!packet.ReadData(doit, param))
 		return;
 	if (doit != DOIT::HIT)
@@ -94,7 +102,7 @@ void SeaBattle::SlotReceive(const Packet& packet)
 		return;
 	_graphics.RivalHit(param);
 	Graphics::IsRivalMove = false;
-	Impact();
+	Impact(false);
 	repaint();
 }
 
@@ -103,34 +111,34 @@ void SeaBattle::paintEvent(QPaintEvent* event)
 	Q_UNUSED(event);
 	QPainter painter(this);
 	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) != Ship::SHIPTYPES::EMPTY)
+	if (get<0>(selShip) != Ship::TYPES::EMPTY)
 		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
 	else
 		_graphics.Paint(painter);
 }
 
-tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
+tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
 {
 	if (_graphics.IsReadyToPlay())
-		return make_tuple(Ship::SHIPTYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
-	Ship::SHIPTYPES ship;
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+	Ship::TYPES ship;
 	Ship::ROTATE rotate;
 	switch (_mainForm.lstShipArea->currentRow())
 	{
 	case 0:
-		ship = Ship::SHIPTYPES::LINKOR;
+		ship = Ship::TYPES::LINKOR;
 		break;
 	case 1:
-		ship = Ship::SHIPTYPES::CRUISER;
+		ship = Ship::TYPES::CRUISER;
 		break;
 	case 2:
-		ship = Ship::SHIPTYPES::ESMINEC;
+		ship = Ship::TYPES::ESMINEC;
 		break;
 	case 3:
-		ship = Ship::SHIPTYPES::VEDETTE;
+		ship = Ship::TYPES::VEDETTE;
 		break;
 	default:
-		return make_tuple(Ship::SHIPTYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
 	}
 	switch (_mainForm.lstDirection->currentRow())
 	{
@@ -141,7 +149,7 @@ tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShi
 		rotate = Ship::ROTATE::STARTDOWN;
 		break;
 	default:
-		return make_tuple(Ship::SHIPTYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
 	}
 	return make_tuple(ship, rotate, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
 }
@@ -149,7 +157,7 @@ tuple<Ship::SHIPTYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShi
 void SeaBattle::AddShip()
 {
 	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) == Ship::SHIPTYPES::EMPTY)
+	if (get<0>(selShip) == Ship::TYPES::EMPTY)
 		return;
 	switch (_graphics.AddShip(get<0>(selShip), get<1>(selShip)))
 	{
@@ -176,7 +184,7 @@ void SeaBattle::AddShip()
 void SeaBattle::RenewShipCount() const
 {
 	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) == Ship::SHIPTYPES::EMPTY)
+	if (get<0>(selShip) == Ship::TYPES::EMPTY)
 		return;
 	const int shipCount = _graphics.GetShipCount(get<0>(selShip));
 	QString str = get<2>(selShip)->text();
@@ -206,7 +214,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		Graphics::IsRivalMove = true;
 		_graphics.MyHit(*coord);
 		_clientServer->SendHit(*coord);
-		Impact();
+		Impact(false);
 	}
 	repaint();
 }
@@ -229,7 +237,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 			Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 			return;
 		case Graphics::SHIPADDITION::NOSHIP:
-			Message("", "В указанном месте корабля нет.");
+			Message("Корабль отсутствует.", "В указанном месте нет корабля.");
 			return;
 		case Graphics::SHIPADDITION::INCORRECTMODE:
 			Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
@@ -264,7 +272,7 @@ void SeaBattle::Message(const QString& comment, const QString& infoMessage)
 	msgBox.exec();
 }
 
-void SeaBattle::Impact()
+void SeaBattle::Impact(const bool disconnect)
 {
 	const auto pStop = [this]
 	{
@@ -274,9 +282,22 @@ void SeaBattle::Impact()
 		_clientServer.reset();
 	};
 
-	if (_graphics.IsRivalBroken())
+	switch (_graphics.IsBroken())
+	{
+	case Graphics::BROKEN::ME:
 		pStop();
-	else
-		if (_graphics.IsIamBroken())
+		Message("Поражение!", "Вы проиграли.");
+		return;
+	case Graphics::BROKEN::RIVAL:
+		pStop();
+		Message("Победа!", "Соперник потерпел поражение.");
+		return;
+	case Graphics::BROKEN::NOTHING:
+		if (disconnect)
 			pStop();
+		Message("Игра прекращена.", "Соединение разорвано.");
+		return;
+	default:
+		throw exception(__func__);
+	}
 }
