@@ -231,10 +231,10 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		}
 	};
 
-	for (int x = 0, p = 0, xc = Margin; x < 10; ++x, xc += ObjectWidth)
-		for (int y = 0, yc = Margin; y < 10; ++y, ++p, yc += ObjectWidth)
+	for (int x = 0, xc = Margin; x < 10; ++x, xc += ObjectWidth)
+		for (int y = 0, yc = Margin; y < 10; ++y, yc += ObjectWidth)
 		{
-			const Ship& s = _screenObjects[p];
+			const Ship& s = _screenObjects[(y * 10) + x];
 			mBeat(xc, yc, s.GetBit());
 			const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth;
 			int tx, ty;

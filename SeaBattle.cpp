@@ -20,6 +20,7 @@ SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 void SeaBattle::SlotBtnClearShipsClicked()
 {
 	_graphics.ClearField();
+	RenewShipCount();
 }
 
 void SeaBattle::SlotBtnConnectClicked()
@@ -183,13 +184,35 @@ void SeaBattle::AddShip()
 
 void SeaBattle::RenewShipCount() const
 {
-	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) == Ship::TYPES::EMPTY)
-		return;
-	const int shipCount = _graphics.GetShipCount(get<0>(selShip));
-	QString str = get<2>(selShip)->text();
-	str[39] = QString::number(shipCount)[0];
-	get<2>(selShip)->setText(str);
+	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item)
+	{
+		QString str = item->text();
+		int n;
+		switch (shipType)
+		{
+		case Ship::TYPES::LINKOR:
+			n = 41;
+			break;
+		case Ship::TYPES::CRUISER:
+			n = 45;
+			break;
+		case Ship::TYPES::ESMINEC:
+			n = 44;
+			break;
+		case Ship::TYPES::VEDETTE:
+			n = 35;
+			break;
+		default:
+			throw exception("RenewShipCount");
+		}
+		str[n] = QString::number(_graphics.GetShipCount(shipType))[0];
+		item->setText(str);
+	};
+
+	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0));
+	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1));
+	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2));
+	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3));
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)
