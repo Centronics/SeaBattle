@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string notr="true">Морской бой</string>
   </property>
-  <widget class="QLineEdit" name="IPAddress">
+  <widget class="QLineEdit" name="txtIPAddress">
    <property name="geometry">
     <rect>
      <x>359</x>
@@ -45,7 +45,7 @@
     <string>Подключение</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="Port">
+  <widget class="QLineEdit" name="txtPort">
    <property name="geometry">
     <rect>
      <x>540</x>
@@ -250,6 +250,16 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>txtIPAddress</tabstop>
+  <tabstop>txtPort</tabstop>
+  <tabstop>btnConnect</tabstop>
+  <tabstop>btnServerStart</tabstop>
+  <tabstop>btnClearShips</tabstop>
+  <tabstop>btnDisconnect</tabstop>
+  <tabstop>lstShipArea</tabstop>
+  <tabstop>lstDirection</tabstop>
+ </tabstops>
  <resources>
   <include location="SeaBattle.qrc"/>
  </resources>

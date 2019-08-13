@@ -6,6 +6,7 @@ using namespace std;
 
 static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 4, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
+static const QPen DRAW_TEXT_PEN(Qt::red, 3);
 
 void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
@@ -33,7 +34,7 @@ void Graphics::SetMoveQuad(QPainter& painter)
 	if (ShipAddition)
 		return;
 
-	static const QPen Bp(Qt::black, BetweenObjects, Qt::DashDotLine);
+	static const QPen Bp(Qt::black, BetweenObjects);
 	static const QPen Rp(Qt::red, BetweenObjects);
 	static const QBrush Rb(Qt::red, Qt::SolidPattern);
 	static const QPen Gp(Qt::green, BetweenObjects);
@@ -45,23 +46,23 @@ void Graphics::SetMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(450, 350, "Ход соперника.");
-		painter.setPen(Gp);
-		painter.setBrush(Gb);
+		painter.drawText(406, 250, "Ход соперника.");
+		painter.setPen(Rp);
+		painter.setBrush(Rb);
 	}
 	else
 	{
 		painter.setPen(Gpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(450, 350, "Ваш ход.");
-		painter.setPen(Rp);
-		painter.setBrush(Rb);
+		painter.drawText(432, 250, "Ваш ход.");
+		painter.setPen(Gp);
+		painter.setBrush(Gb);
 	}
 
-	painter.drawEllipse(440, 320, 50, 50);
+	painter.drawEllipse(440, 265, 50, 50);
 	painter.setPen(Bp);
 	painter.setBrush(Qt::NoBrush);
-	painter.drawRect(420, 340, 100, 100);
+	painter.drawRect(395, 230, 140, 100);
 }
 
 Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
@@ -175,28 +176,31 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 
 void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawShipAndFrame = [&painter](const int x, const int y, const Ship* pShip, const int w = -1, const int h = -1)
+	const auto drawShipAndFrame = [&painter](const int x, const int y, const Ship* const pShip, const int w, const int h)
 	{
 		static constexpr int W = BetweenObjects * 2;
-		static constexpr int Wh = ObjectWidth + W;
 		static const QPen G(Qt::gray, BetweenObjects);
 		static const QBrush D(Qt::gray, Qt::Dense6Pattern);
-		if (w < 0 || h < 0)
+		const int xw = x + w, yh = y + h;
+		if (xw > MaxCoord || yh > MaxCoord)
 		{
-			painter.setPen(G);
-			painter.setBrush(D);
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, Wh, Wh);
+			painter.setPen(DRAW_TEXT_PEN);
+			painter.setFont(DRAW_FONT);
+			painter.drawText(CursorX - 12, CursorY + 20, "!");
 			return;
 		}
-		painter.setPen(pShip ? Ship::GetColor(pShip->GetShipType()) : Qt::black);
-		painter.setBrush(Qt::NoBrush);
-		painter.drawRect(x, y, w, h);
-		if (CursorX >= x && CursorX < (x + w) && CursorY >= y && CursorY < (y + h))
+		if (ShipAddition && CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh)
 		{
 			painter.setPen(G);
 			painter.setBrush(D);
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
 		}
+		else
+		{
+			const QColor color = Ship::GetColor(pShip->GetShipType());
+			painter.setPen(QPen(pShip ? color : Qt::black, BetweenObjects));
+			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
+		}
+		painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
 	};
 
 	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const Ship::BIT bit)
@@ -218,8 +222,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		{
 			if (!IsRivalMove)
 				return;
-			static const QPen Dpen(Qt::red, 3);
-			painter.setPen(Dpen);
+			painter.setPen(DRAW_TEXT_PEN);
 			painter.setFont(DRAW_FONT);
 			painter.drawText(x + 4, y + (ObjectWidth - 2), "X");
 			return;
@@ -243,11 +246,6 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 				int x2, y2;
 			case Ship::ROTATE::NIL:
 			{
-				if (!ShipAddition)
-				{
-					drawShipAndFrame(xc, yc, nullptr);
-					continue;
-				}
 				if (ship == Ship::TYPES::EMPTY || rotate == Ship::ROTATE::NIL)
 					continue;
 				const auto phs = GetPhysicalCoords();
@@ -281,9 +279,9 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			default:
 				throw exception(__func__);
 			}
-			if (IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL))
-				drawShipAndFrame(xc, yc, nullptr);
-			if (!IsRivalMove && s.GetHolding(Ship::HOLDING::ME))
+			if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
+				drawShipAndFrame(xc, yc, nullptr, ObjectWidth, ObjectWidth);
+			if ((IsRivalMove || ShipAddition) && s.GetHolding(Ship::HOLDING::ME))
 				drawShipAndFrame(xc, yc, &s, tx, ty);
 		}
 }
@@ -309,6 +307,14 @@ bool Graphics::IsFree(const int sx, const int sy) const
 	if (!coord(sx, sy + 1))
 		return false;
 	if (!coord(sx, sy))
+		return false;
+	if (!coord(sx - 1, sy - 1))
+		return false;
+	if (!coord(sx - 1, sy + 1))
+		return false;
+	if (!coord(sx + 1, sy - 1))
+		return false;
+	if (!coord(sx + 1, sy + 1))
 		return false;
 
 	return true;

@@ -37,6 +37,7 @@ protected:
 	void AddShip();
 	void RenewShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
+	void leaveEvent(QEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void Message(const QString& comment, const QString& infoMessage);

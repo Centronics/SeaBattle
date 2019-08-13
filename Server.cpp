@@ -66,7 +66,7 @@ void Server::SocketClose()
 void Server::SendToClient(const Packet& packet) const
 {
 	if (_socket)
-		_socket->write(GetBytes(packet));//Проверить ошибку??
+		_socket->write(GetBytes(packet));
 }
 
 void Server::SlotNewConnection()

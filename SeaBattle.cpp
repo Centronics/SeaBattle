@@ -15,12 +15,15 @@ SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(SlotBtnServerStartClicked()));
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnectClicked()));
 	_mainForm.btnDisconnect->setEnabled(false);
+	_mainForm.lstShipArea->setCurrentRow(0);
+	_mainForm.lstDirection->setCurrentRow(0);
 }
 
 void SeaBattle::SlotBtnClearShipsClicked()
 {
 	_graphics.ClearField();
 	RenewShipCount();
+	repaint();
 }
 
 void SeaBattle::SlotBtnConnectClicked()
@@ -35,7 +38,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	_mainForm.btnDisconnect->setEnabled(true);
 	_mainForm.lstShipArea->setEnabled(false);
 	_mainForm.lstDirection->setEnabled(false);
-	Initialize<Client>()->Connect(_mainForm.IPAddress->text(), *port);
+	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = false;
 }
@@ -46,13 +49,22 @@ void SeaBattle::SlotBtnServerStartClicked()
 		return;
 	const auto port = GetPort();
 	if (!port)
+	{
+		Message("Порт не указан.", "Укажите порт, который необходимо прослушивать!");
 		return;
+	}
 	_mainForm.btnConnect->setEnabled(false);
 	_mainForm.btnServerStart->setEnabled(false);
 	_mainForm.btnDisconnect->setEnabled(true);
+	_mainForm.btnClearShips->setEnabled(false);
+	_mainForm.txtIPAddress->setReadOnly(true);
+	_mainForm.txtPort->setReadOnly(true);
+	_mainForm.lstShipArea->setEnabled(false);
+	_mainForm.lstDirection->setEnabled(false);
 	Initialize<Server>()->Listen(*port);
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = true;
+	repaint();
 }
 
 bool SeaBattle::CheckGameReady()
@@ -116,6 +128,13 @@ void SeaBattle::paintEvent(QPaintEvent* event)
 		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
 	else
 		_graphics.Paint(painter);
+}
+
+void SeaBattle::leaveEvent(QEvent* event)
+{
+	Graphics::CursorX = -1;
+	Graphics::CursorY = -1;
+	repaint();
 }
 
 tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
@@ -276,7 +295,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 optional<quint16> SeaBattle::GetPort()
 {
 	bool ok;
-	const int port = _mainForm.Port->text().toInt(&ok);
+	const int port = _mainForm.txtPort->text().toInt(&ok);
 	if (ok)
 		return port;
 	Message("Ошибка при подключении.", "Порт должен быть числом.");
