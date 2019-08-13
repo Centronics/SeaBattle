@@ -29,6 +29,7 @@ protected:
 	std::vector<Ship> _screenObjects{ 100 };
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
+	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	void DrawShipRect(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
 	[[nodiscard]] bool IsKilled(quint8 coord, Ship::BIT bit) const;
@@ -36,6 +37,7 @@ protected:
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 	static void SetMoveQuad(QPainter& painter);
+	static void DrawWarning(QPainter& painter);
 
 public:
 

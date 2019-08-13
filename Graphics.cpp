@@ -174,9 +174,16 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 	return make_tuple(true, mx, my);
 }
 
+void Graphics::DrawWarning(QPainter& painter)
+{
+	painter.setPen(DRAW_TEXT_PEN);
+	painter.setFont(DRAW_FONT);
+	painter.drawText(CursorX - 12, CursorY + 20, "!");
+}
+
 void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawShipAndFrame = [&painter](const int x, const int y, const Ship* const pShip, const int w, const int h)
+	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const Ship* const pShip, const int w, const int h)
 	{
 		static constexpr int W = BetweenObjects * 2;
 		static const QPen G(Qt::gray, BetweenObjects);
@@ -184,12 +191,11 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		const int xw = x + w, yh = y + h;
 		if (xw > MaxCoord || yh > MaxCoord)
 		{
-			painter.setPen(DRAW_TEXT_PEN);
-			painter.setFont(DRAW_FONT);
-			painter.drawText(CursorX - 12, CursorY + 20, "!");
+			DrawWarning(painter);
 			return;
 		}
-		if (ShipAddition && CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh)
+		const bool adding = ShipAddition && CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
+		if (adding)
 		{
 			painter.setPen(G);
 			painter.setBrush(D);
@@ -201,6 +207,9 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
 		}
 		painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
+		if (adding)
+			if (const auto masCoords = GetMassiveCoords(); get<0>(masCoords) && IsBusy(get<1>(masCoords), get<2>(masCoords), ship, rotate))
+				DrawWarning(painter);
 	};
 
 	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const Ship::BIT bit)
@@ -230,7 +239,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		case Ship::BIT::NIL:
 			return;
 		default:
-			throw exception("DrawShipState");
+			throw exception("DrawShipRect");
 		}
 	};
 
@@ -320,6 +329,38 @@ bool Graphics::IsFree(const int sx, const int sy) const
 	return true;
 }
 
+bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate) const
+{
+	if (startX < 0 || startY < 0 || ship == Ship::TYPES::EMPTY || rotate == Ship::ROTATE::NIL)
+		return false;
+	switch (rotate)
+	{
+	case Ship::ROTATE::STARTDOWN:
+	{
+		const int max = startY + Ship::GetFloors(ship);
+		if (max > 10)
+			return false;
+		for (int k = startY; k < max; ++k)
+			if (!IsFree(startX, k))
+				return true;
+		return false;
+	}
+	case Ship::ROTATE::STARTRIGHT:
+	{
+		const int max = startX + Ship::GetFloors(ship);
+		if (max > 10)
+			return false;
+		for (int k = startX; k < max; ++k)
+			if (!IsFree(k, startY))
+				return true;
+		return false;
+	}
+	case Ship::ROTATE::NIL:
+	default:
+		throw exception(__func__);
+	}
+}
+
 Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
 	if (!ShipAddition)
@@ -347,9 +388,8 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 			return SHIPADDITION::NOCOORD;
 		if (ship != Ship::TYPES::EMPTY)
 		{
-			for (int k = startY; k < max; ++k)
-				if (!IsFree(startX, k))
-					return SHIPADDITION::NOTFREE;
+			if (IsBusy(startX, startY, ship, rotate))
+				return SHIPADDITION::NOTFREE;
 		}
 		else
 			if ((max = Ship::GetFloors(_screenObjects[i].GetShipType())) == 0)
@@ -368,9 +408,8 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 			return SHIPADDITION::NOCOORD;
 		if (ship != Ship::TYPES::EMPTY)
 		{
-			for (int k = startX; k < max; ++k)
-				if (!IsFree(k, startY))
-					return SHIPADDITION::NOTFREE;
+			if (IsBusy(startX, startY, ship, rotate))
+				return SHIPADDITION::NOTFREE;
 		}
 		else
 			if ((max = Ship::GetFloors(_screenObjects[i].GetShipType())) == 0)

@@ -41,6 +41,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = false;
+	repaint();
 }
 
 void SeaBattle::SlotBtnServerStartClicked()
