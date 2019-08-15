@@ -279,9 +279,6 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		case Graphics::SHIPADDITION::NOCOORD:
 			Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 			return;
-		case Graphics::SHIPADDITION::NOSHIP:
-			Message("Корабль отсутствует.", "В указанном месте нет корабля.");
-			return;
 		case Graphics::SHIPADDITION::INCORRECTMODE:
 			Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
 			return;
