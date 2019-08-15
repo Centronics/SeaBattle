@@ -194,7 +194,6 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		const auto drawShip = [x, y, w, h, &painter] { painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); };
 		const auto drawMark = [&painter](const int px, const int py) { painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
-		const optional<quint8> curCoord = GetCoord();
 
 		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh) && inFrame)
 		{
@@ -220,8 +219,6 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 
 		if (!IsRivalMove && inFrame)
 		{
-			if (!curCoord)
-				throw exception("DrawShipRect(drawShipAndFrame)");
 			grey();
 			if (inShip && pShip.GetShipType() != Ship::TYPES::EMPTY)
 				drawMark(x, y);
@@ -235,7 +232,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			drawMark(x, y);
 		}
 
-		if (curCoord && IsBusy(*curCoord % 10, *curCoord / 10, ship, rotate))
+		if (IsBusy(x, y, ship, rotate))
 			DrawWarning(painter);
 	};
 
