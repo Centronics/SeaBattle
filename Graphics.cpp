@@ -232,7 +232,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			drawMark(x, y);
 		}
 
-		if (IsBusy(x, y, ship, rotate))
+		if (inFrame && IsBusy((x - Margin) / ObjectWidth, (y - Margin) / ObjectWidth, ship, rotate))
 			DrawWarning(painter);
 	};
 
