@@ -183,90 +183,63 @@ void Graphics::DrawWarning(QPainter& painter)
 
 void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int w, const int h, const Ship* const pShip = nullptr)
+	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int w, const int h, const Ship& pShip)
 	{
 		static constexpr int W = BetweenObjects * 2;
 		static const QPen G(Qt::gray, BetweenObjects);
 		static const QBrush D(Qt::gray, Qt::Dense6Pattern);
 		const int xw = x + w, yh = y + h;
-		const auto g = [&painter] { painter.setPen(G); painter.setBrush(D); };
-		const auto inFrame = [x, y] { return CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth); };
+		const auto grey = [&painter] { painter.setPen(G); painter.setBrush(D); };
+		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
 		const auto drawShip = [x, y, w, h, &painter] { painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); };
 		const auto drawMark = [&painter](const int px, const int py) { painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const optional<quint8> curCoord = GetCoord();
 
-		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh) && inFrame())
+		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh) && inFrame)
 		{
-			g();
+			grey();
 			drawMark(x, y);
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
 				DrawWarning(painter);
 			return;
 		}
 
-		const auto d = [&painter, inShip, &g, pShip, &drawShip, &drawMark]
+		if (pShip.GetRotate() != Ship::ROTATE::NIL)
 		{
-			const QColor color = Ship::GetColor(pShip->GetShipType());
+			const QColor color = Ship::GetColor(pShip.GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
-			if (!inShip)
-			{
-				drawShip();
-				return;
-			}
-			const auto sCoords = GetPhysicalCoords();
-			if (!get<0>(sCoords))
-				throw exception("DrawShipRect(d)");
 			drawShip();
-			g();
-			drawMark(get<1>(sCoords), get<2>(sCoords));
-		};
-
-		if (ShipAddition && inShip)
-		{
-			if (pShip && pShip->GetRotate() != Ship::ROTATE::NIL)
-				d();
-			if (!ShipAddition && inFrame())
+			if (!IsRivalMove && inShip && inFrame)
+			{
+				grey();
 				drawMark(x, y);
-		}
-		else
-		{
-			if (pShip && pShip->GetRotate() != Ship::ROTATE::NIL)
-			{
-				d();
-			}
-			else
-			{
-				/*const auto sCoords = GetPhysicalCoords();
-			if (!get<0>(sCoords))
-				throw exception("DrawShipRect(d)");
-			//drawShip();
-				painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
-			//g();
-				painter.setPen(G); painter.setBrush(D);
-			drawMark(get<1>(sCoords), get<2>(sCoords));*/
 			}
 		}
-		///
-		//painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
-		///
-		if (inFrame())
+
+		if (!IsRivalMove && inFrame)
 		{
 			if (!curCoord)
 				throw exception("DrawShipRect(drawShipAndFrame)");
-			g();
-			if (inShip && _screenObjects[*curCoord].GetShipType() != Ship::TYPES::EMPTY)
+			grey();
+			if (inShip && pShip.GetShipType() != Ship::TYPES::EMPTY)
 				drawMark(x, y);
 			else
 				drawShip();
+		}
+
+		if (!IsRivalMove && inFrame && IsReadyToPlay())
+		{
+			grey();
+			drawMark(x, y);
 		}
 
 		if (curCoord && IsBusy(*curCoord % 10, *curCoord / 10, ship, rotate))
 			DrawWarning(painter);
 	};
 
-	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const Ship::BIT bit)
+	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const Ship::BIT bit, const Ship& s)
 	{
 		switch (bit)
 		{
@@ -278,7 +251,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			painter.setPen(Cpen);
 			static constexpr int W = ObjectWidth / 2;
 			painter.drawPoint(x + W, y + W);
-			drawShipAndFrame(x, y, ObjectWidth, ObjectWidth);
+			drawShipAndFrame(x, y, ObjectWidth, ObjectWidth, s);
 			return;
 		}
 		case Ship::BIT::RIVAL:
@@ -297,39 +270,41 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		}
 	};
 
-	const auto draw = [&drawShipAndFrame](const Ship& s, const int x, const int y, const int w, const int h)
+	const auto draw = [&drawShipAndFrame](const int x, const int y, const int w, const int h, const Ship& s)
 	{
 		if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
-			drawShipAndFrame(x, y, ObjectWidth, ObjectWidth);
+			drawShipAndFrame(x, y, ObjectWidth, ObjectWidth, s);
 		if ((IsRivalMove || ShipAddition) && s.GetHolding(Ship::HOLDING::ME))
-			drawShipAndFrame(x, y, w, h, &s);
+			drawShipAndFrame(x, y, w, h, s);
 	};
 
 	for (int x = 0, xc = Margin; x < 10; ++x, xc += ObjectWidth)
 		for (int y = 0, yc = Margin; y < 10; ++y, yc += ObjectWidth)
 		{
 			const Ship& s = _screenObjects[(y * 10) + x];
-			mBeat(xc, yc, s.GetBit());
+			mBeat(xc, yc, s.GetBit(), s);
 			switch (const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth; s.GetRotate())
 			{
 			case Ship::ROTATE::NIL:
-				if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
-					switch (const int fls = Ship::GetFloors(ship) * ObjectWidth; rotate)
-					{
-					case Ship::ROTATE::STARTRIGHT:
-						drawShipAndFrame(xc, yc, fls, ObjectWidth);
-						continue;
-					case Ship::ROTATE::STARTDOWN:
-						drawShipAndFrame(xc, yc, ObjectWidth, fls);
-						continue;
-					default:
-						throw exception(__func__);
-					}
+				switch (const int fls = Ship::GetFloors(ship) * ObjectWidth; rotate)
+				{
+				case Ship::ROTATE::STARTRIGHT:
+					drawShipAndFrame(xc, yc, fls, ObjectWidth, s);
+					continue;
+				case Ship::ROTATE::STARTDOWN:
+					drawShipAndFrame(xc, yc, ObjectWidth, fls, s);
+					continue;
+				case Ship::ROTATE::NIL:
+					drawShipAndFrame(xc, yc, ObjectWidth, ObjectWidth, s);
+					continue;
+				default:
+					throw exception(__func__);
+				}
 			case Ship::ROTATE::STARTRIGHT:
-				draw(s, xc, yc, floors, ObjectWidth);
+				draw(xc, yc, floors, ObjectWidth, s);
 				continue;
 			case Ship::ROTATE::STARTDOWN:
-				draw(s, xc, yc, ObjectWidth, floors);
+				draw(xc, yc, ObjectWidth, floors, s);
 				continue;
 			default:
 				throw exception(__func__);
