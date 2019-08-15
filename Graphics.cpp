@@ -191,73 +191,78 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		const int xw = x + w, yh = y + h;
 		const auto g = [&painter] { painter.setPen(G); painter.setBrush(D); };
 		const auto inFrame = [x, y] { return CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth); };
-		const auto drawMark = [x, y, &g, &painter]
+		const auto drawShip = [x, y, w, h, &painter] { painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); };
+		const auto drawMark = [&painter](const int px, const int py) { painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
+		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
+		const optional<quint8> curCoord = GetCoord();
+
+		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh) && inFrame())
 		{
 			g();
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
-		};
-		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh))
-		{
-			if (inFrame())
-				drawMark();
-			DrawWarning(painter);
+			drawMark(x, y);
+			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
+				DrawWarning(painter);
 			return;
 		}
-		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
-		const auto d = [x, y, w, h, &painter, &drawMark, &inFrame, inShip, &g, pShip]
+
+		const auto d = [&painter, inShip, &g, pShip, &drawShip, &drawMark]
 		{
 			const QColor color = Ship::GetColor(pShip->GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
-			if (inShip)
+			if (!inShip)
 			{
-				const auto sCoords = GetPhysicalCoords();
-				if (!get<0>(sCoords))
-					throw exception("DrawShipRect");
-				painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
-				g();
-				painter.drawRect(get<1>(sCoords) - BetweenObjects, get<2>(sCoords) - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
+				drawShip();
+				return;
 			}
-			else
-				painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
-			//if (inFrame())
-				//drawMark();
+			const auto sCoords = GetPhysicalCoords();
+			if (!get<0>(sCoords))
+				throw exception("DrawShipRect(d)");
+			drawShip();
+			g();
+			drawMark(get<1>(sCoords), get<2>(sCoords));
 		};
 
 		if (ShipAddition && inShip)
 		{
-			//g();
 			if (pShip && pShip->GetRotate() != Ship::ROTATE::NIL)
 				d();
 			if (!ShipAddition && inFrame())
-				painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
-			/*else
-				if (ShipAddition && inFrame() && pShip && pShip->GetShipType() == Ship::TYPES::EMPTY)
-				{
-					painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
-				}*/
+				drawMark(x, y);
 		}
 		else
+		{
 			if (pShip && pShip->GetRotate() != Ship::ROTATE::NIL)
 			{
-
 				d();
 			}
-
-		if (inFrame())//›“Œ Õ”∆ÕŒ??
-		{
-			g();
-			const auto mas = GetMassiveCoords();
-			if (!get<0>(mas))
-				return;//Õ”∆ÕŒ À»?
-			const Ship* const ps = &_screenObjects[static_cast<unsigned int>((get<2>(mas) * 10) + get<1>(mas))];
-			if (inShip && ps->GetShipType() != Ship::TYPES::EMPTY)
-				painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
 			else
+			{
+				/*const auto sCoords = GetPhysicalCoords();
+			if (!get<0>(sCoords))
+				throw exception("DrawShipRect(d)");
+			//drawShip();
 				painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
+			//g();
+				painter.setPen(G); painter.setBrush(D);
+			drawMark(get<1>(sCoords), get<2>(sCoords));*/
+			}
+		}
+		///
+		//painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
+		///
+		if (inFrame())
+		{
+			if (!curCoord)
+				throw exception("DrawShipRect(drawShipAndFrame)");
+			g();
+			if (inShip && _screenObjects[*curCoord].GetShipType() != Ship::TYPES::EMPTY)
+				drawMark(x, y);
+			else
+				drawShip();
 		}
 
-		if (const auto masCoords = GetMassiveCoords(); get<0>(masCoords) && IsBusy(get<1>(masCoords), get<2>(masCoords), ship, rotate))
+		if (curCoord && IsBusy(*curCoord % 10, *curCoord / 10, ship, rotate))
 			DrawWarning(painter);
 	};
 
@@ -288,7 +293,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		case Ship::BIT::NIL:
 			return;
 		default:
-			throw exception("DrawShipRect");
+			throw exception("DrawShipRect(mBeat)");
 		}
 	};
 
