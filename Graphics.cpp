@@ -183,7 +183,7 @@ void Graphics::DrawWarning(QPainter& painter)
 
 void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& pShip)
+	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		static constexpr int W = BetweenObjects * 2;
 		static const QPen G(Qt::gray, BetweenObjects);
@@ -192,45 +192,40 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		const auto grey = [&painter] { painter.setPen(G); painter.setBrush(D); };
 		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
 		const auto drawShip = [x, y, w, h, &painter] { painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); };
-		const auto drawMark = [&painter](const int px, const int py) { painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
+		const auto drawMark = [&painter, &grey](const int px, const int py) { grey(); painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 
 		if ((xw > MaxCoord || yh > MaxCoord) && inShip && inFrame)
 		{
-			grey();
 			drawMark(x, y);
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
 				DrawWarning(painter);
 			return;
 		}
 
-		if (pShip.GetRotate() != Ship::ROTATE::NIL)
+		if (s.GetRotate() != Ship::ROTATE::NIL)
 		{
-			const QColor color = Ship::GetColor(pShip.GetShipType());
+			const QColor color = Ship::GetColor(s.GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
 			drawShip();
 			if (!IsRivalMove && inShip && inFrame)
-			{
-				grey();
 				drawMark(x, y);
-			}
 		}
 
 		if (!IsRivalMove && inFrame)
 		{
-			grey();
-			if (inShip && pShip.GetShipType() != Ship::TYPES::EMPTY)
-				drawMark(x, y);
-			else
+			if (!inShip || s.GetShipType() == Ship::TYPES::EMPTY)
+			{
+				grey();
 				drawShip();
+			}
+			else
+				drawMark(x, y);
 		}
 
 		if (!IsRivalMove && inFrame && IsReadyToPlay())
-		{
-			grey();
 			drawMark(x, y);
-		}
 
 		if (inFrame && IsBusy(mx, my, ship, rotate))
 			DrawWarning(painter);
@@ -282,6 +277,12 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 			mBeat(x, y, mx, my, s.GetBit(), s);
 			switch (const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth; s.GetRotate())
 			{
+			case Ship::ROTATE::STARTRIGHT:
+				draw(x, y, mx, my, floors, ObjectWidth, s);
+				continue;
+			case Ship::ROTATE::STARTDOWN:
+				draw(x, y, mx, my, ObjectWidth, floors, s);
+				continue;
 			case Ship::ROTATE::NIL:
 				switch (const int fls = Ship::GetFloors(ship) * ObjectWidth; rotate)
 				{
@@ -297,12 +298,6 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 				default:
 					throw exception(__func__);
 				}
-			case Ship::ROTATE::STARTRIGHT:
-				draw(x, y, mx, my, floors, ObjectWidth, s);
-				continue;
-			case Ship::ROTATE::STARTDOWN:
-				draw(x, y, mx, my, ObjectWidth, floors, s);
-				continue;
 			default:
 				throw exception(__func__);
 			}
