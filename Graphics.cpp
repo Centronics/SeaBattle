@@ -195,7 +195,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 		const auto drawMark = [&painter](const int px, const int py) { painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 
-		if ((xw > MaxCoord || yh > MaxCoord) && (CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh) && inFrame)
+		if ((xw > MaxCoord || yh > MaxCoord) && inShip && inFrame)
 		{
 			grey();
 			drawMark(x, y);
