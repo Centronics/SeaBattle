@@ -81,13 +81,10 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 {
 	if (!ShipAddition)
 		return SHIPADDITION::INCORRECTMODE;
-	const auto xs = GetMassiveCoords();
-	if (!get<0>(xs))
-		return SHIPADDITION::NOCOORD;
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
-		throw exception(__func__);
-	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, Ship::ROTATE::NIL) != SHIPADDITION::OK)
+		return SHIPADDITION::OK;
+	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
 	return SHIPADDITION::OK;
 }
@@ -184,8 +181,8 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const Ship& ship = _screenObjects[*mas];
 	const quint8 mx = *mas % 10, my = *mas / 10;
-	if (ship.GetRotate() != Ship::ROTATE::NIL)
-		return make_tuple(true, mx, my, Ship::ROTATE::NIL);
+	if (const Ship::ROTATE r = ship.GetRotate(); r != Ship::ROTATE::NIL)
+		return make_tuple(true, mx, my, r);
 	for (int x = 0; x < 10; ++x)
 		for (int y = 0; y < 10; ++y)
 		{
@@ -347,7 +344,7 @@ bool Graphics::IsFree(const int sx, const int sy) const
 	{
 		if (x < 0 || x > 9 || y < 0 || y > 9)
 			return true;
-		return !_screenObjects[static_cast<unsigned int>((y * 10) + x)].GetHolding(Ship::HOLDING::ME);
+		return !_screenObjects[(y * 10) + x].GetHolding(Ship::HOLDING::ME);
 	};
 
 	if (!coord(sx - 1, sy))
@@ -412,58 +409,58 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)
 		throw exception(__func__);
 
-	const auto fSet = [](Ship& obj, const Ship::ROTATE rotate, const Ship::TYPES sp)
+	int i = (startY * 10) + startX;
+
+	const auto test = [this, ship, rotate, startX, startY, i](const int coord, int& floors, SHIPADDITION& sa)
 	{
-		obj.SetRotate(rotate);
-		obj.SetBit(Ship::BIT::NIL);
-		obj.SetShipHolder(Ship::HOLDER::ME);
-		obj.SetShipType(sp);
+		floors = Ship::GetFloors(ship);
+		if ((coord + floors) > 10)
+		{
+			sa = SHIPADDITION::NOCOORD;
+			return false;
+		}
+		if (ship != Ship::TYPES::EMPTY)
+		{
+			const bool b = IsBusy(startX, startY, ship, rotate);
+			sa = b ? SHIPADDITION::NOTFREE : SHIPADDITION::OK;
+			return !b;
+		}
+		sa = SHIPADDITION::OK;
+		if (const int c = Ship::GetFloors(_screenObjects[i].GetShipType()); c != 0)
+		{
+			floors = c;
+			return true;
+		}
+		return false;
 	};
 
-	auto i = static_cast<unsigned int>((startY * 10) + startX);
+	const auto item = [this, ship, &i, rotate](const bool start)
+	{
+		if (Ship& obj = _screenObjects[i]; ship != Ship::TYPES::EMPTY)
+		{
+			obj.SetRotate(start ? rotate : Ship::ROTATE::NIL);
+			obj.SetBit(Ship::BIT::NIL);
+			obj.SetShipHolder(Ship::HOLDER::ME);
+			obj.SetShipType(ship);
+		}
+		else
+			obj.Delete();
+	};
 
-	switch (rotate)
+	switch (int floors = 0; rotate)
 	{
-	case Ship::ROTATE::STARTDOWN:
-	{
-		int max = startY + Ship::GetFloors(ship);
-		if (max > 10)
-			return SHIPADDITION::NOCOORD;
-		if (ship != Ship::TYPES::EMPTY)
-		{
-			if (IsBusy(startX, startY, ship, rotate))
-				return SHIPADDITION::NOTFREE;
-		}
-		else
-			if ((max = Ship::GetFloors(_screenObjects[i].GetShipType())) == 0)
-				return SHIPADDITION::OK;
-		for (int k = startY; k < max; ++k, i += 10u)
-			if (ship != Ship::TYPES::EMPTY)
-				fSet(_screenObjects[i], k == startY ? Ship::ROTATE::STARTDOWN : Ship::ROTATE::NIL, ship);
-			else
-				_screenObjects[i].Delete();
-		return SHIPADDITION::OK;
-	}
 	case Ship::ROTATE::STARTRIGHT:
-	{
-		int max = startX + Ship::GetFloors(ship);
-		if (max > 10)
-			return SHIPADDITION::NOCOORD;
-		if (ship != Ship::TYPES::EMPTY)
-		{
-			if (IsBusy(startX, startY, ship, rotate))
-				return SHIPADDITION::NOTFREE;
-		}
-		else
-			if ((max = Ship::GetFloors(_screenObjects[i].GetShipType())) == 0)
-				return SHIPADDITION::OK;
-		for (int k = startX; k < max; ++k, ++i)
-			if (ship != Ship::TYPES::EMPTY)
-				fSet(_screenObjects[i], k == startX ? Ship::ROTATE::STARTRIGHT : Ship::ROTATE::NIL, ship);
-			else
-				_screenObjects[i].Delete();
+		if (SHIPADDITION sa; !test(startX, floors, sa))
+			return sa;
+		for (int k = 0; k < floors; ++k, ++i)
+			item(!k);
 		return SHIPADDITION::OK;
-	}
+	case Ship::ROTATE::STARTDOWN:
+		if (SHIPADDITION sa; !test(startY, floors, sa))
+			return sa;
+		for (int k = 0; k < floors; ++k, i += 10u)
+			item(!k);
+		return SHIPADDITION::OK;
 	default:
 		throw exception(__func__);
 	}

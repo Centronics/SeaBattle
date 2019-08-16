@@ -41,7 +41,7 @@ bool Packet::SerializeToQDataStream(QDataStream& data) const
 {
 	if (_massive.empty())
 		return false;
-	const int sz = static_cast<int>(_massive.size());
+	const int sz = _massive.size();
 	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
 }
 
