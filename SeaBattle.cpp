@@ -202,6 +202,25 @@ void SeaBattle::AddShip()
 	}
 }
 
+void SeaBattle::RemoveShip()
+{
+	switch (_graphics.RemoveShip())
+	{
+	case Graphics::SHIPADDITION::OK:
+		RenewShipCount();
+		repaint();
+		return;
+	case Graphics::SHIPADDITION::NOCOORD:
+		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
+		return;
+	case Graphics::SHIPADDITION::INCORRECTMODE:
+		Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
+		return;
+	default:
+		throw exception(__func__);
+	}
+}
+
 void SeaBattle::RenewShipCount() const
 {
 	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item)
@@ -244,20 +263,36 @@ void SeaBattle::mouseMoveEvent(QMouseEvent* event)
 
 void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 {
-	Graphics::Clicked = event->button() == Qt::LeftButton;
-	const optional<quint8> coord = _graphics.GetCoord();
-	if (!Graphics::Clicked || !coord)
-		return;
-	if (Graphics::ShipAddition)
-		AddShip();
-	else
+	switch (event->button())
 	{
-		if (Graphics::IsRivalMove)
-			return;
-		Graphics::IsRivalMove = true;
-		_graphics.MyHit(*coord);
-		_clientServer->SendHit(*coord);
-		Impact(false);
+	case Qt::LeftButton:
+		Graphics::Clicked = true;
+		if (!Graphics::ShipAddition)
+		{
+			if (Graphics::IsRivalMove)
+			{
+				Graphics::Clicked = false;
+				return;
+			}
+			const optional<quint8> coord = _graphics.GetCoord();
+			if (!coord)
+			{
+				Graphics::Clicked = false;
+				return;
+			}
+			_graphics.MyHit(*coord);
+			_clientServer->SendHit(*coord);
+			Impact(false);
+			Graphics::IsRivalMove = true;
+			break;
+		}
+		AddShip();
+		break;
+	case Qt::RightButton:
+		RemoveShip();
+		break;
+	default:
+		return;
 	}
 	repaint();
 }
@@ -270,21 +305,8 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
-		switch (_graphics.RemoveShip())
-		{
-		case Graphics::SHIPADDITION::OK:
-			RenewShipCount();
-			repaint();
-			return;
-		case Graphics::SHIPADDITION::NOCOORD:
-			Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
-			return;
-		case Graphics::SHIPADDITION::INCORRECTMODE:
-			Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
-			return;
-		default:
-			throw exception(__func__);
-		}
+		RemoveShip();
+		return;
 	default:
 		return;
 	}

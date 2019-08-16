@@ -9,7 +9,7 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-		Ui::SeaBattleForm _mainForm{ };
+	Ui::SeaBattleForm _mainForm{ };
 	Graphics _graphics;
 	std::unique_ptr<NetworkInterface> _clientServer{ };
 
@@ -35,6 +35,7 @@ protected:
 	bool CheckGameReady();
 	void paintEvent(QPaintEvent* event) override;
 	void AddShip();
+	void RemoveShip();
 	void RenewShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void leaveEvent(QEvent* event) override;
