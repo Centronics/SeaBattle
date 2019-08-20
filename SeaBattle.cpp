@@ -8,13 +8,12 @@ using namespace std;
 SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 {
 	_mainForm.setupUi(this);
-	setMouseTracking(true);
+	_mainForm.frmDrawing->installEventFilter(this);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
-	connect(_mainForm.btnClearShips, SIGNAL(clicked()), this, SLOT(SlotBtnClearShipsClicked()));
-	connect(_mainForm.btnConnect, SIGNAL(clicked()), this, SLOT(SlotBtnConnectClicked()));
-	connect(_mainForm.btnServerStart, SIGNAL(clicked()), this, SLOT(SlotBtnServerStartClicked()));
-	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), this, SLOT(SlotBtnDisconnectClicked()));
-	_mainForm.btnDisconnect->setEnabled(false);
+	connect(_mainForm.btnClearShips, SIGNAL(clicked()), SLOT(SlotBtnClearShipsClicked()));
+	connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked()));
+	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
+	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
 }
@@ -23,49 +22,77 @@ void SeaBattle::SlotBtnClearShipsClicked()
 {
 	_graphics.ClearField();
 	RenewShipCount();
-	repaint();
+	update();
 }
 
 void SeaBattle::SlotBtnConnectClicked()
 {
 	if (!CheckGameReady())
 		return;
-	const auto port = GetPort();
+	const optional<quint16> port = GetPort();
 	if (!port)
+	{
+		Message("Порт не указан.", "Укажите порт, к которому необходимо подключиться!");
 		return;
-	_mainForm.btnConnect->setEnabled(false);
-	_mainForm.btnServerStart->setEnabled(false);
-	_mainForm.btnDisconnect->setEnabled(true);
-	_mainForm.lstShipArea->setEnabled(false);
-	_mainForm.lstDirection->setEnabled(false);
+	}
+	OffButtons();
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = false;
-	repaint();
+	update();
 }
 
 void SeaBattle::SlotBtnServerStartClicked()
 {
 	if (!CheckGameReady())
 		return;
-	const auto port = GetPort();
+	const optional<quint16> port = GetPort();
 	if (!port)
 	{
 		Message("Порт не указан.", "Укажите порт, который необходимо прослушивать!");
 		return;
 	}
-	_mainForm.btnConnect->setEnabled(false);
-	_mainForm.btnServerStart->setEnabled(false);
-	_mainForm.btnDisconnect->setEnabled(true);
-	_mainForm.btnClearShips->setEnabled(false);
-	_mainForm.txtIPAddress->setReadOnly(true);
-	_mainForm.txtPort->setReadOnly(true);
-	_mainForm.lstShipArea->setEnabled(false);
-	_mainForm.lstDirection->setEnabled(false);
+	OffButtons();
 	Initialize<Server>()->Listen(*port);
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = true;
-	repaint();
+	update();
+}
+
+bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
+{
+	if (watched != _mainForm.frmDrawing)
+		return QObject::eventFilter(watched, event);
+	// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+	switch (event->type())
+	{
+	case QEvent::Leave:
+		Graphics::CursorX = -1;
+		Graphics::CursorY = -1;
+		_mainForm.frmDrawing->update();
+		break;
+	case QEvent::Paint:
+	{
+		QPainter painter(_mainForm.frmDrawing);
+		const auto selShip = GetSelectedShip();
+		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
+		break;
+	}
+	}
+	return QObject::eventFilter(watched, event);
+}
+
+void SeaBattle::OffButtons(const bool off) const
+{
+	const bool t = !off;
+	_mainForm.btnConnect->setEnabled(t);
+	_mainForm.btnServerStart->setEnabled(t);
+	_mainForm.btnClearShips->setEnabled(t);
+	_mainForm.lstShipArea->setEnabled(t);
+	_mainForm.lstDirection->setEnabled(t);
+	_mainForm.btnDisconnect->setEnabled(off);
+	_mainForm.txtPort->setReadOnly(off);
+	_mainForm.txtIPAddress->setReadOnly(off);
 }
 
 bool SeaBattle::CheckGameReady()
@@ -78,15 +105,12 @@ bool SeaBattle::CheckGameReady()
 
 void SeaBattle::SlotBtnDisconnectClicked()
 {
-	_mainForm.btnConnect->setEnabled(true);
-	_mainForm.btnServerStart->setEnabled(true);
-	_mainForm.btnClearShips->setEnabled(true);
-	_mainForm.btnDisconnect->setEnabled(false);
+	OffButtons(false);
 	_clientServer.reset();
 	_graphics.ClearRivalState();
 	Graphics::ShipAddition = true;
 	Graphics::IsRivalMove = false;
-	repaint();
+	update();
 }
 
 void SeaBattle::SlotReceive(const Packet& packet)
@@ -96,7 +120,7 @@ void SeaBattle::SlotReceive(const Packet& packet)
 		Message("Ошибка.", packet.ErrorString());
 		Graphics::ShipAddition = true;
 		Graphics::IsRivalMove = false;
-		repaint();
+		update();
 		return;
 	}
 	DOIT doit;
@@ -117,25 +141,7 @@ void SeaBattle::SlotReceive(const Packet& packet)
 	_graphics.RivalHit(param);
 	Graphics::IsRivalMove = false;
 	Impact(false);
-	repaint();
-}
-
-void SeaBattle::paintEvent(QPaintEvent* event)
-{
-	Q_UNUSED(event);
-	QPainter painter(this);
-	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) != Ship::TYPES::EMPTY)
-		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
-	else
-		_graphics.Paint(painter);
-}
-
-void SeaBattle::leaveEvent(QEvent* event)
-{
-	Graphics::CursorX = -1;
-	Graphics::CursorY = -1;
-	repaint();
+	update();
 }
 
 tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
@@ -208,7 +214,7 @@ void SeaBattle::RemoveShip()
 	{
 	case Graphics::SHIPADDITION::OK:
 		RenewShipCount();
-		repaint();
+		update();
 		return;
 	case Graphics::SHIPADDITION::NOCOORD:
 		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
@@ -258,7 +264,7 @@ void SeaBattle::mouseMoveEvent(QMouseEvent* event)
 {
 	Graphics::CursorX = event->x();
 	Graphics::CursorY = event->y();
-	repaint();
+	update();
 }
 
 void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
@@ -294,7 +300,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	default:
 		return;
 	}
-	repaint();
+	update();
 }
 
 void SeaBattle::keyReleaseEvent(QKeyEvent* event)

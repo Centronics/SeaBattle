@@ -19,7 +19,7 @@ private slots:
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
-	void SlotReceive(const Packet& packet);
+	void SlotReceive(const Packet&);
 
 public:
 
@@ -32,13 +32,13 @@ public:
 
 protected:
 
+	bool eventFilter(QObject* watched, QEvent* event) override;
+	void OffButtons(bool off = true) const;
 	bool CheckGameReady();
-	void paintEvent(QPaintEvent* event) override;
 	void AddShip();
 	void RemoveShip();
 	void RenewShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
-	void leaveEvent(QEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void Message(const QString& comment, const QString& infoMessage);
@@ -51,7 +51,7 @@ protected:
 		const auto f = [this]() -> T*
 		{
 			T* const result = new T(_graphics, *this, this);
-			connect(result, SIGNAL(SignalReceive(const Packet&)), this, SLOT(SlotReceive(const Packet&)));
+			connect(result, SIGNAL(SignalReceive(const Packet&)), SLOT(SlotReceive(const Packet&)));
 			return result;
 		};
 

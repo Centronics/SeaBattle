@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>595</width>
-    <height>340</height>
+    <height>341</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -16,8 +16,29 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
+  <property name="mouseTracking">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string notr="true">Морской бой</string>
+  </property>
+  <property name="toolTip">
+   <string notr="true"/>
+  </property>
+  <property name="statusTip">
+   <string notr="true"/>
+  </property>
+  <property name="whatsThis">
+   <string notr="true"/>
+  </property>
+  <property name="accessibleName">
+   <string notr="true"/>
+  </property>
+  <property name="accessibleDescription">
+   <string notr="true"/>
+  </property>
+  <property name="windowFilePath">
+   <string notr="true"/>
   </property>
   <widget class="QLineEdit" name="txtIPAddress">
    <property name="geometry">
@@ -72,6 +93,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="btnDisconnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>339</x>
@@ -222,7 +246,7 @@
     <string>Очистить поле</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="lblIPAddress">
    <property name="geometry">
     <rect>
      <x>341</x>
@@ -235,7 +259,7 @@
     <string>IP:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="lblPort">
    <property name="geometry">
     <rect>
      <x>507</x>
@@ -246,6 +270,34 @@
    </property>
    <property name="text">
     <string>Порт:</string>
+   </property>
+  </widget>
+  <widget class="QFrame" name="frmDrawing">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>341</width>
+     <height>341</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="mouseTracking">
+    <bool>true</bool>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::NoFrame</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>0</number>
    </property>
   </widget>
  </widget>
