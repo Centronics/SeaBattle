@@ -10,12 +10,12 @@ SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
 	_mainForm.setupUi(this);
 	_mainForm.frmDrawing->installEventFilter(this);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
+	_mainForm.lstShipArea->setCurrentRow(0);
+	_mainForm.lstDirection->setCurrentRow(0);
 	connect(_mainForm.btnClearShips, SIGNAL(clicked()), SLOT(SlotBtnClearShipsClicked()));
 	connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked()));
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
-	_mainForm.lstShipArea->setCurrentRow(0);
-	_mainForm.lstDirection->setCurrentRow(0);
 }
 
 void SeaBattle::SlotBtnClearShipsClicked()
@@ -62,24 +62,26 @@ void SeaBattle::SlotBtnServerStartClicked()
 bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 {
 	if (watched != _mainForm.frmDrawing)
-		return QObject::eventFilter(watched, event);
-	// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+		return QWidget::eventFilter(watched, event);
 	switch (event->type())
 	{
 	case QEvent::Leave:
 		Graphics::CursorX = -1;
 		Graphics::CursorY = -1;
 		_mainForm.frmDrawing->update();
-		break;
+		QWidget::eventFilter(watched, event);
+		return true;
 	case QEvent::Paint:
 	{
 		QPainter painter(_mainForm.frmDrawing);
 		const auto selShip = GetSelectedShip();
 		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
-		break;
+		QWidget::eventFilter(watched, event);
+		return true;
 	}
+	default:
+		return QWidget::eventFilter(watched, event);
 	}
-	return QObject::eventFilter(watched, event);
 }
 
 void SeaBattle::OffButtons(const bool off) const
@@ -275,15 +277,11 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		Graphics::Clicked = true;
 		if (!Graphics::ShipAddition)
 		{
-			if (Graphics::IsRivalMove)
-			{
-				Graphics::Clicked = false;
-				return;
-			}
 			const optional<quint8> coord = _graphics.GetCoord();
-			if (!coord)
+			if (Graphics::IsRivalMove || !coord)
 			{
 				Graphics::Clicked = false;
+				QWidget::mouseReleaseEvent(event);
 				return;
 			}
 			_graphics.MyHit(*coord);
@@ -298,6 +296,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		RemoveShip();
 		break;
 	default:
+		QWidget::mouseReleaseEvent(event);
 		return;
 	}
 	update();
@@ -314,7 +313,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		RemoveShip();
 		return;
 	default:
-		return;
+		QWidget::keyReleaseEvent(event);
 	}
 }
 
