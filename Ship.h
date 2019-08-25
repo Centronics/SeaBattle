@@ -59,7 +59,7 @@ public:
 
 protected:
 
-	explicit Ship(const quint8 byte)
+	explicit Ship(const quint8 byte) noexcept
 	{
 		_currentState = byte;
 	}
@@ -106,7 +106,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] HOLDER GetShipHolder() const
+	[[nodiscard]] HOLDER GetShipHolder() const noexcept
 	{
 		return static_cast<HOLDER>((_currentState & 0xC0u) >> 6u);
 	}
@@ -144,7 +144,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] BIT GetBit() const
+	[[nodiscard]] BIT GetBit() const noexcept
 	{
 		return static_cast<BIT>((_currentState & 0x30u) >> 4u);
 	}
@@ -240,12 +240,12 @@ public:
 		}
 	}
 
-	void Delete()
+	void Delete() noexcept
 	{
 		_currentState = quint8{};
 	}
 
-	explicit operator quint8() const
+	explicit operator quint8() const noexcept
 	{
 		return _currentState;
 	}

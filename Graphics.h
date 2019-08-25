@@ -35,7 +35,7 @@ protected:
 	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
-	std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
+	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
 	static void SetMoveQuad(QPainter& painter);
 	static void DrawWarning(QPainter& painter);
 

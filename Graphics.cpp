@@ -79,11 +79,11 @@ Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROT
 
 Graphics::SHIPADDITION Graphics::RemoveShip()
 {
-	if (!ShipAddition)
-		return SHIPADDITION::INCORRECTMODE;
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
-		return SHIPADDITION::OK;
+		return SHIPADDITION::NOCOORD;
+	if (!ShipAddition)
+		return SHIPADDITION::INCORRECTMODE;
 	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
 	return SHIPADDITION::OK;
@@ -180,6 +180,8 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord || !mas)
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const Ship& ship = _screenObjects[*mas];
+	if (ship.GetShipType() == Ship::TYPES::EMPTY)
+		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const quint8 mx = *mas % 10, my = *mas / 10;
 	if (const Ship::ROTATE r = ship.GetRotate(); r != Ship::ROTATE::NIL)
 		return make_tuple(true, mx, my, r);

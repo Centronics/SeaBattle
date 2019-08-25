@@ -12,6 +12,7 @@ class SeaBattle : public QWidget
 	Ui::SeaBattleForm _mainForm{ };
 	Graphics _graphics;
 	std::unique_ptr<NetworkInterface> _clientServer{ };
+	inline static const QString SettingsFileName = "Settings.xml";
 
 private slots:
 
@@ -23,7 +24,7 @@ private slots:
 
 public:
 
-	explicit SeaBattle(QWidget* parent = Q_NULLPTR);
+	explicit SeaBattle(QWidget* parent = Q_NULLPTR) noexcept;
 	SeaBattle(const SeaBattle&) = delete;
 	SeaBattle(SeaBattle&&) = delete;
 	~SeaBattle() = default;
@@ -41,8 +42,11 @@ protected:
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
-	void Message(const QString& comment, const QString& infoMessage);
+	void closeEvent(QCloseEvent* event) override;
+	QMessageBox::StandardButton Message(const QString& comment, const QString& infoMessage, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
 	void Impact(bool disconnect);
+	void SaveParameters() const;
+	void LoadParameters() const;
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort();
 

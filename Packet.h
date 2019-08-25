@@ -37,12 +37,12 @@ public:
 	[[nodiscard]] bool ReadRivals(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
 
-	[[nodiscard]] const QString& ErrorString() const
+	[[nodiscard]] const QString& ErrorString() const noexcept
 	{
 		return _errorMessage;
 	}
 
-	[[nodiscard]] explicit operator bool() const
+	[[nodiscard]] explicit operator bool() const noexcept
 	{
 		return !_error;
 	}

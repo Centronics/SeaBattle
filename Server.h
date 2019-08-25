@@ -17,7 +17,7 @@ public:
 	}
 
 	Server() = delete;
-	virtual ~Server() = default;
+	~Server() = default;
 	Server(const Server&) = delete;
 	Server(Server&&) = delete;
 	Server& operator=(const Server&) = delete;

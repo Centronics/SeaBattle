@@ -5,13 +5,14 @@
 
 using namespace std;
 
-SeaBattle::SeaBattle(QWidget* parent) : QWidget(parent), _graphics(this)
+SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent), _graphics(this)
 {
 	_mainForm.setupUi(this);
 	_mainForm.frmDrawing->installEventFilter(this);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
+	LoadParameters();
 	connect(_mainForm.btnClearShips, SIGNAL(clicked()), SLOT(SlotBtnClearShipsClicked()));
 	connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked()));
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
@@ -27,6 +28,7 @@ void SeaBattle::SlotBtnClearShipsClicked()
 
 void SeaBattle::SlotBtnConnectClicked()
 {
+	SaveParameters();
 	if (!CheckGameReady())
 		return;
 	const optional<quint16> port = GetPort();
@@ -44,6 +46,7 @@ void SeaBattle::SlotBtnConnectClicked()
 
 void SeaBattle::SlotBtnServerStartClicked()
 {
+	SaveParameters();
 	if (!CheckGameReady())
 		return;
 	const optional<quint16> port = GetPort();
@@ -57,6 +60,53 @@ void SeaBattle::SlotBtnServerStartClicked()
 	Graphics::ShipAddition = false;
 	Graphics::IsRivalMove = true;
 	update();
+}
+
+void SeaBattle::SaveParameters() const
+{
+	QDomDocument doc(QString{});
+
+	const auto createElement = [&doc](const QString& tagName, const QString& value)
+	{
+		QDomElement domElement = doc.createElement(tagName);
+		doc.appendChild(domElement);
+		domElement.appendChild(doc.createTextNode(value.trimmed()));
+		return domElement;
+	};
+
+	QDomElement domElement = doc.createElement("SeaBattle");
+	doc.appendChild(domElement);
+	domElement.appendChild(createElement("IPAddress", _mainForm.txtIPAddress->text()));
+	domElement.appendChild(createElement("Port", _mainForm.txtPort->text()));
+	QFile file(SettingsFileName);
+	if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+		QTextStream(&file) << doc.toString();
+}
+
+void SeaBattle::LoadParameters() const
+{
+	QFile file(SettingsFileName);
+	if (!file.open(QIODevice::ReadOnly))
+		return;
+
+	QDomDocument domDoc;
+	if (!domDoc.setContent(&file))
+		return;
+	QDomNode node = domDoc.documentElement().firstChild();
+	if (node.isNull() || !node.isElement())
+		return;
+	QDomElement el = node.toElement();
+	if (el.isNull() || el.tagName() != "IPAddress")
+		return;
+	const QString strIP = el.text();
+	node = node.nextSibling();
+	if (node.isNull())
+		return;
+	el = node.toElement();
+	if (el.isNull() || el.tagName() != "Port")
+		return;
+	_mainForm.txtIPAddress->setText(strIP);
+	_mainForm.txtPort->setText(el.text());
 }
 
 bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
@@ -101,7 +151,7 @@ bool SeaBattle::CheckGameReady()
 {
 	if (_graphics.IsReadyToPlay())
 		return true;
-	Message("", "Необходимо расставить все корабли.");
+	Message(QString{}, "Необходимо расставить все корабли.");
 	return false;
 }
 
@@ -197,7 +247,6 @@ void SeaBattle::AddShip()
 		Message("Таких кораблей поставлено достаточно.", "Невозможно поставить корабль.");
 		return;
 	case Graphics::SHIPADDITION::NOCOORD:
-		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 		return;
 	case Graphics::SHIPADDITION::NOTFREE:
 		Message("Место занято.", "Другие корабли стоят слишком близко.");
@@ -219,7 +268,6 @@ void SeaBattle::RemoveShip()
 		update();
 		return;
 	case Graphics::SHIPADDITION::NOCOORD:
-		Message("Сюда нельзя поставить корабль.", "Переставьте в другое место.");
 		return;
 	case Graphics::SHIPADDITION::INCORRECTMODE:
 		Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
@@ -304,10 +352,16 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 
 void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 {
+	if (event->isAutoRepeat())
+	{
+		QWidget::keyReleaseEvent(event);
+		return;
+	}
 	switch (event->key())
 	{
 	case Qt::Key::Key_Escape:
-		QApplication::quit();
+		if (close())
+			QApplication::quit();
 		return;
 	case Qt::Key::Key_Delete:
 		RemoveShip();
@@ -315,6 +369,23 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 	default:
 		QWidget::keyReleaseEvent(event);
 	}
+}
+
+void SeaBattle::closeEvent(QCloseEvent* event)
+{
+	if (!Graphics::ShipAddition)
+		switch (Message("Партия не закончена.", "Выйти из игры?", QMessageBox::Question, QMessageBox::Yes | QMessageBox::No, QMessageBox::No, QMessageBox::No))
+		{
+		case QMessageBox::Yes:
+			break;
+		case QMessageBox::No:
+			event->ignore();
+			return;
+		default:
+			throw exception(__func__);
+		}
+	SaveParameters();
+	event->accept();
 }
 
 optional<quint16> SeaBattle::GetPort()
@@ -327,16 +398,42 @@ optional<quint16> SeaBattle::GetPort()
 	return nullopt;
 }
 
-void SeaBattle::Message(const QString& comment, const QString& infoMessage)
+QMessageBox::StandardButton SeaBattle::Message(const QString& comment, const QString& infoMessage, const QMessageBox::Icon icon, const QMessageBox::StandardButtons btnSet, const QMessageBox::StandardButton btnDef, const QMessageBox::StandardButton btnEsc)
 {
-	QMessageBox msgBox(this);
-	if (!comment.isEmpty())
-		msgBox.setText(comment);
-	if (!infoMessage.isEmpty())
-		msgBox.setInformativeText(infoMessage);
-	msgBox.setStandardButtons(QMessageBox::Ok);
-	msgBox.setDefaultButton(QMessageBox::Ok);
-	msgBox.exec();
+	class MyMessageBox : public QMessageBox
+	{
+	public:
+
+		explicit MyMessageBox(QWidget* parent) : QMessageBox(parent) { }
+
+	protected:
+
+		void keyPressEvent(QKeyEvent* event) override
+		{
+			event->accept();
+		}
+
+		void keyReleaseEvent(QKeyEvent* event) override
+		{
+			if (!event->isAutoRepeat() && event->key() == Qt::Key::Key_Escape)
+				close();
+		}
+
+	} msgBox(this);
+
+	msgBox.setText(comment);
+	msgBox.setInformativeText(infoMessage);
+	msgBox.setIcon(icon);
+	msgBox.setStandardButtons(btnSet);
+	msgBox.setDefaultButton(btnDef);
+	msgBox.setEscapeButton(btnEsc);
+	msgBox.setWindowTitle("Морской бой");
+	msgBox.setWindowModality(Qt::WindowModal);
+	msgBox.setTextFormat(Qt::PlainText);
+	msgBox.setTextInteractionFlags(Qt::NoTextInteraction);
+	msgBox.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
+	msgBox.setStyleSheet("QMessageBox { font-family: Arial; font-style: normal; font-size: 15pt; color: #000000; }");
+	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
 void SeaBattle::Impact(const bool disconnect)
@@ -353,11 +450,11 @@ void SeaBattle::Impact(const bool disconnect)
 	{
 	case Graphics::BROKEN::ME:
 		pStop();
-		Message("Поражение!", "Вы проиграли.");
+		Message("Поражение!", "Вы проиграли.", QMessageBox::Information);
 		return;
 	case Graphics::BROKEN::RIVAL:
 		pStop();
-		Message("Победа!", "Соперник потерпел поражение.");
+		Message("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
 		return;
 	case Graphics::BROKEN::NOTHING:
 		if (disconnect)

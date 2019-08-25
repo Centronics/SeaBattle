@@ -36,9 +36,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SeaBattle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -49,6 +46,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SeaBattle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -67,16 +67,16 @@
     <QtMoc Include="SeaBattle.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="NetworkInterface.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="Client.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="Server.h">
+    <QtMoc Include="Graphics.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="Graphics.h">
+    <QtMoc Include="NetworkInterface.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Server.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
