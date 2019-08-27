@@ -129,6 +129,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyMessageBox.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="SeaBattle.cpp">
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>
@@ -145,6 +146,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MyMessageBox.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Ship.h" />
     <QtMoc Include="Server.h">

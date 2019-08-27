@@ -86,7 +86,7 @@ void Server::SlotNewConnection()
 
 void Server::SlotReadClient()
 {
-	QTcpSocket* const pClientSocket = dynamic_cast<QTcpSocket*>(sender());
+	QTcpSocket* const pClientSocket = qobject_cast<QTcpSocket*>(sender());
 	if (!pClientSocket)
 		return;
 	QDataStream in(pClientSocket);

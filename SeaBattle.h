@@ -1,7 +1,6 @@
 #pragma once
 #include "ui_SeaBattle.h"
 #include "Graphics.h"
-#include "Packet.h"
 #include "NetworkInterface.h"
 #include "Client.h"
 
@@ -43,7 +42,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void closeEvent(QCloseEvent* event) override;
-	QMessageBox::StandardButton Message(const QString& comment, const QString& infoMessage, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
+	QMessageBox::StandardButton Message(const QString& situation, const QString& question, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
 	void Impact(bool disconnect);
 	void SaveParameters() const;
 	void LoadParameters() const;
@@ -59,11 +58,8 @@ protected:
 			return result;
 		};
 
-		if (!_clientServer)
+		if (!qobject_cast<T*>(_clientServer.get()))
 			_clientServer.reset(f());
-		else
-			if (!dynamic_cast<T*>(_clientServer.get()))
-				_clientServer.reset(f());
 		return reinterpret_cast<T*>(_clientServer.get());
 	}
 };

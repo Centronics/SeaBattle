@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "SeaBattle.h"
+#include "Packet.h"
 #include "Server.h"
-#include "Client.h"
+#include "MyMessageBox.h"
 
 using namespace std;
 
@@ -398,41 +399,15 @@ optional<quint16> SeaBattle::GetPort()
 	return nullopt;
 }
 
-QMessageBox::StandardButton SeaBattle::Message(const QString& comment, const QString& infoMessage, const QMessageBox::Icon icon, const QMessageBox::StandardButtons btnSet, const QMessageBox::StandardButton btnDef, const QMessageBox::StandardButton btnEsc)
+QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const QString& question, const QMessageBox::Icon icon, const QMessageBox::StandardButtons btnSet, const QMessageBox::StandardButton btnDef, const QMessageBox::StandardButton btnEsc)
 {
-	class MyMessageBox : public QMessageBox
-	{
-	public:
-
-		explicit MyMessageBox(QWidget* parent) : QMessageBox(parent) { }
-
-	protected:
-
-		void keyPressEvent(QKeyEvent* event) override
-		{
-			event->accept();
-		}
-
-		void keyReleaseEvent(QKeyEvent* event) override
-		{
-			if (!event->isAutoRepeat() && event->key() == Qt::Key::Key_Escape)
-				close();
-		}
-
-	} msgBox(this);
-
-	msgBox.setText(comment);
-	msgBox.setInformativeText(infoMessage);
+	MyMessageBox msgBox(this);
+	msgBox.setText(situation);
+	msgBox.setInformativeText(question);
 	msgBox.setIcon(icon);
 	msgBox.setStandardButtons(btnSet);
 	msgBox.setDefaultButton(btnDef);
 	msgBox.setEscapeButton(btnEsc);
-	msgBox.setWindowTitle("Морской бой");
-	msgBox.setWindowModality(Qt::WindowModal);
-	msgBox.setTextFormat(Qt::PlainText);
-	msgBox.setTextInteractionFlags(Qt::NoTextInteraction);
-	msgBox.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
-	msgBox.setStyleSheet("QMessageBox { font-family: Arial; font-style: normal; font-size: 15pt; color: #000000; }");
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
