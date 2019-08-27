@@ -6,7 +6,7 @@
 
 using namespace std;
 
-SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent), _graphics(this)
+SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 {
 	_mainForm.setupUi(this);
 	_mainForm.frmDrawing->installEventFilter(this);

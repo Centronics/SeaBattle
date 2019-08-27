@@ -1,10 +1,8 @@
 #pragma once
 #include "Ship.h"
 
-class Graphics : public QObject
+class Graphics
 {
-	Q_OBJECT
-
 public:
 
 	enum class SHIPADDITION
@@ -43,7 +41,7 @@ public:
 
 	static constexpr int Margin = 10, BetweenObjects = 5, ObjectWidth = 32, MaxCoord = (ObjectWidth * 10) + Margin;
 
-	explicit Graphics(QObject* parent) : QObject(parent) { }
+	Graphics() = default;
 	~Graphics() = default;
 	Graphics(const Graphics&) = delete;
 	Graphics(Graphics&&) = delete;
