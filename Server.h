@@ -14,6 +14,7 @@ public:
 	explicit Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
 	{
 		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+		_currentState = STATE::WAITMAP;
 	}
 
 	Server() = delete;
@@ -29,14 +30,14 @@ public:
 
 protected:
 
-	void SendToClient(const Packet& packet) const;
+	void SendToClient(Packet packet) const;
 
 private:
 
 	QTcpServer _server{ this };
 	QTcpSocket* _socket = nullptr;
 
-	void SendAnswerToClient(const Packet& packet);
+	void SendAnswerToClient(Packet packet);
 	void SocketClose();
 
 private slots:

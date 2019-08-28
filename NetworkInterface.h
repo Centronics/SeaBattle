@@ -23,7 +23,15 @@ public:
 
 protected:
 
-	DOIT _currentState = DOIT::STARTGAME;
+	enum class STATE : quint8
+	{
+		PUSHMAP,
+		WAITMAP,
+		WAITHIT,
+		HIT
+	};
+
+	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
 	SeaBattle& _client;
 
@@ -42,14 +50,14 @@ protected:
 
 signals:
 
-	void SignalReceive(const Packet& packet);
+	void SignalReceive(Packet packet);
 
 protected slots:
 
 	void SlotClosed()
 	{
 		Packet p;
-		p.WriteData(DOIT::STOPGAME);
+		p.SetDisconnected();
 		emit SignalReceive(p);
 	}
 };

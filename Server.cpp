@@ -3,53 +3,41 @@
 
 using namespace std;
 
-void Server::SendAnswerToClient(const Packet& packet)
+void Server::SendAnswerToClient(Packet packet)
 {
 	switch (Packet out; _currentState)
 	{
-	case DOIT::STARTGAME:
-		if (DOIT doit; !packet.ReadData(doit) && doit != DOIT::STARTGAME)
+	case STATE::WAITMAP:
+		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			SocketClose();
-			return;
-		}
-		out.WriteData(DOIT::STARTGAME);
-		SendToClient(out);
-		_currentState = DOIT::WAITMAP;
-		break;
-	case DOIT::WAITMAP:
-		if (DOIT doit; !packet.ReadData(doit) || doit != DOIT::PUSHMAP)
-		{
-			_currentState = DOIT::STARTGAME;
+			_currentState = STATE::WAITMAP;
 			SocketClose();
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
-		if (!_graphics.ReadRivals(packet))
-		{
-			_currentState = DOIT::STARTGAME;
-			SocketClose();
-			emit SignalReceive(Packet("Rivals not readed."));
-			break;
-		}
 		out.WriteData(_graphics.GetData());
-		SendToClient(out);
-		_currentState = DOIT::WAITHIT;
+		SendToClient(move(out));
+		_currentState = STATE::WAITHIT;
 		emit SignalReceive(Packet());
 		break;
-	case DOIT::WAITHIT:
-		if (DOIT doit; !packet.ReadData(doit) || doit != DOIT::HIT)
+	case STATE::WAITHIT:
+		quint8 coord;
+		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			_currentState = DOIT::STARTGAME;
+			_currentState = STATE::WAITMAP;
 			SocketClose();
 			emit SignalReceive(Packet("HIT error."));
 			break;
 		}
-		_currentState = DOIT::HIT;
-		emit SignalReceive(packet);
+		if (!_graphics.RivalHit(coord))
+		{
+			_currentState = STATE::HIT;
+			Graphics::IsRivalMove = false;
+		}
+		emit SignalReceive(move(packet));
 		break;
-	case DOIT::HIT:
-		break;
+	case STATE::HIT:
+		return;
 	default:
 		throw exception(__func__);
 	}
@@ -63,7 +51,7 @@ void Server::SocketClose()
 	_socket = nullptr;
 }
 
-void Server::SendToClient(const Packet& packet) const
+void Server::SendToClient(const Packet packet) const
 {
 	if (_socket)
 		_socket->write(GetBytes(packet));
@@ -80,7 +68,7 @@ void Server::SlotNewConnection()
 	else
 	{
 		_socket = pClientSocket;
-		_currentState = DOIT::STARTGAME;
+		_currentState = STATE::WAITMAP;
 	}
 }
 
@@ -102,18 +90,23 @@ void Server::SlotReadClient()
 
 void Server::SendHit(const quint8 coord)
 {
-	if (_currentState != DOIT::HIT)
+	if (_currentState != STATE::HIT)
 		return;
+	if (!_graphics.MyHit(coord))
+	{
+		_currentState = STATE::WAITHIT;
+		Graphics::IsRivalMove = true;
+	}
 	Packet packet;
-	packet.WriteData(DOIT::HIT, coord);
-	SendToClient(packet);
+	packet.WriteData(Packet::DOIT::HIT, coord);
+	SendToClient(move(packet));
 }
 
 void Server::Close()
 {
 	_server.close();
 	SocketClose();
-	_currentState = DOIT::STARTGAME;
+	_currentState = STATE::WAITMAP;
 }
 
 void Server::Listen(const quint16 port)

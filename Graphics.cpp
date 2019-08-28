@@ -89,18 +89,20 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 	return SHIPADDITION::OK;
 }
 
-void Graphics::RivalHit(const quint8 coord)
+bool Graphics::RivalHit(const quint8 coord)
 {
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::ME))
 		ship.SetBit(Ship::BIT::BOTH);
+	return ship.GetHolding(Ship::HOLDING::ME);
 }
 
-void Graphics::MyHit(const quint8 coord)
+bool Graphics::MyHit(const quint8 coord)
 {
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
 		ship.SetBit(Ship::BIT::BOTH);
+	return ship.GetHolding(Ship::HOLDING::RIVAL);
 }
 
 bool Graphics::IsReadyToPlay(const Ship::TYPES ship) const
@@ -510,9 +512,4 @@ optional<quint8> Graphics::GetCoord() const
 vector<Ship>& Graphics::GetData()
 {
 	return _screenObjects;
-}
-
-bool Graphics::ReadRivals(const Packet& packet)
-{
-	return packet.ReadRivals(_screenObjects);
 }

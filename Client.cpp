@@ -9,21 +9,26 @@ Client::Client(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g,
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
 	connect(&_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
+	_currentState = STATE::PUSHMAP;
 }
 
 inline void Client::SendHit(const quint8 coord)
 {
-	if (_currentState != DOIT::HIT)
+	if (_currentState != STATE::HIT)
 		return;
+	if (!_graphics.MyHit(coord))
+	{
+		_currentState = STATE::WAITHIT;
+		Graphics::IsRivalMove = true;
+	}
 	Packet packet;
-	packet.WriteData(DOIT::HIT, coord);
+	packet.WriteData(Packet::DOIT::HIT, coord);
 	SendToServer(packet);
-	_currentState = DOIT::WAITHIT;
 }
 
 void Client::Close()
 {
-	_currentState = DOIT::STARTGAME;
+	_currentState = STATE::PUSHMAP;
 	_tcpSocket.close();
 }
 
@@ -33,71 +38,42 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }
 
-void Client::SendAnswerToServer(const Packet* const packet)
+void Client::SendAnswerToServer(Packet packet)
 {
-	if (!packet)
-	{
-		_currentState = DOIT::STARTGAME;
-		emit SignalReceive(Packet("Подключен."));
-		return;
-	}
-	if (packet && !(*packet))
-	{
-		_currentState = DOIT::STARTGAME;
-		_tcpSocket.close();
-		emit SignalReceive(Packet("Неизвестная ошибка сети."));
-		return;
-	}
 	switch (Packet out; _currentState)
 	{
-	case DOIT::STARTGAME:
-		out.WriteData(DOIT::STARTGAME);
-		SendToServer(out);
-		_currentState = DOIT::PUSHMAP;
-		break;
-	case DOIT::PUSHMAP:
-		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::STARTGAME)
-		{
-			_currentState = DOIT::STARTGAME;
-			_tcpSocket.close();
-			emit SignalReceive(Packet("PUSHMAP error."));
-			break;
-		}
+	case STATE::PUSHMAP:
 		out.WriteData(_graphics.GetData());
 		SendToServer(out);
-		_currentState = DOIT::WAITMAP;
+		_currentState = STATE::WAITMAP;
 		break;
-	case DOIT::WAITMAP:
-		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::PUSHMAP)
+	case STATE::WAITMAP:
+		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			_currentState = DOIT::STARTGAME;
-			_tcpSocket.close();
+			Close();
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
-		if (!_graphics.ReadRivals(*packet))
-		{
-			_currentState = DOIT::STARTGAME;
-			_tcpSocket.close();
-			emit SignalReceive(Packet("Rivals not readed."));
-			break;
-		}
-		_currentState = DOIT::HIT;
+		_currentState = STATE::WAITHIT;
 		emit SignalReceive(Packet());
 		break;
-	case DOIT::WAITHIT:
-		if (DOIT doit; !packet->ReadData(doit) || doit != DOIT::HIT)
+	case STATE::WAITHIT:
+		quint8 coord;
+		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			_currentState = DOIT::STARTGAME;
-			_tcpSocket.close();
+			Close();
 			emit SignalReceive(Packet("HIT error."));
 			break;
 		}
-		_currentState = DOIT::HIT;
-		emit SignalReceive(*packet);
+		if (!_graphics.RivalHit(coord))
+		{
+			_currentState = STATE::HIT;
+			Graphics::IsRivalMove = false;
+		}
+		emit SignalReceive(move(packet));
 		break;
-	case DOIT::HIT:
-		break;
+	case STATE::HIT:
+		return;
 	default:
 		throw exception(__func__);
 	}
@@ -113,18 +89,17 @@ void Client::SlotReadyRead()
 	in >> blockSize;
 	if (_tcpSocket.bytesAvailable() < blockSize)
 		return;
-	Packet packet(in, blockSize);
-	SendAnswerToServer(&packet);
+	SendAnswerToServer(Packet(in, blockSize));
 }
 
 void Client::SendToServer(const Packet& packet)
 {
-	_tcpSocket.write(GetBytes(packet));//Проверить ошибку??
+	_tcpSocket.write(GetBytes(packet));
 }
 
 void Client::SlotConnected()
 {
-	SendAnswerToServer();
+	_currentState = STATE::PUSHMAP;
 }
 
 void Client::SlotError(const QAbstractSocket::SocketError err)
@@ -208,6 +183,5 @@ void Client::SlotError(const QAbstractSocket::SocketError err)
 		errorString = _tcpSocket.errorString();
 		break;
 	}
-	const Packet packet(errorString);
-	SendAnswerToServer(&packet);
+	SendAnswerToServer(Packet(errorString));
 }

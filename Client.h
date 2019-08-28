@@ -29,7 +29,7 @@ protected:
 private:
 
 	QTcpSocket _tcpSocket{ this };
-	void SendAnswerToServer(const Packet* packet = nullptr);
+	void SendAnswerToServer(Packet packet);
 
 private slots:
 

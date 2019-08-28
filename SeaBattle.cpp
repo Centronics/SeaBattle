@@ -170,24 +170,24 @@ void SeaBattle::SlotReceive(const Packet& packet)
 {
 	if (!packet)
 	{
-		Message("Ошибка.", packet.ErrorString());
+		switch (QString errStr; packet.GetState(&errStr))
+		{
+		case Packet::STATE::ERR:
+			Message("Ошибка.", errStr);
+			break;
+		case Packet::STATE::DISCONNECTED:
+			Impact(true);
+			break;
+		default:
+			throw exception(__func__);
+		}
 		Graphics::ShipAddition = true;
 		Graphics::IsRivalMove = false;
 		update();
 		return;
 	}
-	DOIT doit;
-	if (packet.ReadData(doit))
-	{
-		if (doit != DOIT::STOPGAME)
-			return;
-		Impact(true);
-		return;
-	}
 	quint8 param;
-	if (!packet.ReadData(doit, param))
-		return;
-	if (doit != DOIT::HIT)
+	if (Packet::DOIT doit; !packet.ReadData(doit, param) || doit != Packet::DOIT::HIT)
 		throw exception("Некорректный пакет.");
 	if (!Graphics::IsRivalMove)
 		return;
@@ -333,7 +333,6 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 				QWidget::mouseReleaseEvent(event);
 				return;
 			}
-			_graphics.MyHit(*coord);
 			_clientServer->SendHit(*coord);
 			Impact(false);
 			Graphics::IsRivalMove = true;

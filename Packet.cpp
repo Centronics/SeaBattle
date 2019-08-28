@@ -10,20 +10,11 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	switch (const DOIT dt = static_cast<DOIT>(doit))
 	{
 	case DOIT::PUSHMAP:
-	{
 		if (blockSize != 101)
 			return;
 		_massive.resize(101);
 		if (data.readRawData(reinterpret_cast<char*>(_massive.data()), 101) != 101)
 			_massive.clear();
-		return;
-	}
-	case DOIT::STARTGAME:
-	case DOIT::WAITHIT:
-		if (blockSize != 1)
-			return;
-		_massive.resize(1);
-		_massive[0] = static_cast<quint8>(dt);
 		return;
 	case DOIT::HIT:
 		if (blockSize != 2)
@@ -33,7 +24,7 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 		data >> _massive[1];
 		return;
 	default:
-		return;
+		throw exception(__func__);
 	}
 }
 
@@ -45,30 +36,10 @@ bool Packet::SerializeToQDataStream(QDataStream& data) const
 	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
 }
 
-Packet::Packet(Packet&& packet) noexcept
-{
-	_massive = move(packet._massive);
-}
-
-Packet& Packet::operator=(Packet&& packet) noexcept
-{
-	_massive = move(packet._massive);
-	return *this;
-}
-
 void Packet::WriteData(const DOIT doit, const quint8 param)
 {
-	switch (doit)
-	{
-	case DOIT::STARTGAME:
-	case DOIT::WAITMAP:
-	case DOIT::STOPGAME:
-	case DOIT::WAITHIT:
-	case DOIT::PUSHMAP:
-		return;
-	default:
-		break;
-	}
+	if (doit != DOIT::HIT)
+		throw exception(__func__);
 	_massive.clear();
 	_massive.reserve(2);
 	_massive.emplace_back(static_cast<quint8>(doit));
@@ -86,23 +57,6 @@ void Packet::WriteData(const vector<Ship>& mas)
 		_massive.emplace_back(t);
 }
 
-void Packet::WriteData(const DOIT doit)
-{
-	switch (doit)
-	{
-	case DOIT::HIT:
-	case DOIT::PUSHMAP:
-	case DOIT::WAITHIT:
-	case DOIT::WAITMAP:
-		return;
-	default:
-		break;
-	}
-	_massive.clear();
-	_massive.reserve(1);
-	_massive.emplace_back(static_cast<quint8>(doit));
-}
-
 bool Packet::ReadData(DOIT& doit, quint8& param) const
 {
 	if (_massive.size() != 2)
@@ -114,21 +68,6 @@ bool Packet::ReadData(DOIT& doit, quint8& param) const
 		return true;
 	}
 	return false;
-}
-
-bool Packet::ReadData(DOIT& doit) const
-{
-	if (_massive.size() != 1)
-		return false;
-	switch (const DOIT dt = static_cast<DOIT>(_massive[0]))
-	{
-	case DOIT::STARTGAME:
-	case DOIT::STOPGAME:
-		doit = dt;
-		return true;
-	default:
-		return false;
-	}
 }
 
 bool Packet::ReadRivals(std::vector<Ship>& mas) const
@@ -143,4 +82,11 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 				if (to.GetShipHolder() == Ship::HOLDER::NIL)
 					to.SetShipHolder(Ship::HOLDER::RIVAL);
 	return true;
+}
+
+Packet::Packet(Packet&& packet) noexcept
+{
+	_massive = move(packet._massive);
+	_error = packet._error;
+	_errorMessage = packet._errorMessage;
 }

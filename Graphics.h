@@ -54,8 +54,8 @@ public:
 	void Paint(QPainter& painter, Ship::TYPES ship = Ship::TYPES::EMPTY, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
 	void ClearRivalState();
 	void ClearField();
-	void RivalHit(quint8 coord);
-	void MyHit(quint8 coord);
+	bool RivalHit(quint8 coord);
+	bool MyHit(quint8 coord);
 
 	[[nodiscard]] SHIPADDITION RemoveShip();
 	[[nodiscard]] SHIPADDITION AddShip(Ship::TYPES ship, Ship::ROTATE rotate);
@@ -64,5 +64,4 @@ public:
 	[[nodiscard]] int GetShipCount(Ship::TYPES ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
-	[[nodiscard]] bool ReadRivals(const Packet& packet);
 };
