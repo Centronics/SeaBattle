@@ -166,7 +166,7 @@ void SeaBattle::SlotBtnDisconnectClicked()
 	update();
 }
 
-void SeaBattle::SlotReceive(const Packet& packet)
+void SeaBattle::SlotReceive(const Packet packet)
 {
 	if (!packet)
 	{

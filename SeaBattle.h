@@ -19,7 +19,7 @@ private slots:
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
-	void SlotReceive(const Packet&);
+	void SlotReceive(Packet packet);
 
 public:
 
@@ -54,7 +54,7 @@ protected:
 		const auto f = [this]() -> T*
 		{
 			T* const result = new T(_graphics, *this, this);
-			connect(result, SIGNAL(SignalReceive(const Packet&)), SLOT(SlotReceive(const Packet&)));
+			connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
 			return result;
 		};
 

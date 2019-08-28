@@ -38,7 +38,7 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }
 
-void Client::SendAnswerToServer(Packet packet)
+void Client::IncomingProc(Packet packet)
 {
 	switch (Packet out; _currentState)
 	{
@@ -55,7 +55,7 @@ void Client::SendAnswerToServer(Packet packet)
 			break;
 		}
 		_currentState = STATE::WAITHIT;
-		emit SignalReceive(Packet());
+		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
 		break;
 	case STATE::WAITHIT:
 		quint8 coord;
@@ -89,7 +89,7 @@ void Client::SlotReadyRead()
 	in >> blockSize;
 	if (_tcpSocket.bytesAvailable() < blockSize)
 		return;
-	SendAnswerToServer(Packet(in, blockSize));
+	IncomingProc(Packet(in, blockSize));
 }
 
 void Client::SendToServer(const Packet& packet)
@@ -183,5 +183,5 @@ void Client::SlotError(const QAbstractSocket::SocketError err)
 		errorString = _tcpSocket.errorString();
 		break;
 	}
-	SendAnswerToServer(Packet(errorString));
+	IncomingProc(Packet(errorString));
 }

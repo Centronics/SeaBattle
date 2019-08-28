@@ -36,6 +36,28 @@ bool Packet::SerializeToQDataStream(QDataStream& data) const
 	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
 }
 
+Packet::STATE Packet::GetState(QString* const errStr) const
+{
+	switch (_error)
+	{
+	case STATE::ERR:
+		if (errStr)
+			*errStr = _errorMessage;
+		break;
+	case STATE::DISCONNECTED:
+		if (errStr)
+			*errStr = "Disconnected";
+		break;
+	case STATE::CONNECTED:
+		if (errStr)
+			*errStr = "Connected";
+		break;
+	default:
+		break;
+	}
+	return _error;
+}
+
 void Packet::WriteData(const DOIT doit, const quint8 param)
 {
 	if (doit != DOIT::HIT)
@@ -88,5 +110,5 @@ Packet::Packet(Packet&& packet) noexcept
 {
 	_massive = move(packet._massive);
 	_error = packet._error;
-	_errorMessage = packet._errorMessage;
+	_errorMessage = move(packet._errorMessage);
 }

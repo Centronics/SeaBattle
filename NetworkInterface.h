@@ -56,8 +56,6 @@ protected slots:
 
 	void SlotClosed()
 	{
-		Packet p;
-		p.SetDisconnected();
-		emit SignalReceive(p);
+		emit SignalReceive(Packet(Packet::STATE::DISCONNECTED));
 	}
 };

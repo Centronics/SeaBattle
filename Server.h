@@ -11,12 +11,7 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
-	{
-		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
-		_currentState = STATE::WAITMAP;
-	}
-
+	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
 	Server() = delete;
 	~Server() = default;
 	Server(const Server&) = delete;
@@ -28,16 +23,13 @@ public:
 	void Close() override;
 	void Listen(quint16 port);
 
-protected:
-
-	void SendToClient(Packet packet) const;
-
 private:
 
 	QTcpServer _server{ this };
 	QTcpSocket* _socket = nullptr;
 
-	void SendAnswerToClient(Packet packet);
+	void SendToClient(Packet packet) const;
+	void IncomingProc(Packet packet);
 	void SocketClose();
 
 private slots:

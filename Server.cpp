@@ -3,7 +3,13 @@
 
 using namespace std;
 
-void Server::SendAnswerToClient(Packet packet)
+Server::Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+{
+	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+	_currentState = STATE::WAITMAP;
+}
+
+void Server::IncomingProc(Packet packet)
 {
 	switch (Packet out; _currentState)
 	{
@@ -18,7 +24,7 @@ void Server::SendAnswerToClient(Packet packet)
 		out.WriteData(_graphics.GetData());
 		SendToClient(move(out));
 		_currentState = STATE::WAITHIT;
-		emit SignalReceive(Packet());
+		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
 		break;
 	case STATE::WAITHIT:
 		quint8 coord;
@@ -85,7 +91,7 @@ void Server::SlotReadClient()
 	in >> blockSize;
 	if (pClientSocket->bytesAvailable() < blockSize)
 		return;
-	SendAnswerToClient(Packet(in, blockSize));
+	IncomingProc(Packet(in, blockSize));
 }
 
 void Server::SendHit(const quint8 coord)

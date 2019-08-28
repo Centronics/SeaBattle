@@ -22,14 +22,12 @@ public:
 	void Close() override;
 	void Connect(const QString& ip, quint16 port);
 
-protected:
-
-	void SendToServer(const Packet& packet);
-
 private:
 
 	QTcpSocket _tcpSocket{ this };
-	void SendAnswerToServer(Packet packet);
+
+	void SendToServer(const Packet& packet);
+	void IncomingProc(Packet packet);
 
 private slots:
 

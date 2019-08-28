@@ -16,7 +16,8 @@ public:
 	{
 		NOERR,
 		ERR,
-		DISCONNECTED
+		DISCONNECTED,
+		CONNECTED
 	};
 
 private:
@@ -30,7 +31,8 @@ public:
 	Packet() = default;
 	explicit Packet(QDataStream& data, quint16 blockSize);
 	explicit Packet(QString errorMessage) : _error(STATE::ERR), _errorMessage(std::move(errorMessage)) { }
-	Packet(const Packet&) = delete;
+	explicit Packet(const STATE state) : _error(state) { }
+	Packet(const Packet&) = default;
 	Packet(Packet&& packet) noexcept;
 	~Packet() = default;
 	Packet& operator=(const Packet&) = delete;
@@ -41,18 +43,7 @@ public:
 	[[nodiscard]] bool ReadData(DOIT& doit, quint8& param) const;
 	[[nodiscard]] bool ReadRivals(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
-
-	void SetDisconnected() noexcept
-	{
-		_error = STATE::DISCONNECTED;
-	}
-
-	[[nodiscard]] STATE GetState(QString* const errStr = nullptr) const
-	{
-		if (errStr)
-			*errStr = (_error == STATE::DISCONNECTED) ? "Disconnected" : _errorMessage;
-		return _error;
-	}
+	[[nodiscard]] STATE GetState(QString* errStr = nullptr) const;
 
 	[[nodiscard]] explicit operator bool() const noexcept
 	{
