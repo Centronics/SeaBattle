@@ -118,3 +118,8 @@
 /x64/Release/client.nativecodeanalysis.xml
 /x64/Debug/MyMessageBox.obj
 /.vs/SeaBattle/v15/ipch/AutoPCH/635d088fd532af98/MOC_NETWORKINTERFACE.ipch
+/x64/Debug/NetworkInterface.obj
+/.vs/SeaBattle/v15/ipch/AutoPCH/daba04a3c7a1f64e/MOC_SEABATTLE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/d0c488d865658390/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/9d0685719d45d4bf/MOC_SEABATTLE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/988a59124139d5b4/MOC_NETWORKINTERFACE.ipch

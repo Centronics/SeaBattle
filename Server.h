@@ -13,27 +13,26 @@ public:
 
 	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
 	Server() = delete;
-	~Server() = default;
+	virtual ~Server() = default;
 	Server(const Server&) = delete;
 	Server(Server&&) = delete;
 	Server& operator=(const Server&) = delete;
 	Server& operator=(Server&&) = delete;
 
 	void SendHit(quint8 coord) override;
-	void Close() override;
 	void Listen(quint16 port);
 
 private:
 
 	QTcpServer _server{ this };
-	QTcpSocket* _socket = nullptr;
+	std::unique_ptr<QTcpSocket> _socket;
 
-	void SendToClient(Packet packet) const;
+	void SendToClient(const Packet& packet) const;
 	void IncomingProc(Packet packet);
-	void SocketClose();
 
 private slots:
 
 	void SlotNewConnection();
 	void SlotReadClient();
+	void SlotError(QAbstractSocket::SocketError err);
 };

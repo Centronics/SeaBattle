@@ -6,23 +6,29 @@ using namespace std;
 Server::Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
 {
 	connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+	connect(&_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	_currentState = STATE::WAITMAP;
 }
 
 void Server::IncomingProc(Packet packet)
 {
+	if (!packet)
+	{
+		emit SignalReceive(move(packet));
+		return;
+	}
 	switch (Packet out; _currentState)
 	{
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			_currentState = STATE::WAITMAP;
-			SocketClose();
+			_socket.reset();
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
 		out.WriteData(_graphics.GetData());
-		SendToClient(move(out));
+		SendToClient(out);
 		_currentState = STATE::WAITHIT;
 		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
 		break;
@@ -31,7 +37,7 @@ void Server::IncomingProc(Packet packet)
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			SocketClose();
+			_socket.reset();
 			emit SignalReceive(Packet("HIT error."));
 			break;
 		}
@@ -49,15 +55,7 @@ void Server::IncomingProc(Packet packet)
 	}
 }
 
-void Server::SocketClose()
-{
-	if (!_socket)
-		return;
-	_socket->close();
-	_socket = nullptr;
-}
-
-void Server::SendToClient(const Packet packet) const
+void Server::SendToClient(const Packet& packet) const
 {
 	if (_socket)
 		_socket->write(GetBytes(packet));
@@ -65,17 +63,19 @@ void Server::SendToClient(const Packet packet) const
 
 void Server::SlotNewConnection()
 {
+	_server.close();
 	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
+	if (_socket)
+	{
+		pClientSocket->close();
+		return;
+	}
 	connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
-	if (_socket)
-		pClientSocket->close();
-	else
-	{
-		_socket = pClientSocket;
-		_currentState = STATE::WAITMAP;
-	}
+	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	_socket.reset(pClientSocket);
+	_currentState = STATE::WAITMAP;
 }
 
 void Server::SlotReadClient()
@@ -94,6 +94,12 @@ void Server::SlotReadClient()
 	IncomingProc(Packet(in, blockSize));
 }
 
+void Server::SlotError(const QAbstractSocket::SocketError err)
+{
+	const QString eStr = _socket ? _socket->errorString() : "Unknown";
+	IncomingProc(Packet(GetErrorDescr(err, eStr)));
+}
+
 void Server::SendHit(const quint8 coord)
 {
 	if (_currentState != STATE::HIT)
@@ -105,14 +111,7 @@ void Server::SendHit(const quint8 coord)
 	}
 	Packet packet;
 	packet.WriteData(Packet::DOIT::HIT, coord);
-	SendToClient(move(packet));
-}
-
-void Server::Close()
-{
-	_server.close();
-	SocketClose();
-	_currentState = STATE::WAITMAP;
+	SendToClient(packet);
 }
 
 void Server::Listen(const quint16 port)

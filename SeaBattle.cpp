@@ -40,7 +40,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	}
 	OffButtons();
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
-	Graphics::ShipAddition = false;
+	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = false;
 	update();
 }
@@ -58,7 +58,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	}
 	OffButtons();
 	Initialize<Server>()->Listen(*port);
-	Graphics::ShipAddition = false;
+	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = true;
 	update();
 }
@@ -135,6 +135,12 @@ bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 	}
 }
 
+void SeaBattle::paintEvent(QPaintEvent*)
+{
+	QPainter painter(this);
+	Graphics::DrawMoveQuad(painter);
+}
+
 void SeaBattle::OffButtons(const bool off) const
 {
 	const bool t = !off;
@@ -161,27 +167,32 @@ void SeaBattle::SlotBtnDisconnectClicked()
 	OffButtons(false);
 	_clientServer.reset();
 	_graphics.ClearRivalState();
-	Graphics::ShipAddition = true;
+	Graphics::IsShipAddition = true;
 	Graphics::IsRivalMove = false;
 	update();
 }
 
-void SeaBattle::SlotReceive(const Packet packet)
+void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
 {
 	if (!packet)
 	{
 		switch (QString errStr; packet.GetState(&errStr))
 		{
+		case Packet::STATE::CONNECTED:
+			Graphics::IsConnected = true;
+			break;
 		case Packet::STATE::ERR:
+			Graphics::IsConnected = false;
 			Message("Ошибка.", errStr);
 			break;
 		case Packet::STATE::DISCONNECTED:
+			Graphics::IsConnected = false;
 			Impact(true);
 			break;
 		default:
 			throw exception(__func__);
 		}
-		Graphics::ShipAddition = true;
+		Graphics::IsShipAddition = true;
 		Graphics::IsRivalMove = false;
 		update();
 		return;
@@ -280,35 +291,17 @@ void SeaBattle::RemoveShip()
 
 void SeaBattle::RenewShipCount() const
 {
-	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item)
+	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item, const int n)
 	{
 		QString str = item->text();
-		int n;
-		switch (shipType)
-		{
-		case Ship::TYPES::LINKOR:
-			n = 41;
-			break;
-		case Ship::TYPES::CRUISER:
-			n = 45;
-			break;
-		case Ship::TYPES::ESMINEC:
-			n = 44;
-			break;
-		case Ship::TYPES::VEDETTE:
-			n = 35;
-			break;
-		default:
-			throw exception("RenewShipCount");
-		}
 		str[n] = QString::number(_graphics.GetShipCount(shipType))[0];
 		item->setText(str);
 	};
 
-	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0));
-	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1));
-	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2));
-	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3));
+	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41);
+	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45);
+	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44);
+	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35);
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)
@@ -323,13 +316,13 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	switch (event->button())
 	{
 	case Qt::LeftButton:
-		Graphics::Clicked = true;
-		if (!Graphics::ShipAddition)
+		Graphics::IsClicked = true;
+		if (!Graphics::IsShipAddition)
 		{
 			const optional<quint8> coord = _graphics.GetCoord();
 			if (Graphics::IsRivalMove || !coord)
 			{
-				Graphics::Clicked = false;
+				Graphics::IsClicked = false;
 				QWidget::mouseReleaseEvent(event);
 				return;
 			}
@@ -373,7 +366,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 
 void SeaBattle::closeEvent(QCloseEvent* event)
 {
-	if (!Graphics::ShipAddition)
+	if (Graphics::IsConnected)
 		switch (Message("Партия не закончена.", "Выйти из игры?", QMessageBox::Question, QMessageBox::Yes | QMessageBox::No, QMessageBox::No, QMessageBox::No))
 		{
 		case QMessageBox::Yes:
@@ -407,20 +400,22 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 	msgBox.setStandardButtons(btnSet);
 	msgBox.setDefaultButton(btnDef);
 	msgBox.setEscapeButton(btnEsc);
+	if (btnSet & QMessageBox::No)
+		msgBox.setButtonText(QMessageBox::No, "Нет");
+	if (btnSet & QMessageBox::Yes)
+		msgBox.setButtonText(QMessageBox::Yes, "Да");
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
 void SeaBattle::Impact(const bool disconnect)
 {
-	const auto pStop = [this]
+	const auto pStop = []
 	{
-		Graphics::ShipAddition = true;
+		Graphics::IsShipAddition = true;
 		Graphics::IsRivalMove = false;
-		_clientServer->Close();
-		_clientServer.reset();
 	};
 
-	switch (_graphics.IsBroken())
+	switch (_graphics.GetBroken())
 	{
 	case Graphics::BROKEN::ME:
 		pStop();

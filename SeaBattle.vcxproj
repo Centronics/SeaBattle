@@ -130,6 +130,7 @@
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyMessageBox.cpp" />
+    <ClCompile Include="NetworkInterface.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="SeaBattle.cpp">
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\%(Filename).moc</OutputFile>

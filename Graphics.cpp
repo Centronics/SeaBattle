@@ -6,14 +6,14 @@ using namespace std;
 
 static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 4, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
+static const QFont BIG_FONT("Arial", 15, QFont::Bold);
 static const QPen DRAW_TEXT_PEN(Qt::red, 3);
 
 void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
 	DrawField(painter);
 	DrawShipRect(painter, ship, rotate);
-	SetMoveQuad(painter);
-	Clicked = false;
+	IsClicked = false;
 }
 
 void Graphics::ClearRivalState()
@@ -29,9 +29,9 @@ void Graphics::ClearField()
 	for_each(_screenObjects.begin(), _screenObjects.end(), [](Ship& ship) { ship.Delete(); });
 }
 
-void Graphics::SetMoveQuad(QPainter& painter)
+void Graphics::DrawMoveQuad(QPainter& painter)
 {
-	if (ShipAddition)
+	if (IsShipAddition)
 		return;
 
 	static const QPen Bp(Qt::black, BetweenObjects);
@@ -41,6 +41,14 @@ void Graphics::SetMoveQuad(QPainter& painter)
 	static const QBrush Gb(Qt::green, Qt::SolidPattern);
 	static const QPen Rpen(Qt::red, 3);
 	static const QPen Gpen(Qt::green, 3);
+
+	if (!IsConnected)
+	{
+		painter.setPen(Rpen);
+		painter.setFont(BIG_FONT);
+		painter.drawText(341, 285, "Ожидание подключения.");
+		return;
+	}
 
 	if (IsRivalMove)
 	{
@@ -67,7 +75,7 @@ void Graphics::SetMoveQuad(QPainter& painter)
 
 Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (!ShipAddition)
+	if (!IsShipAddition)
 		return SHIPADDITION::INCORRECTMODE;
 	if (IsReadyToPlay(ship))
 		return SHIPADDITION::MANY;
@@ -82,7 +90,7 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
 		return SHIPADDITION::NOCOORD;
-	if (!ShipAddition)
+	if (!IsShipAddition)
 		return SHIPADDITION::INCORRECTMODE;
 	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
@@ -115,41 +123,33 @@ bool Graphics::IsReadyToPlay(const Ship::TYPES ship) const
 	return Ship::GetMaxShipCount(ship) == GetShipCount(ship);
 }
 
-Graphics::BROKEN Graphics::IsBroken() const
+Graphics::BROKEN Graphics::GetBroken() const
 {
-	const auto broken = [this](const Ship::BIT bit)
+	const auto isRivals = [this]
 	{
-		const Ship::HOLDING h = bit == Ship::BIT::ME ? Ship::HOLDING::ME : Ship::HOLDING::RIVAL;
-		for (unsigned int k = 0; k < _screenObjects.size(); ++k)
-			if (_screenObjects[k].GetHolding(h) && !IsKilled(k, bit))
+		for (const Ship& s : _screenObjects)
+			if (s.GetHolding(Ship::HOLDING::RIVAL))
+				return true;
+		return false;
+	};
+
+	const auto broken = [this](const Ship::HOLDING hld)
+	{
+		const Ship::BEAT b = (hld == Ship::HOLDING::ME) ? Ship::BEAT::RIVAL : Ship::BEAT::ME;
+		for (const Ship& s : _screenObjects)
+			if (s.GetHolding(hld) && !s.GetBeat(b))
 				return false;
 		return true;
 	};
 
-	if (broken(Ship::BIT::ME))
+	if (!isRivals())
+		return BROKEN::NOTHING;
+
+	if (broken(Ship::HOLDING::ME))
 		return BROKEN::ME;
-	if (broken(Ship::BIT::RIVAL))
+	if (broken(Ship::HOLDING::RIVAL))
 		return BROKEN::RIVAL;
 	return BROKEN::NOTHING;
-}
-
-bool Graphics::IsKilled(quint8 coord, const Ship::BIT bit) const
-{
-	switch (const Ship& ship = _screenObjects[coord]; ship.GetRotate())
-	{
-	case Ship::ROTATE::STARTRIGHT:
-		for (const unsigned int max = coord + Ship::GetFloors(ship.GetShipType()); coord < max; ++coord)
-			if (bit == Ship::BIT::ME ? ship.GetBeat(Ship::BEAT::ME) : ship.GetBeat(Ship::BEAT::RIVAL))
-				return false;
-		return true;
-	case Ship::ROTATE::STARTDOWN:
-		for (const unsigned int max = coord + (Ship::GetFloors(ship.GetShipType()) * 10); coord < max; coord += 10)
-			if (_screenObjects[coord].GetBit() != bit)
-				return false;
-		return true;
-	default:
-		return true;
-	}
 }
 
 tuple<bool, int, int> Graphics::GetPhysicalCoords()
@@ -301,7 +301,7 @@ void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Shi
 	{
 		if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
 			drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
-		if ((IsRivalMove || ShipAddition) && s.GetHolding(Ship::HOLDING::ME))
+		if ((IsRivalMove || IsShipAddition) && s.GetHolding(Ship::HOLDING::ME))
 			drawShipAndFrame(x, y, mx, my, w, h, s);
 	};
 
@@ -375,7 +375,7 @@ bool Graphics::IsFree(const int sx, const int sy) const
 
 bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	if (startX < 0 || startY < 0 || ship == Ship::TYPES::EMPTY || rotate == Ship::ROTATE::NIL)
+	if (startX < 0 || startX > 9 || startY < 0 || startY > 9 || ship == Ship::TYPES::EMPTY || rotate == Ship::ROTATE::NIL)
 		return false;
 	switch (rotate)
 	{
@@ -407,7 +407,7 @@ bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship
 
 Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (!ShipAddition)
+	if (!IsShipAddition)
 		return SHIPADDITION::INCORRECTMODE;
 
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)

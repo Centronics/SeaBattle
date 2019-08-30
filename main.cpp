@@ -2,7 +2,7 @@
 #include "SeaBattle.h"
 #include "MyMessageBox.h"
 
-void ShowMessage(const char* message)
+static void ShowMessage(const char* message)
 {
 	MyMessageBox msgBox;
 	msgBox.setText("Произошла неисправимая ошибка, игра будет закрыта.");
@@ -11,6 +11,7 @@ void ShowMessage(const char* message)
 	msgBox.setStandardButtons(QMessageBox::Ok);
 	msgBox.setDefaultButton(QMessageBox::Ok);
 	msgBox.setEscapeButton(QMessageBox::Ok);
+	msgBox.setButtonText(QMessageBox::Ok, "Закрыть");
 	msgBox.exec();
 }
 

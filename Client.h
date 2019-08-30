@@ -19,7 +19,6 @@ public:
 	Client& operator=(Client&&) = delete;
 
 	void SendHit(quint8 coord) override;
-	void Close() override;
 	void Connect(const QString& ip, quint16 port);
 
 private:
@@ -28,6 +27,7 @@ private:
 
 	void SendToServer(const Packet& packet);
 	void IncomingProc(Packet packet);
+	void Close();
 
 private slots:
 

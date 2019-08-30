@@ -8,9 +8,9 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-	Ui::SeaBattleForm _mainForm{ };
+	Ui::SeaBattleForm _mainForm;
 	Graphics _graphics;
-	std::unique_ptr<NetworkInterface> _clientServer{ };
+	std::unique_ptr<NetworkInterface> _clientServer;
 	inline static const QString SettingsFileName = "Settings.xml";
 
 private slots:
@@ -42,6 +42,7 @@ protected:
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void closeEvent(QCloseEvent* event) override;
+	void paintEvent(QPaintEvent* event) override;
 	QMessageBox::StandardButton Message(const QString& situation, const QString& question, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
 	void Impact(bool disconnect);
 	void SaveParameters() const;
@@ -51,15 +52,9 @@ protected:
 
 	template<typename T> T* Initialize()
 	{
-		const auto f = [this]() -> T*
-		{
-			T* const result = new T(_graphics, *this, this);
-			connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
-			return result;
-		};
-
-		if (!qobject_cast<T*>(_clientServer.get()))
-			_clientServer.reset(f());
+		T* const result = new T(_graphics, *this, this);
+		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		_clientServer.reset(result);
 		return reinterpret_cast<T*>(_clientServer.get());
 	}
 };

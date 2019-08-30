@@ -22,7 +22,7 @@ public:
 
 private:
 
-	std::vector<quint8> _massive{ 0 };
+	std::vector<quint8> _massive;
 	STATE _error = STATE::NOERR;
 	QString _errorMessage;
 

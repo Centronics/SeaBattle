@@ -52,10 +52,10 @@ public:
 
 	Ship() = default;
 	Ship(const Ship&) = delete;
-	Ship(Ship&&) = default;
+	Ship(Ship&&) = delete;
 	~Ship() = default;
 	Ship& operator=(const Ship&) = delete;
-	Ship& operator=(Ship&&) = default;
+	Ship& operator=(Ship&&) = delete;
 
 protected:
 
