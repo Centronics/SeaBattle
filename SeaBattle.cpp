@@ -192,18 +192,9 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 		default:
 			throw exception(__func__);
 		}
-		Graphics::IsShipAddition = true;
-		Graphics::IsRivalMove = false;
 		update();
 		return;
 	}
-	quint8 param;
-	if (Packet::DOIT doit; !packet.ReadData(doit, param) || doit != Packet::DOIT::HIT)
-		throw exception("Некорректный пакет.");
-	if (!Graphics::IsRivalMove)
-		return;
-	_graphics.RivalHit(param);
-	Graphics::IsRivalMove = false;
 	Impact(false);
 	update();
 }
@@ -316,19 +307,10 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	switch (event->button())
 	{
 	case Qt::LeftButton:
-		Graphics::IsClicked = true;
 		if (!Graphics::IsShipAddition)
 		{
-			const optional<quint8> coord = _graphics.GetCoord();
-			if (Graphics::IsRivalMove || !coord)
-			{
-				Graphics::IsClicked = false;
-				QWidget::mouseReleaseEvent(event);
-				return;
-			}
-			_clientServer->SendHit(*coord);
+			_clientServer->SendHit();
 			Impact(false);
-			Graphics::IsRivalMove = true;
 			break;
 		}
 		AddShip();
@@ -426,8 +408,9 @@ void SeaBattle::Impact(const bool disconnect)
 		Message("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
 		return;
 	case Graphics::BROKEN::NOTHING:
-		if (disconnect)
-			pStop();
+		if (!disconnect)
+			return;
+		pStop();
 		Message("Игра прекращена.", "Соединение разорвано.");
 		return;
 	default:

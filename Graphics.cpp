@@ -13,7 +13,6 @@ void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTA
 {
 	DrawField(painter);
 	DrawShipRect(painter, ship, rotate);
-	IsClicked = false;
 }
 
 void Graphics::ClearRivalState()

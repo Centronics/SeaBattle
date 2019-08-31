@@ -18,7 +18,8 @@ public:
 	NetworkInterface(NetworkInterface&&) = delete;
 	NetworkInterface& operator=(const NetworkInterface&) = delete;
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
-	virtual void SendHit(quint8 coord) = 0;
+
+	virtual void SendHit() = 0;
 
 protected:
 
@@ -36,10 +37,11 @@ protected:
 
 	static QByteArray GetBytes(const Packet& packet);
 	static QString GetErrorDescr(QAbstractSocket::SocketError err, const QString& alternate);
+	[[nodiscard]] Packet CreateHitPacket();
 
 signals:
 
-	void SignalReceive(Packet packet);
+	void SignalReceive(Packet);
 
 protected slots:
 

@@ -11,7 +11,13 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent);
+	explicit Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+	{
+		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+		connect(&_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+		_currentState = STATE::WAITMAP;
+	}
+
 	Server() = delete;
 	virtual ~Server() = default;
 	Server(const Server&) = delete;
@@ -19,7 +25,11 @@ public:
 	Server& operator=(const Server&) = delete;
 	Server& operator=(Server&&) = delete;
 
-	void SendHit(quint8 coord) override;
+	void SendHit() override
+	{
+		SendToClient(CreateHitPacket());
+	}
+
 	void Listen(quint16 port);
 
 private:
@@ -27,12 +37,25 @@ private:
 	QTcpServer _server{ this };
 	std::unique_ptr<QTcpSocket> _socket;
 
-	void SendToClient(const Packet& packet) const;
 	void IncomingProc(Packet packet);
+
+	void SendToClient(const Packet& packet) const
+	{
+		if (_socket && packet)
+			_socket->write(GetBytes(packet));
+	}
 
 private slots:
 
 	void SlotNewConnection();
-	void SlotReadClient();
-	void SlotError(QAbstractSocket::SocketError err);
+
+	void SlotReadClient()
+	{
+		IncomingProc(Packet(*qobject_cast<QTcpSocket*>(sender())));
+	}
+
+	void SlotError(const QAbstractSocket::SocketError err)
+	{
+		IncomingProc(Packet(GetErrorDescr(err, _socket ? _socket->errorString() : "Unknown")));
+	}
 };

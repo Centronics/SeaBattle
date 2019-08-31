@@ -46,7 +46,7 @@ public:
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
 
-	inline static bool IsClicked = false, IsRivalMove = false, IsShipAddition = true, IsConnected = false;
+	inline static bool IsRivalMove = false, IsShipAddition = true, IsConnected = false;
 	inline static int CursorX = -1, CursorY = 0;
 
 	void Paint(QPainter& painter, Ship::TYPES ship = Ship::TYPES::EMPTY, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;

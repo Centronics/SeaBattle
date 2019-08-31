@@ -70,3 +70,18 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err, 
 		return alternate;
 	}
 }
+
+Packet NetworkInterface::CreateHitPacket()
+{
+	const auto coord = _graphics.GetCoord();
+	if (_currentState != STATE::HIT || !coord)
+		return Packet(Packet::STATE::ERR);
+	if (!_graphics.MyHit(*coord))
+	{
+		_currentState = STATE::WAITHIT;
+		Graphics::IsRivalMove = true;
+	}
+	Packet packet;
+	packet.WriteData(Packet::DOIT::HIT, *coord);
+	return packet;
+}

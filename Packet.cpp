@@ -3,8 +3,24 @@
 
 using namespace std;
 
-Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
+Packet::Packet(QTcpSocket& socket)
 {
+	QDataStream data(&socket);
+	data.setVersion(QDataStream::Qt_5_10);
+	if (socket.bytesAvailable() < 2)
+	{
+		_error = STATE::ERR;
+		_errorMessage = "ReadPacket error";
+		return;
+	}
+	quint16 blockSize = 0;
+	data >> blockSize;
+	if (socket.bytesAvailable() < blockSize)
+	{
+		_error = STATE::ERR;
+		_errorMessage = "ReadPacket error";
+		return;
+	}
 	quint8 doit;
 	data >> doit;
 	switch (const DOIT dt = static_cast<DOIT>(doit))
@@ -26,6 +42,13 @@ Packet::Packet(QDataStream& data, const quint16 blockSize) : _massive(blockSize)
 	default:
 		throw exception(__func__);
 	}
+}
+
+Packet::Packet(Packet&& packet) noexcept
+{
+	_massive = move(packet._massive);
+	_error = packet._error;
+	_errorMessage = move(packet._errorMessage);
 }
 
 bool Packet::SerializeToQDataStream(QDataStream& data) const
@@ -104,11 +127,4 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 				if (to.GetShipHolder() == Ship::HOLDER::NIL)
 					to.SetShipHolder(Ship::HOLDER::RIVAL);
 	return true;
-}
-
-Packet::Packet(Packet&& packet) noexcept
-{
-	_massive = move(packet._massive);
-	_error = packet._error;
-	_errorMessage = move(packet._errorMessage);
 }

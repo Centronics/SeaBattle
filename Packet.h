@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 #include "Ship.h"
+#include "QTcpSocket"
 
 class Packet
 {
@@ -29,7 +30,7 @@ private:
 public:
 
 	Packet() = default;
-	explicit Packet(QDataStream& data, quint16 blockSize);
+	explicit Packet(QTcpSocket& socket);
 	explicit Packet(QString errorMessage) : _error(STATE::ERR), _errorMessage(std::move(errorMessage)) { }
 	explicit Packet(const STATE state) : _error(state) { }
 	Packet(const Packet&) = default;
