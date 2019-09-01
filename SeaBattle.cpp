@@ -20,11 +20,9 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
 }
 
-void SeaBattle::SlotBtnClearShipsClicked()
+void SeaBattle::SlotBtnHelpClicked()
 {
-	_graphics.ClearField();
-	RenewShipCount();
-	update();
+	//ВЫЗОВ СПРАВКИ
 }
 
 void SeaBattle::SlotBtnConnectClicked()
@@ -39,9 +37,9 @@ void SeaBattle::SlotBtnConnectClicked()
 		return;
 	}
 	OffButtons();
-	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = false;
+	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	update();
 }
 
@@ -57,9 +55,9 @@ void SeaBattle::SlotBtnServerStartClicked()
 		return;
 	}
 	OffButtons();
-	Initialize<Server>()->Listen(*port);
 	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = true;
+	Initialize<Server>()->Listen(*port);
 	update();
 }
 
@@ -166,9 +164,6 @@ void SeaBattle::SlotBtnDisconnectClicked()
 {
 	OffButtons(false);
 	_clientServer.reset();
-	_graphics.ClearRivalState();
-	Graphics::IsShipAddition = true;
-	Graphics::IsRivalMove = false;
 	update();
 }
 
@@ -184,9 +179,9 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 		case Packet::STATE::ERR:
 			Graphics::IsConnected = false;
 			Message("Ошибка.", errStr);
+			Impact(true);
 			break;
 		case Packet::STATE::DISCONNECTED:
-			Graphics::IsConnected = false;
 			Impact(true);
 			break;
 		default:
@@ -204,7 +199,6 @@ tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() 
 	if (_graphics.IsReadyToPlay())
 		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
 	Ship::TYPES ship;
-	Ship::ROTATE rotate;
 	switch (_mainForm.lstShipArea->currentRow())
 	{
 	case 0:
@@ -222,6 +216,7 @@ tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() 
 	default:
 		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
 	}
+	Ship::ROTATE rotate;
 	switch (_mainForm.lstDirection->currentRow())
 	{
 	case 0:
@@ -363,13 +358,12 @@ void SeaBattle::closeEvent(QCloseEvent* event)
 	event->accept();
 }
 
-optional<quint16> SeaBattle::GetPort()
+optional<quint16> SeaBattle::GetPort() const
 {
 	bool ok;
-	const int port = _mainForm.txtPort->text().toInt(&ok);
+	const auto port = static_cast<quint16>(_mainForm.txtPort->text().toUInt(&ok));
 	if (ok)
 		return port;
-	Message("Ошибка при подключении.", "Порт должен быть числом.");
 	return nullopt;
 }
 
@@ -393,6 +387,7 @@ void SeaBattle::Impact(const bool disconnect)
 {
 	const auto pStop = []
 	{
+		Graphics::IsConnected = false;
 		Graphics::IsShipAddition = true;
 		Graphics::IsRivalMove = false;
 	};

@@ -15,7 +15,7 @@ class SeaBattle : public QWidget
 
 private slots:
 
-	void SlotBtnClearShipsClicked();
+	void SlotBtnHelpClicked();
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
@@ -48,7 +48,7 @@ protected:
 	void SaveParameters() const;
 	void LoadParameters() const;
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
-	[[nodiscard]] std::optional<quint16> GetPort();
+	[[nodiscard]] std::optional<quint16> GetPort() const;
 
 	template<typename T> T* Initialize()
 	{

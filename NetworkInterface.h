@@ -35,8 +35,8 @@ protected:
 	Graphics& _graphics;
 	SeaBattle& _client;
 
-	static QByteArray GetBytes(const Packet& packet);
-	static QString GetErrorDescr(QAbstractSocket::SocketError err, const QString& alternate);
+	[[nodiscard]] static QByteArray GetBytes(const Packet& packet);
+	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
 	[[nodiscard]] Packet CreateHitPacket();
 
 signals:

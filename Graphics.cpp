@@ -12,20 +12,7 @@ static const QPen DRAW_TEXT_PEN(Qt::red, 3);
 void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
 	DrawField(painter);
-	DrawShipRect(painter, ship, rotate);
-}
-
-void Graphics::ClearRivalState()
-{
-	for (int x = 0; x < 10; ++x)
-		for (int y = 0; y < 10; ++y)
-			if (Ship& ship = _screenObjects[(y * 10) + x]; ship.GetShipHolder() == Ship::HOLDER::RIVAL)
-				ship.Delete();
-}
-
-void Graphics::ClearField()
-{
-	for_each(_screenObjects.begin(), _screenObjects.end(), [](Ship& ship) { ship.Delete(); });
+	DrawShips(painter, ship, rotate);
 }
 
 void Graphics::DrawMoveQuad(QPainter& painter)
@@ -215,7 +202,7 @@ void Graphics::DrawWarning(QPainter& painter)
 	painter.drawText(CursorX - 12, CursorY + 20, "!");
 }
 
-void Graphics::DrawShipRect(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
+void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
 	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
@@ -495,7 +482,7 @@ int Graphics::GetShipCount(const Ship::TYPES ship) const
 {
 	int result = 0;
 	for (const auto& obj : _screenObjects)
-		if (const Ship::ROTATE rotate = obj.GetRotate(); obj.GetShipType() == ship && (rotate == Ship::ROTATE::STARTRIGHT || rotate == Ship::ROTATE::STARTDOWN))
+		if (obj.GetShipType() == ship && obj.GetRotate() != Ship::ROTATE::NIL)
 			result++;
 	return result;
 }

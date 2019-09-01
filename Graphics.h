@@ -27,7 +27,7 @@ protected:
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
-	void DrawShipRect(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
+	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
 	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
@@ -49,9 +49,7 @@ public:
 	inline static bool IsRivalMove = false, IsShipAddition = true, IsConnected = false;
 	inline static int CursorX = -1, CursorY = 0;
 
-	void Paint(QPainter& painter, Ship::TYPES ship = Ship::TYPES::EMPTY, Ship::ROTATE rotate = Ship::ROTATE::NIL) const;
-	void ClearRivalState();
-	void ClearField();
+	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	bool RivalHit(quint8 coord);
 	bool MyHit(quint8 coord);
 

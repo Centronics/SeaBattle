@@ -56,6 +56,6 @@ private slots:
 
 	void SlotError(const QAbstractSocket::SocketError err)
 	{
-		IncomingProc(Packet(GetErrorDescr(err, _socket ? _socket->errorString() : "Unknown")));
+		IncomingProc(Packet(GetErrorDescr(err)));
 	}
 };

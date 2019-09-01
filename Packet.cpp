@@ -121,10 +121,8 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 		return false;
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
 		if (Ship& to = mas[k]; Ship(_massive[n]).GetShipHolder() == Ship::HOLDER::ME)
-			if (to.GetShipHolder() == Ship::HOLDER::ME)
-				to.SetShipHolder(Ship::HOLDER::BOTH);
-			else
-				if (to.GetShipHolder() == Ship::HOLDER::NIL)
-					to.SetShipHolder(Ship::HOLDER::RIVAL);
+			to.SetRivalHolding();
+		else
+			to.ClearRivalHolding();
 	return true;
 }

@@ -14,7 +14,7 @@ QByteArray NetworkInterface::GetBytes(const Packet& packet)
 	return arrBlock;
 }
 
-QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err, const QString& alternate)
+QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 {
 	switch (err)
 	{
@@ -67,7 +67,7 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err, 
 	case QAbstractSocket::UnknownSocketError:
 		return "An unidentified error occurred.";
 	default:
-		return alternate;
+		return "GetErrorDescr: Unknown error.";
 	}
 }
 

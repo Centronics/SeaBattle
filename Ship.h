@@ -121,6 +121,42 @@ public:
 		return false;
 	}
 
+	void ClearRivalHolding()
+	{
+		switch (GetShipHolder())
+		{
+		case HOLDER::NIL:
+		case HOLDER::ME:
+			return;
+		case HOLDER::RIVAL:
+			SetShipHolder(HOLDER::NIL);
+			return;
+		case HOLDER::BOTH:
+			SetShipHolder(HOLDER::ME);
+			return;
+		default:
+			throw std::exception(__func__);
+		}
+	}
+
+	void SetRivalHolding()
+	{
+		switch (GetShipHolder())
+		{
+		case HOLDER::NIL:
+			SetShipHolder(HOLDER::RIVAL);
+			return;
+		case HOLDER::ME:
+			SetShipHolder(HOLDER::BOTH);
+			return;
+		case HOLDER::RIVAL:
+		case HOLDER::BOTH:
+			return;
+		default:
+			throw std::exception(__func__);
+		}
+	}
+
 	void SetShipHolder(const HOLDER holder)
 	{
 		switch (holder)
