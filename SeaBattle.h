@@ -2,13 +2,14 @@
 #include "ui_SeaBattle.h"
 #include "Graphics.h"
 #include "NetworkInterface.h"
-#include "Client.h"
+#include "Help.h"
 
 class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
 	Ui::SeaBattleForm _mainForm;
+	HelpForm _helpForm{ this };
 	Graphics _graphics;
 	std::unique_ptr<NetworkInterface> _clientServer;
 	inline static const QString SettingsFileName = "Settings.xml";

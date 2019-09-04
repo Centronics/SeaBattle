@@ -233,7 +233,7 @@
     </property>
    </item>
   </widget>
-  <widget class="QPushButton" name="btnClearShips">
+  <widget class="QPushButton" name="btnHelp">
    <property name="geometry">
     <rect>
      <x>339</x>
@@ -314,7 +314,7 @@
   <tabstop>txtPort</tabstop>
   <tabstop>btnConnect</tabstop>
   <tabstop>btnServerStart</tabstop>
-  <tabstop>btnClearShips</tabstop>
+  <tabstop>btnHelp</tabstop>
   <tabstop>btnDisconnect</tabstop>
   <tabstop>lstShipArea</tabstop>
   <tabstop>lstDirection</tabstop>

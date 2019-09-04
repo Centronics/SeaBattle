@@ -123,3 +123,8 @@
 /.vs/SeaBattle/v15/ipch/AutoPCH/d0c488d865658390/MOC_NETWORKINTERFACE.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/9d0685719d45d4bf/MOC_SEABATTLE.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/988a59124139d5b4/MOC_NETWORKINTERFACE.ipch
+/x64/Debug/moc_Help.obj
+/SeaBattle.aps
+/GeneratedFiles/ui_SeaBattleHelp.h
+/GeneratedFiles/Debug/SeaBattle.moc
+/GeneratedFiles/Debug/moc_Help.cpp

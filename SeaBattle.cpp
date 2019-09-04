@@ -3,6 +3,7 @@
 #include "Packet.h"
 #include "Server.h"
 #include "MyMessageBox.h"
+#include "Client.h"
 
 using namespace std;
 
@@ -14,15 +15,16 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
 	LoadParameters();
-	connect(_mainForm.btnClearShips, SIGNAL(clicked()), SLOT(SlotBtnClearShipsClicked()));
+	connect(_mainForm.btnHelp, SIGNAL(clicked()), SLOT(SlotBtnHelpClicked()));
 	connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked()));
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
+	_helpForm.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
 }
 
 void SeaBattle::SlotBtnHelpClicked()
 {
-	//ÂÛÇÎÂ ÑÏÐÀÂÊÈ
+	_helpForm.show();
 }
 
 void SeaBattle::SlotBtnConnectClicked()
@@ -144,7 +146,6 @@ void SeaBattle::OffButtons(const bool off) const
 	const bool t = !off;
 	_mainForm.btnConnect->setEnabled(t);
 	_mainForm.btnServerStart->setEnabled(t);
-	_mainForm.btnClearShips->setEnabled(t);
 	_mainForm.lstShipArea->setEnabled(t);
 	_mainForm.lstDirection->setEnabled(t);
 	_mainForm.btnDisconnect->setEnabled(off);

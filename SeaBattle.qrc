@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="SeaBattle">
+    <qresource>
+      <file>Help.html</file>
     </qresource>
 </RCC>

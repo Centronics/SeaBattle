@@ -28,6 +28,9 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Help Files">
+      <UniqueIdentifier>{989cbe64-f9eb-440f-80ef-d17607031a91}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,13 +51,13 @@
     <ClCompile Include="Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SeaBattle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MyMessageBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NetworkInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SeaBattle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -88,9 +91,15 @@
     <QtMoc Include="Server.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="Help.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="SeaBattle.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="SeaBattleHelp.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>
@@ -101,5 +110,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SeaBattle.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Help.html">
+      <Filter>Help Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
