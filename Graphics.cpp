@@ -28,11 +28,11 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	static const QPen Rpen(Qt::red, 3);
 	static const QPen Gpen(Qt::green, 3);
 
-	if (!IsConnected)
+	if (ConnectingStatus == CONNECTINGSTATUS::SERVER || ConnectingStatus == CONNECTINGSTATUS::CLIENT)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(BIG_FONT);
-		painter.drawText(341, 285, "Ожидание подключения.");
+		painter.drawText(341, 285, ConnectingStatus == CONNECTINGSTATUS::SERVER ? "Ожидание подключения." : "Подключение...");
 		return;
 	}
 

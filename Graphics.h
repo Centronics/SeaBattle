@@ -21,6 +21,14 @@ public:
 		RIVAL
 	};
 
+	enum class CONNECTINGSTATUS
+	{
+		DISCONNECTED,
+		SERVER,
+		CLIENT,
+		CONNECTED
+	};
+
 protected:
 
 	std::vector<Ship> _screenObjects{ 100 };
@@ -46,8 +54,9 @@ public:
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
 
-	inline static bool IsRivalMove = false, IsShipAddition = true, IsConnected = false;
+	inline static bool IsRivalMove = false, IsShipAddition = true;
 	inline static int CursorX = -1, CursorY = 0;
+	inline static CONNECTINGSTATUS ConnectingStatus = CONNECTINGSTATUS::DISCONNECTED;
 
 	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	bool RivalHit(quint8 coord);
