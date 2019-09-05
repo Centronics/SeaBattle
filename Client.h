@@ -10,7 +10,7 @@ class Client : public NetworkInterface
 
 public:
 
-	explicit Client(Graphics& g, SeaBattle& c, QObject* parent);
+	explicit Client(Graphics& g, QObject* parent);
 	Client() = delete;
 	virtual ~Client() = default;
 	Client(const Client&) = delete;
@@ -37,12 +37,6 @@ private:
 	{
 		if (packet)
 			_tcpSocket.write(GetBytes(packet));
-	}
-
-	void Close()
-	{
-		_currentState = STATE::PUSHMAP;
-		_tcpSocket.close();
 	}
 
 	void IncomingProc(Packet packet);

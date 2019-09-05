@@ -11,11 +11,10 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+	explicit Server(Graphics& g, QObject* parent) : NetworkInterface(g, parent)
 	{
 		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 		connect(&_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-		_currentState = STATE::WAITMAP;
 	}
 
 	Server() = delete;

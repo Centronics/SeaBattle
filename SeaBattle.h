@@ -53,8 +53,9 @@ protected:
 
 	template<typename T> T* Initialize()
 	{
-		T* const result = new T(_graphics, *this, this);
+		T* const result = new T(_graphics, this);
 		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer.reset(result);
 		return reinterpret_cast<T*>(_clientServer.get());
 	}

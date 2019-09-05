@@ -10,33 +10,45 @@ Packet::Packet(QTcpSocket& socket)
 	if (socket.bytesAvailable() < 2)
 	{
 		_error = STATE::ERR;
-		_errorMessage = "ReadPacket error";
+		_errorMessage = "ReadPacket error(1)";
 		return;
 	}
 	quint16 blockSize = 0;
 	data >> blockSize;
-	if (socket.bytesAvailable() < blockSize)
+	if (socket.bytesAvailable() != blockSize)
 	{
 		_error = STATE::ERR;
-		_errorMessage = "ReadPacket error";
+		_errorMessage = "ReadPacket error(2)";
 		return;
 	}
 	quint8 doit;
 	data >> doit;
-	switch (const DOIT dt = static_cast<DOIT>(doit))
+	switch (static_cast<DOIT>(doit))
 	{
 	case DOIT::PUSHMAP:
 		if (blockSize != 101)
+		{
+			_error = STATE::ERR;
+			_errorMessage = "ReadPacket error(3)";
 			return;
+		}
 		_massive.resize(101);
-		if (data.readRawData(reinterpret_cast<char*>(_massive.data()), 101) != 101)
-			_massive.clear();
+		_massive[0] = static_cast<quint8>(DOIT::PUSHMAP);
+		if (data.readRawData(reinterpret_cast<char*>(&_massive[1]), 100) == 100)
+			return;
+		_massive.clear();
+		_error = STATE::ERR;
+		_errorMessage = "ReadPacket error(4)";
 		return;
 	case DOIT::HIT:
 		if (blockSize != 2)
+		{
+			_error = STATE::ERR;
+			_errorMessage = "ReadPacket error(5)";
 			return;
+		}
 		_massive.resize(2);
-		_massive[0] = static_cast<quint8>(dt);
+		_massive[0] = static_cast<quint8>(DOIT::HIT);
 		data >> _massive[1];
 		return;
 	default:
@@ -120,9 +132,13 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
-		if (Ship& to = mas[k]; Ship(_massive[n]).GetShipHolder() == Ship::HOLDER::ME)
+	{
+		Ship& to = mas[k];
+		to.SetBit(Ship::BIT::NIL);
+		if (Ship(_massive[n]).GetShipHolder() == Ship::HOLDER::ME)
 			to.SetRivalHolding();
 		else
 			to.ClearRivalHolding();
+	}
 	return true;
 }

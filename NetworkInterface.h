@@ -3,15 +3,13 @@
 #include "Graphics.h"
 #include "QTcpSocket"
 
-class SeaBattle;
-
 class NetworkInterface : public QObject
 {
 	Q_OBJECT
 
 public:
 
-	explicit NetworkInterface(Graphics& g, SeaBattle& c, QObject* parent) : QObject(parent), _graphics(g), _client(c) { }
+	explicit NetworkInterface(Graphics& g, QObject* parent) : QObject(parent), _graphics(g) { }
 	NetworkInterface() = delete;
 	virtual ~NetworkInterface() = default;
 	NetworkInterface(const NetworkInterface&) = delete;
@@ -33,7 +31,6 @@ protected:
 
 	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
-	SeaBattle& _client;
 
 	[[nodiscard]] static QByteArray GetBytes(const Packet& packet);
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
@@ -42,6 +39,7 @@ protected:
 signals:
 
 	void SignalReceive(Packet);
+	void Update();
 
 protected slots:
 

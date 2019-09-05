@@ -39,7 +39,7 @@ void Server::IncomingProc(Packet packet)
 			_currentState = STATE::HIT;
 			Graphics::IsRivalMove = false;
 		}
-		emit SignalReceive(move(packet));
+		emit Update();
 		return;
 	case STATE::HIT:
 		return;
@@ -50,8 +50,8 @@ void Server::IncomingProc(Packet packet)
 
 void Server::SlotNewConnection()
 {
-	_server.close();
 	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
+	_server.close();
 	if (_socket)
 	{
 		pClientSocket->close();

@@ -54,7 +54,7 @@ public:
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
 
-	inline static bool IsRivalMove = false, IsShipAddition = true;
+	inline static bool IsRivalMove = false;
 	inline static int CursorX = -1, CursorY = 0;
 	inline static CONNECTINGSTATUS ConnectingStatus = CONNECTINGSTATUS::DISCONNECTED;
 

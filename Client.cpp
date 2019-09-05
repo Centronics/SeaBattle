@@ -3,13 +3,12 @@
 
 using namespace std;
 
-Client::Client(Graphics& g, SeaBattle& c, QObject* parent) : NetworkInterface(g, c, parent)
+Client::Client(Graphics& g, QObject* parent) : NetworkInterface(g, parent)
 {
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
 	connect(&_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
-	_currentState = STATE::PUSHMAP;
 }
 
 void Client::IncomingProc(Packet packet)
@@ -19,6 +18,13 @@ void Client::IncomingProc(Packet packet)
 		emit SignalReceive(move(packet));
 		return;
 	}
+
+	const auto close = [this]
+	{
+		_currentState = STATE::PUSHMAP;
+		_tcpSocket.close();
+	};
+
 	switch (Packet out; _currentState)
 	{
 	case STATE::PUSHMAP:
@@ -29,18 +35,18 @@ void Client::IncomingProc(Packet packet)
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			Close();
+			close();
 			emit SignalReceive(Packet("WAITMAP error."));
 			break;
 		}
-		_currentState = STATE::WAITHIT;
+		_currentState = STATE::HIT;
 		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
 		break;
 	case STATE::WAITHIT:
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			Close();
+			close();
 			emit SignalReceive(Packet("HIT error."));
 			break;
 		}
@@ -49,7 +55,7 @@ void Client::IncomingProc(Packet packet)
 			_currentState = STATE::HIT;
 			Graphics::IsRivalMove = false;
 		}
-		emit SignalReceive(move(packet));
+		emit Update();
 		break;
 	case STATE::HIT:
 		return;

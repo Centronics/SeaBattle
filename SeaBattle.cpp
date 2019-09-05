@@ -40,7 +40,6 @@ void SeaBattle::SlotBtnConnectClicked()
 	}
 	OffButtons();
 	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::CLIENT;
-	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = false;
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	update();
@@ -59,7 +58,6 @@ void SeaBattle::SlotBtnServerStartClicked()
 	}
 	OffButtons();
 	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::SERVER;
-	Graphics::IsShipAddition = false;
 	Graphics::IsRivalMove = true;
 	Initialize<Server>()->Listen(*port);
 	update();
@@ -173,25 +171,22 @@ void SeaBattle::SlotBtnDisconnectClicked()
 
 void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
 {
-	if (packet)
-		Impact(false);
-	else
-		switch (QString errStr; packet.GetState(&errStr))
-		{
-		case Packet::STATE::CONNECTED:
-			Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::CONNECTED;
-			break;
-		case Packet::STATE::ERR:
-			Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
-			Message("Îøèáêà.", errStr);
-			Impact(true);
-			break;
-		case Packet::STATE::DISCONNECTED:
-			Impact(true);
-			break;
-		default:
-			throw exception(__func__);
-		}
+	switch (QString errStr; packet.GetState(&errStr))
+	{
+	case Packet::STATE::CONNECTED:
+		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::CONNECTED;
+		break;
+	case Packet::STATE::ERR:
+		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
+		Message("Îøèáêà.", errStr);
+		Impact(true);
+		break;
+	case Packet::STATE::DISCONNECTED:
+		Impact(true);
+		break;
+	default:
+		throw exception(__func__);
+	}
 	update();
 }
 
@@ -303,7 +298,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	switch (event->button())
 	{
 	case Qt::LeftButton:
-		if (!Graphics::IsShipAddition)
+		if (Graphics::ConnectingStatus != Graphics::CONNECTINGSTATUS::DISCONNECTED)
 		{
 			_clientServer->SendHit();
 			Impact(false);
@@ -389,7 +384,6 @@ void SeaBattle::Impact(const bool disconnect)
 	const auto pStop = []
 	{
 		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
-		Graphics::IsShipAddition = true;
 		Graphics::IsRivalMove = false;
 	};
 

@@ -17,7 +17,7 @@ void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTA
 
 void Graphics::DrawMoveQuad(QPainter& painter)
 {
-	if (IsShipAddition)
+	if (ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED)
 		return;
 
 	static const QPen Bp(Qt::black, BetweenObjects);
@@ -61,7 +61,7 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 
 Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (!IsShipAddition)
+	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 	if (IsReadyToPlay(ship))
 		return SHIPADDITION::MANY;
@@ -76,7 +76,7 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
 		return SHIPADDITION::NOCOORD;
-	if (!IsShipAddition)
+	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
@@ -88,14 +88,18 @@ bool Graphics::RivalHit(const quint8 coord)
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::ME))
 		ship.SetBit(Ship::BIT::BOTH);
+	else
+		ship.SetBit(Ship::BIT::RIVAL);
 	return ship.GetHolding(Ship::HOLDING::ME);
 }
 
 bool Graphics::MyHit(const quint8 coord)
 {
-	Ship& ship = _screenObjects.at(coord);
+	Ship& ship = _screenObjects.at(coord);//_currentState в состоянии WAITHIT, а не в HIT, более того, мои удары и удары противника не отмечаются.
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
 		ship.SetBit(Ship::BIT::BOTH);
+	else
+		ship.SetBit(Ship::BIT::ME);
 	return ship.GetHolding(Ship::HOLDING::RIVAL);
 }
 
@@ -254,6 +258,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const int mx, const int my, const Ship::BIT bit, const Ship& s)
 	{
+		if (ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED)
+			return;
 		switch (bit)
 		{
 		case Ship::BIT::ME:
@@ -287,7 +293,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	{
 		if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
 			drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
-		if ((IsRivalMove || IsShipAddition) && s.GetHolding(Ship::HOLDING::ME))
+		if ((IsRivalMove || ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED) && s.GetHolding(Ship::HOLDING::ME))
 			drawShipAndFrame(x, y, mx, my, w, h, s);
 	};
 
@@ -393,7 +399,7 @@ bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship
 
 Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (!IsShipAddition)
+	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)
