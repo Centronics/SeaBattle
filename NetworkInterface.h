@@ -32,7 +32,6 @@ protected:
 	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
 
-	[[nodiscard]] static QByteArray GetBytes(const Packet& packet);
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
 	[[nodiscard]] Packet CreateHitPacket();
 

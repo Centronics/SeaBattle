@@ -48,6 +48,7 @@ protected:
 	void Impact(bool disconnect);
 	void SaveParameters() const;
 	void LoadParameters() const;
+	void ExitApp();
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 

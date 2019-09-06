@@ -163,10 +163,15 @@ bool SeaBattle::CheckGameReady()
 
 void SeaBattle::SlotBtnDisconnectClicked()
 {
+	ExitApp();
+	update();
+}
+
+void SeaBattle::ExitApp()
+{
 	OffButtons(false);
 	_clientServer.reset();
 	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
-	update();
 }
 
 void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
@@ -302,9 +307,9 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		{
 			_clientServer->SendHit();
 			Impact(false);
-			break;
 		}
-		AddShip();
+		else
+			AddShip();
 		break;
 	case Qt::RightButton:
 		RemoveShip();
@@ -381,10 +386,11 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 
 void SeaBattle::Impact(const bool disconnect)
 {
-	const auto pStop = []
+	const auto pStop = [this]
 	{
 		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
 		Graphics::IsRivalMove = false;
+		ExitApp();
 	};
 
 	switch (_graphics.GetBroken())

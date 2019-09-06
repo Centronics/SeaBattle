@@ -1,19 +1,6 @@
 #include "stdafx.h"
 #include "NetworkInterface.h"
 
-QByteArray NetworkInterface::GetBytes(const Packet& packet)
-{
-	QByteArray arrBlock;
-	QDataStream out(&arrBlock, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_5_10);
-	out << quint16(0);
-	if (!packet.SerializeToQDataStream(out))
-		throw std::exception("Не могу сериализовать пакет.");
-	out.device()->seek(0);
-	out << quint16(arrBlock.size() - 2);
-	return arrBlock;
-}
-
 QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 {
 	switch (err)

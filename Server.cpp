@@ -54,6 +54,8 @@ void Server::SlotNewConnection()
 	_server.close();
 	if (_socket)
 	{
+		const Packet p(Packet::STATE::BUSY);
+		p.Send(*pClientSocket);
 		pClientSocket->close();
 		return;
 	}

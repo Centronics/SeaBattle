@@ -2,8 +2,6 @@
 #include "NetworkInterface.h"
 #include "QTcpSocket"
 
-class SeaBattle;
-
 class Client : public NetworkInterface
 {
 	Q_OBJECT
@@ -35,8 +33,7 @@ private:
 
 	void SendToServer(const Packet& packet)
 	{
-		if (packet)
-			_tcpSocket.write(GetBytes(packet));
+		packet.Send(_tcpSocket);
 	}
 
 	void IncomingProc(Packet packet);

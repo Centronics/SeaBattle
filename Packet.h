@@ -10,7 +10,8 @@ public:
 	enum class DOIT : quint8
 	{
 		PUSHMAP,
-		HIT
+		HIT,
+		BUSY
 	};
 
 	enum class STATE : quint8
@@ -18,7 +19,8 @@ public:
 		NOERR,
 		ERR,
 		DISCONNECTED,
-		CONNECTED
+		CONNECTED,
+		BUSY
 	};
 
 private:
@@ -45,6 +47,7 @@ public:
 	[[nodiscard]] bool ReadRivals(std::vector<Ship>& mas) const;
 	[[nodiscard]] bool SerializeToQDataStream(QDataStream& data) const;
 	[[nodiscard]] STATE GetState(QString* errStr = nullptr) const;
+	void Send(QTcpSocket& pSocket) const;
 
 	[[nodiscard]] explicit operator bool() const noexcept
 	{

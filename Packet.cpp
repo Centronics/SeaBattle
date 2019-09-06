@@ -10,7 +10,7 @@ Packet::Packet(QTcpSocket& socket)
 	if (socket.bytesAvailable() < 2)
 	{
 		_error = STATE::ERR;
-		_errorMessage = "ReadPacket error(1)";
+		_errorMessage = "Packet error(1)";
 		return;
 	}
 	quint16 blockSize = 0;
@@ -18,7 +18,7 @@ Packet::Packet(QTcpSocket& socket)
 	if (socket.bytesAvailable() != blockSize)
 	{
 		_error = STATE::ERR;
-		_errorMessage = "ReadPacket error(2)";
+		_errorMessage = "Packet error(2)";
 		return;
 	}
 	quint8 doit;
@@ -29,7 +29,7 @@ Packet::Packet(QTcpSocket& socket)
 		if (blockSize != 101)
 		{
 			_error = STATE::ERR;
-			_errorMessage = "ReadPacket error(3)";
+			_errorMessage = "Packet error(3)";
 			return;
 		}
 		_massive.resize(101);
@@ -38,18 +38,27 @@ Packet::Packet(QTcpSocket& socket)
 			return;
 		_massive.clear();
 		_error = STATE::ERR;
-		_errorMessage = "ReadPacket error(4)";
+		_errorMessage = "Packet error(4)";
 		return;
 	case DOIT::HIT:
 		if (blockSize != 2)
 		{
 			_error = STATE::ERR;
-			_errorMessage = "ReadPacket error(5)";
+			_errorMessage = "Packet error(5)";
 			return;
 		}
 		_massive.resize(2);
 		_massive[0] = static_cast<quint8>(DOIT::HIT);
 		data >> _massive[1];
+		return;
+	case DOIT::BUSY:
+		if (blockSize != 1)
+		{
+			_error = STATE::ERR;
+			_errorMessage = "Packet error(6)";
+			return;
+		}
+		_error = STATE::BUSY;
 		return;
 	default:
 		throw exception(__func__);
@@ -65,7 +74,7 @@ Packet::Packet(Packet&& packet) noexcept
 
 bool Packet::SerializeToQDataStream(QDataStream& data) const
 {
-	if (_massive.empty())
+	if (_error != STATE::NOERR && _error != STATE::BUSY || _massive.empty())
 		return false;
 	const int sz = _massive.size();
 	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
@@ -87,6 +96,10 @@ Packet::STATE Packet::GetState(QString* const errStr) const
 		if (errStr)
 			*errStr = "Connected";
 		break;
+	case STATE::BUSY:
+		if (errStr)
+			*errStr = "Busy";
+		break;
 	default:
 		break;
 	}
@@ -95,7 +108,7 @@ Packet::STATE Packet::GetState(QString* const errStr) const
 
 void Packet::WriteData(const DOIT doit, const quint8 param)
 {
-	if (doit != DOIT::HIT)
+	if (_error != STATE::NOERR || doit != DOIT::HIT)
 		throw exception(__func__);
 	_massive.clear();
 	_massive.reserve(2);
@@ -105,8 +118,8 @@ void Packet::WriteData(const DOIT doit, const quint8 param)
 
 void Packet::WriteData(const vector<Ship>& mas)
 {
-	if (mas.size() != 100)
-		throw exception("Неправильная длина пакета.");
+	if (_error != STATE::NOERR || mas.size() != 100)
+		throw exception(__func__);
 	_massive.clear();
 	_massive.reserve(101);
 	_massive.emplace_back(static_cast<quint8>(DOIT::PUSHMAP));
@@ -116,7 +129,7 @@ void Packet::WriteData(const vector<Ship>& mas)
 
 bool Packet::ReadData(DOIT& doit, quint8& param) const
 {
-	if (_massive.size() != 2)
+	if (_error != STATE::NOERR || _massive.size() != 2)
 		return false;
 	if (const DOIT dt = static_cast<DOIT>(_massive[0]); dt == DOIT::HIT)
 	{
@@ -129,7 +142,7 @@ bool Packet::ReadData(DOIT& doit, quint8& param) const
 
 bool Packet::ReadRivals(std::vector<Ship>& mas) const
 {
-	if (mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
+	if (_error != STATE::NOERR || mas.size() != 100 || _massive.size() != 101 || static_cast<DOIT>(_massive[0]) != DOIT::PUSHMAP)
 		return false;
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
 	{
@@ -141,4 +154,19 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 			to.ClearRivalHolding();
 	}
 	return true;
+}
+
+void Packet::Send(QTcpSocket& pSocket) const
+{
+	if (_error != STATE::NOERR && _error != STATE::BUSY)
+		throw exception(__func__);
+	QByteArray arrBlock;
+	QDataStream out(&arrBlock, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_5_10);
+	out << quint16(0);
+	if (!SerializeToQDataStream(out))
+		throw std::exception("Не могу сериализовать пакет.");
+	out.device()->seek(0);
+	out << quint16(arrBlock.size() - 2);
+	pSocket.write(arrBlock);
 }

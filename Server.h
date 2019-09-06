@@ -3,8 +3,6 @@
 #include "QTcpServer"
 #include "QTcpSocket"
 
-class SeaBattle;
-
 class Server : public NetworkInterface
 {
 	Q_OBJECT
@@ -40,8 +38,8 @@ private:
 
 	void SendToClient(const Packet& packet) const
 	{
-		if (_socket && packet)
-			_socket->write(GetBytes(packet));
+		if (_socket)
+			packet.Send(*_socket);
 	}
 
 private slots:
