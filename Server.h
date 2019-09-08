@@ -22,12 +22,15 @@ public:
 	Server& operator=(const Server&) = delete;
 	Server& operator=(Server&&) = delete;
 
-	void SendHit() override
-	{
-		SendToClient(CreateHitPacket());
-	}
-
 	void Listen(quint16 port);
+
+protected:
+
+	void Send(const Packet& packet) override
+	{
+		if (_socket)
+			packet.Send(*_socket);
+	}
 
 private:
 
@@ -35,12 +38,6 @@ private:
 	std::unique_ptr<QTcpSocket> _socket;
 
 	void IncomingProc(Packet packet);
-
-	void SendToClient(const Packet& packet) const
-	{
-		if (_socket)
-			packet.Send(*_socket);
-	}
 
 private slots:
 
@@ -53,6 +50,9 @@ private slots:
 
 	void SlotError(const QAbstractSocket::SocketError err)
 	{
-		IncomingProc(Packet(GetErrorDescr(err)));
+		if (err == QAbstractSocket::RemoteHostClosedError)
+			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
+		else
+			IncomingProc(Packet(GetErrorDescr(err)));
 	}
 };

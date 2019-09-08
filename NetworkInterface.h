@@ -17,7 +17,18 @@ public:
 	NetworkInterface& operator=(const NetworkInterface&) = delete;
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
-	virtual void SendHit() = 0;
+	[[nodiscard]] virtual std::optional<QString> SendHit()
+	{
+		const Packet p = CreateHitPacket();
+		if (!p)
+		{
+			QString s;
+			Q_UNUSED(p.GetState(&s));
+			return s;
+		}
+		Send(p);
+		return std::nullopt;
+	}
 
 protected:
 
@@ -34,6 +45,7 @@ protected:
 
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
 	[[nodiscard]] Packet CreateHitPacket();
+	virtual void Send(const Packet& packet) = 0;
 
 signals:
 

@@ -21,7 +21,7 @@ public:
 		RIVAL
 	};
 
-	enum class CONNECTINGSTATUS
+	enum class CONNECTIONSTATUS
 	{
 		DISCONNECTED,
 		SERVER,
@@ -56,11 +56,11 @@ public:
 
 	inline static bool IsRivalMove = false;
 	inline static int CursorX = -1, CursorY = 0;
-	inline static CONNECTINGSTATUS ConnectingStatus = CONNECTINGSTATUS::DISCONNECTED;
+	inline static CONNECTIONSTATUS ConnectionStatus = CONNECTIONSTATUS::DISCONNECTED;
 
 	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	bool RivalHit(quint8 coord);
-	bool MyHit(quint8 coord);
+	std::optional<bool> MyHit(quint8 coord);
 
 	static void DrawMoveQuad(QPainter& painter);
 

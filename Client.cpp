@@ -8,7 +8,7 @@ Client::Client(Graphics& g, QObject* parent) : NetworkInterface(g, parent)
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
 	connect(&_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-	connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
+	//connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
 }
 
 void Client::IncomingProc(Packet packet)
@@ -29,7 +29,7 @@ void Client::IncomingProc(Packet packet)
 	{
 	case STATE::PUSHMAP:
 		out.WriteData(_graphics.GetData());
-		SendToServer(out);
+		Send(out);
 		_currentState = STATE::WAITMAP;
 		break;
 	case STATE::WAITMAP:

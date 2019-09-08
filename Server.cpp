@@ -21,7 +21,7 @@ void Server::IncomingProc(Packet packet)
 			return;
 		}
 		out.WriteData(_graphics.GetData());
-		SendToClient(out);
+		Send(out);
 		_currentState = STATE::WAITHIT;
 		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
 		return;
@@ -51,7 +51,7 @@ void Server::IncomingProc(Packet packet)
 void Server::SlotNewConnection()
 {
 	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
-	_server.close();
+	//_server.close();
 	if (_socket)
 	{
 		const Packet p(Packet::STATE::BUSY);
@@ -59,7 +59,7 @@ void Server::SlotNewConnection()
 		pClientSocket->close();
 		return;
 	}
-	connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
+	//connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));

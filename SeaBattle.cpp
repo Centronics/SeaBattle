@@ -39,7 +39,7 @@ void SeaBattle::SlotBtnConnectClicked()
 		return;
 	}
 	OffButtons();
-	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::CLIENT;
+	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CLIENT;
 	Graphics::IsRivalMove = false;
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	update();
@@ -57,7 +57,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 		return;
 	}
 	OffButtons();
-	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::SERVER;
+	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::SERVER;
 	Graphics::IsRivalMove = true;
 	Initialize<Server>()->Listen(*port);
 	update();
@@ -171,7 +171,7 @@ void SeaBattle::ExitApp()
 {
 	OffButtons(false);
 	_clientServer.reset();
-	Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
+	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 }
 
 void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
@@ -179,14 +179,17 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 	switch (QString errStr; packet.GetState(&errStr))
 	{
 	case Packet::STATE::CONNECTED:
-		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::CONNECTED;
+		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CONNECTED;
 		break;
 	case Packet::STATE::ERR:
-		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
+		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 		Message("Ошибка.", errStr);
+		[[fallthrough]];
+	case Packet::STATE::DISCONNECTED:
 		Impact(true);
 		break;
-	case Packet::STATE::DISCONNECTED:
+	case Packet::STATE::BUSY:
+		Message("Сервер уже участвует в сражении.", "Повторите попытку позже.");
 		Impact(true);
 		break;
 	default:
@@ -303,10 +306,12 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	switch (event->button())
 	{
 	case Qt::LeftButton:
-		if (Graphics::ConnectingStatus != Graphics::CONNECTINGSTATUS::DISCONNECTED)
+		if (Graphics::ConnectionStatus == Graphics::CONNECTIONSTATUS::CONNECTED)
 		{
-			_clientServer->SendHit();
-			Impact(false);
+			if (const std::optional<QString> s = _clientServer->SendHit())
+				Message("Сюда ударить нельзя.", *s, QMessageBox::Information);
+			else
+				Impact(false);
 		}
 		else
 			AddShip();
@@ -344,7 +349,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 
 void SeaBattle::closeEvent(QCloseEvent* event)
 {
-	if (Graphics::ConnectingStatus != Graphics::CONNECTINGSTATUS::DISCONNECTED)
+	if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED)
 		switch (Message("Партия не закончена.", "Выйти из игры?", QMessageBox::Question, QMessageBox::Yes | QMessageBox::No, QMessageBox::No, QMessageBox::No))
 		{
 		case QMessageBox::Yes:
@@ -388,7 +393,7 @@ void SeaBattle::Impact(const bool disconnect)
 {
 	const auto pStop = [this]
 	{
-		Graphics::ConnectingStatus = Graphics::CONNECTINGSTATUS::DISCONNECTED;
+		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 		Graphics::IsRivalMove = false;
 		ExitApp();
 	};

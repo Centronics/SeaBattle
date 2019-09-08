@@ -60,10 +60,15 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 
 Packet NetworkInterface::CreateHitPacket()
 {
-	const auto coord = _graphics.GetCoord();
-	if (_currentState != STATE::HIT || !coord)
-		return Packet(Packet::STATE::ERR);
-	if (!_graphics.MyHit(*coord))
+	if (_currentState != STATE::HIT)
+		return Packet("Неверное состояние программы (баг).");
+	const std::optional<quint8> coord = _graphics.GetCoord();
+	if (!coord)
+		return Packet("Курсор вне рабочего поля.");
+	const std::optional<bool> v = _graphics.MyHit(*coord);
+	if (!v)
+		return Packet("По этому месту уже был удар.");
+	if (!(*v))
 	{
 		_currentState = STATE::WAITHIT;
 		Graphics::IsRivalMove = true;

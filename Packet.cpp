@@ -74,7 +74,7 @@ Packet::Packet(Packet&& packet) noexcept
 
 bool Packet::SerializeToQDataStream(QDataStream& data) const
 {
-	if (_error != STATE::NOERR && _error != STATE::BUSY || _massive.empty())
+	if ((_error != STATE::NOERR && _error != STATE::BUSY) || _massive.empty())
 		return false;
 	const int sz = _massive.size();
 	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
@@ -148,7 +148,7 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 	{
 		Ship& to = mas[k];
 		to.SetBit(Ship::BIT::NIL);
-		if (Ship(_massive[n]).GetShipHolder() == Ship::HOLDER::ME)
+		if (Ship(_massive[n]).GetHolding(Ship::HOLDING::ME))
 			to.SetRivalHolding();
 		else
 			to.ClearRivalHolding();

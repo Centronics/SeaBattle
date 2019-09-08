@@ -16,26 +16,22 @@ public:
 	Client& operator=(const Client&) = delete;
 	Client& operator=(Client&&) = delete;
 
-	void SendHit() override
-	{
-		SendToServer(CreateHitPacket());
-	}
-
 	void Connect(const QString& ip, const quint16 port)
 	{
 		_tcpSocket.close();
 		_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 	}
 
-private:
+protected:
 
-	QTcpSocket _tcpSocket{ this };
-
-	void SendToServer(const Packet& packet)
+	void Send(const Packet& packet) override
 	{
 		packet.Send(_tcpSocket);
 	}
 
+private:
+
+	QTcpSocket _tcpSocket{ this };
 	void IncomingProc(Packet packet);
 
 private slots:
@@ -47,7 +43,10 @@ private slots:
 
 	void SlotError(const QAbstractSocket::SocketError err)
 	{
-		IncomingProc(Packet(GetErrorDescr(err)));
+		if (err == QAbstractSocket::RemoteHostClosedError)
+			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
+		else
+			IncomingProc(Packet(GetErrorDescr(err)));
 	}
 
 	void SlotConnected()

@@ -4,7 +4,7 @@
 
 using namespace std;
 
-static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 4, QFont::Bold);
+static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 5, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
 static const QFont BIG_FONT("Arial", 15, QFont::Bold);
 static const QPen DRAW_TEXT_PEN(Qt::red, 3);
@@ -17,7 +17,7 @@ void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTA
 
 void Graphics::DrawMoveQuad(QPainter& painter)
 {
-	if (ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED)
+	if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
 		return;
 
 	static const QPen Bp(Qt::black, BetweenObjects);
@@ -28,11 +28,11 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	static const QPen Rpen(Qt::red, 3);
 	static const QPen Gpen(Qt::green, 3);
 
-	if (ConnectingStatus == CONNECTINGSTATUS::SERVER || ConnectingStatus == CONNECTINGSTATUS::CLIENT)
+	if (ConnectionStatus == CONNECTIONSTATUS::SERVER || ConnectionStatus == CONNECTIONSTATUS::CLIENT)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(BIG_FONT);
-		painter.drawText(341, 285, ConnectingStatus == CONNECTINGSTATUS::SERVER ? "Ожидание подключения." : "Подключение...");
+		painter.drawText(341, 285, ConnectionStatus == CONNECTIONSTATUS::SERVER ? "Ожидание подключения." : "Подключение...");
 		return;
 	}
 
@@ -61,7 +61,7 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 
 Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
+	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 	if (IsReadyToPlay(ship))
 		return SHIPADDITION::MANY;
@@ -76,7 +76,7 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
 		return SHIPADDITION::NOCOORD;
-	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
+	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
@@ -93,9 +93,11 @@ bool Graphics::RivalHit(const quint8 coord)
 	return ship.GetHolding(Ship::HOLDING::ME);
 }
 
-bool Graphics::MyHit(const quint8 coord)
+optional<bool> Graphics::MyHit(const quint8 coord)
 {
-	Ship& ship = _screenObjects.at(coord);//_currentState в состоянии WAITHIT, а не в HIT, более того, мои удары и удары противника не отмечаются.
+	Ship& ship = _screenObjects.at(coord);
+	if (ship.GetBeat(Ship::BEAT::ME))
+		return nullopt;
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
 		ship.SetBit(Ship::BIT::BOTH);
 	else
@@ -208,21 +210,35 @@ void Graphics::DrawWarning(QPainter& painter)
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawShipAndFrame = [&painter, ship, rotate, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
+	static const QPen G(Qt::gray, BetweenObjects);
+	static const QBrush D(Qt::gray, Qt::Dense6Pattern);
+	static constexpr int W = BetweenObjects * 2;
+
+	int xMarkCoord = -1, yMarkCoord = -1, wMarkCoord = -1, hMarkCoord = -1;
+
+	const auto grey = [&painter] { painter.setPen(G); painter.setBrush(D); };
+
+	const auto marking = [&painter, &grey, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord]
 	{
-		static constexpr int W = BetweenObjects * 2;
-		static const QPen G(Qt::gray, BetweenObjects);
-		static const QBrush D(Qt::gray, Qt::Dense6Pattern);
+		if (xMarkCoord < 0 || yMarkCoord < 0)
+			return;
+		if (wMarkCoord < 0 || hMarkCoord < 0)
+			wMarkCoord = hMarkCoord = ObjectWidth;
+		grey();
+		painter.drawRect(xMarkCoord - BetweenObjects, yMarkCoord - BetweenObjects, wMarkCoord + W, hMarkCoord + W);
+	};
+
+	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
+	{
 		const int xw = x + w, yh = y + h;
-		const auto grey = [&painter] { painter.setPen(G); painter.setBrush(D); };
 		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
-		const auto drawShip = [x, y, w, h, &painter] { painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); };
-		const auto drawMark = [&painter, &grey](const int px, const int py) { grey(); painter.drawRect(px - BetweenObjects, py - BetweenObjects, ObjectWidth + W, ObjectWidth + W); };
+		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now) { if (now) painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); else { xMarkCoord = x; yMarkCoord = y; wMarkCoord = w; hMarkCoord = h; } };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
+		const auto drawMark = [x, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = x, yMarkCoord = y; };
 
 		if ((xw > MaxCoord || yh > MaxCoord) && inShip && inFrame)
 		{
-			drawMark(x, y);
+			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
 				DrawWarning(painter);
 			return;
@@ -233,9 +249,10 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			const QColor color = Ship::GetColor(s.GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
-			drawShip();
+			if (IsRivalMove || ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
+				drawShip(true);
 			if (!IsRivalMove && inShip && inFrame)
-				drawMark(x, y);
+				drawMark();
 		}
 
 		if (!IsRivalMove && inFrame)
@@ -243,49 +260,40 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			if (!inShip || s.GetShipType() == Ship::TYPES::EMPTY)
 			{
 				grey();
-				drawShip();
+				drawShip(false);
 			}
 			else
-				drawMark(x, y);
+				drawMark();
 		}
 
-		if (!IsRivalMove && inFrame && IsReadyToPlay())
-			drawMark(x, y);
+		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && inFrame)
+			drawMark();
 
-		if (inFrame && IsBusy(mx, my, ship, rotate))
+		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inFrame && IsBusy(mx, my, ship, rotate))
 			DrawWarning(painter);
 	};
 
-	const auto mBeat = [&painter, &drawShipAndFrame](const int x, const int y, const int mx, const int my, const Ship::BIT bit, const Ship& s)
+	const auto mBeat = [&painter](const int x, const int y, const Ship& s)
 	{
-		if (ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED)
+		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
 			return;
-		switch (bit)
+		const Ship::BIT bit = s.GetBit();
+		if ((bit == Ship::BIT::ME || bit == Ship::BIT::BOTH) && !IsRivalMove)
 		{
-		case Ship::BIT::ME:
-		{
-			if (IsRivalMove)
-				return;
-			static const QPen Cpen(Qt::green, BetweenObjects);
-			painter.setPen(Cpen);
-			static constexpr int W = ObjectWidth / 2;
-			painter.drawPoint(x + W, y + W);
-			drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
+			static constexpr int Wd = ObjectWidth / 2;
+			static const QPen B(Qt::black, Wd);
+			static const QPen R(Qt::red, Wd);
+			painter.setPen(s.GetHolding(Ship::HOLDING::RIVAL) ? R : B);
+			static constexpr int Wc = (Wd / 2);
+			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
+			painter.drawPoint(x + Wd, y + Wd);
 			return;
 		}
-		case Ship::BIT::RIVAL:
+		if ((bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH) && IsRivalMove && s.GetShipType() != Ship::TYPES::EMPTY && s.GetHolding(Ship::HOLDING::ME))
 		{
-			if (!IsRivalMove)
-				return;
 			painter.setPen(DRAW_TEXT_PEN);
 			painter.setFont(DRAW_FONT);
-			painter.drawText(x + 4, y + (ObjectWidth - 2), "X");
-			return;
-		}
-		case Ship::BIT::NIL:
-			return;
-		default:
-			throw exception("DrawShipRect(mBeat)");
+			painter.drawText(x + 4, y + (ObjectWidth - 3), "X");
 		}
 	};
 
@@ -293,15 +301,18 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	{
 		if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
 			drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
-		if ((IsRivalMove || ConnectingStatus == CONNECTINGSTATUS::DISCONNECTED) && s.GetHolding(Ship::HOLDING::ME))
+		if ((IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) && s.GetHolding(Ship::HOLDING::ME))
 			drawShipAndFrame(x, y, mx, my, w, h, s);
 	};
 
 	for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
+			mBeat(x, y, _screenObjects[(my * 10) + mx]);
+
+	for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
+		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
 		{
 			const Ship& s = _screenObjects[(my * 10) + mx];
-			mBeat(x, y, mx, my, s.GetBit(), s);
 			switch (const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth; s.GetRotate())
 			{
 			case Ship::ROTATE::STARTRIGHT:
@@ -329,6 +340,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 				throw exception(__func__);
 			}
 		}
+
+	marking();
 }
 
 bool Graphics::IsFree(const int sx, const int sy) const
@@ -399,7 +412,7 @@ bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship
 
 Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
-	if (ConnectingStatus != CONNECTINGSTATUS::DISCONNECTED)
+	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
 
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)
