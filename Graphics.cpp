@@ -249,7 +249,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			const QColor color = Ship::GetColor(s.GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
 			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
-			if (IsRivalMove || ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
+			if (IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
 				drawShip(true);
 			if (!IsRivalMove && inShip && inFrame)
 				drawMark();
@@ -313,7 +313,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
 		{
 			const Ship& s = _screenObjects[(my * 10) + mx];
-			switch (const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth; s.GetRotate())
+			const Ship::ROTATE r = (!IsRivalMove && ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED) ? Ship::ROTATE::NIL : s.GetRotate();
+			switch (const int floors = Ship::GetFloors(s.GetShipType()) * ObjectWidth; r)
 			{
 			case Ship::ROTATE::STARTRIGHT:
 				draw(x, y, mx, my, floors, ObjectWidth, s);
