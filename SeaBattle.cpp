@@ -167,10 +167,13 @@ void SeaBattle::SlotBtnDisconnectClicked()
 	update();
 }
 
-void SeaBattle::ExitApp()
+void SeaBattle::ExitApp() const
 {
 	OffButtons(false);
-	_clientServer.reset();
+	//_clientServer.reset();
+	NetworkInterface* const t = _clientServer;
+	if (t)
+		t->Close();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 }
 

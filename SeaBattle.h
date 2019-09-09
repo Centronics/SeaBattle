@@ -11,7 +11,7 @@ class SeaBattle : public QWidget
 	Ui::SeaBattleForm _mainForm;
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
-	std::unique_ptr<NetworkInterface> _clientServer;
+	NetworkInterface* _clientServer = nullptr;
 	inline static const QString SettingsFileName = "Settings.xml";
 
 private slots:
@@ -48,16 +48,16 @@ protected:
 	void Impact(bool disconnect);
 	void SaveParameters() const;
 	void LoadParameters() const;
-	void ExitApp();
+	void ExitApp() const;
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 
 	template<typename T> T* Initialize()
 	{
-		T* const result = new T(_graphics, this);
+		T* const result = new T(_graphics, this, &_clientServer);
 		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
 		connect(result, SIGNAL(Update()), SLOT(update()));
-		_clientServer.reset(result);
-		return reinterpret_cast<T*>(_clientServer.get());
+		_clientServer = result;
+		return reinterpret_cast<T*>(_clientServer);
 	}
 };

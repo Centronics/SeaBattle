@@ -3,12 +3,30 @@
 
 using namespace std;
 
-Client::Client(Graphics& g, QObject* parent) : NetworkInterface(g, parent)
+Client::Client(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r)
 {
 	connect(&_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
 	connect(&_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
 	connect(&_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	//connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
+}
+
+void Client::Close()
+{
+	if (_closed)
+		return;
+	_tcpSocket.close();
+	deleteLater();
+	*_myRef = nullptr;
+	_closed = true;
+}
+
+void Client::Connect(const QString& ip, const quint16 port)
+{
+	_tcpSocket.close();
+	_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
+	connect(&_tcpSocket, SIGNAL(disconnected()), SLOT(SlotDeleteMe()));
+	connect(this, SIGNAL(NeedDelete()), &_tcpSocket, SLOT(deleteLater()));
 }
 
 void Client::IncomingProc(Packet packet)

@@ -1,6 +1,23 @@
 #include "stdafx.h"
 #include "NetworkInterface.h"
 
+using namespace std;
+
+std::optional<QString> NetworkInterface::SendHit()
+{
+	const std::optional<Packet> p = CreateHitPacket();
+	if (!p)
+		return std::nullopt;
+	if (!(*p))
+	{
+		QString s;
+		Q_UNUSED((*p).GetState(&s));
+		return s;
+	}
+	Send(*p);
+	return std::nullopt;
+}
+
 QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 {
 	switch (err)
@@ -58,14 +75,18 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 	}
 }
 
-Packet NetworkInterface::CreateHitPacket()
+optional<Packet> NetworkInterface::CreateHitPacket()
 {
-	if (_currentState != STATE::HIT)
-		return Packet("Неверное состояние программы (баг).");
-	const std::optional<quint8> coord = _graphics.GetCoord();
+	const optional<quint8> coord = _graphics.GetCoord();
 	if (!coord)
-		return Packet("Курсор вне рабочего поля.");
-	const std::optional<bool> v = _graphics.MyHit(*coord);
+		return nullopt;
+	if (_currentState != STATE::HIT)
+	{
+		if (_currentState == STATE::WAITHIT)
+			return Packet("Сейчас ход соперника.");
+		return Packet("Неверное состояние программы.");
+	}
+	const optional<bool> v = _graphics.MyHit(*coord);
 	if (!v)
 		return Packet("По этому месту уже был удар.");
 	if (!(*v))

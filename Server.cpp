@@ -16,7 +16,7 @@ void Server::IncomingProc(Packet packet)
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			_currentState = STATE::WAITMAP;
-			_socket.reset();
+			_socket = nullptr;
 			emit SignalReceive(Packet("WAITMAP error."));
 			return;
 		}
@@ -30,7 +30,7 @@ void Server::IncomingProc(Packet packet)
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			_socket.reset();
+			_socket = nullptr;
 			emit SignalReceive(Packet("HIT error."));
 			return;
 		}
@@ -63,8 +63,18 @@ void Server::SlotNewConnection()
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-	_socket.reset(pClientSocket);
+	_socket = pClientSocket;
 	_currentState = STATE::WAITMAP;
+}
+
+void Server::Close()
+{
+	if (_closed)
+		return;
+	_server.close();
+	deleteLater();
+	*_myRef = nullptr;
+	_closed = true;
 }
 
 void Server::Listen(const quint16 port)

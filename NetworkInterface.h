@@ -9,7 +9,7 @@ class NetworkInterface : public QObject
 
 public:
 
-	explicit NetworkInterface(Graphics& g, QObject* parent) : QObject(parent), _graphics(g) { }
+	explicit NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r) : QObject(parent), _graphics(g), _myRef(r) { }
 	NetworkInterface() = delete;
 	virtual ~NetworkInterface() = default;
 	NetworkInterface(const NetworkInterface&) = delete;
@@ -17,18 +17,8 @@ public:
 	NetworkInterface& operator=(const NetworkInterface&) = delete;
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
-	[[nodiscard]] virtual std::optional<QString> SendHit()
-	{
-		const Packet p = CreateHitPacket();
-		if (!p)
-		{
-			QString s;
-			Q_UNUSED(p.GetState(&s));
-			return s;
-		}
-		Send(p);
-		return std::nullopt;
-	}
+	[[nodiscard]] std::optional<QString> SendHit();
+	virtual void Close() = 0;
 
 protected:
 
@@ -42,9 +32,11 @@ protected:
 
 	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
+	bool _closed = true;
+	NetworkInterface** const _myRef = nullptr;
 
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
-	[[nodiscard]] Packet CreateHitPacket();
+	[[nodiscard]] std::optional<Packet> CreateHitPacket();
 	virtual void Send(const Packet& packet) = 0;
 
 signals:

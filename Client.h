@@ -8,7 +8,7 @@ class Client : public NetworkInterface
 
 public:
 
-	explicit Client(Graphics& g, QObject* parent);
+	explicit Client(Graphics& g, QObject* parent, NetworkInterface** r);
 	Client() = delete;
 	virtual ~Client() = default;
 	Client(const Client&) = delete;
@@ -16,11 +16,8 @@ public:
 	Client& operator=(const Client&) = delete;
 	Client& operator=(Client&&) = delete;
 
-	void Connect(const QString& ip, const quint16 port)
-	{
-		_tcpSocket.close();
-		_tcpSocket.connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
-	}
+	void Close() override;
+	void Connect(const QString& ip, const quint16 port);
 
 protected:
 
@@ -34,7 +31,16 @@ private:
 	QTcpSocket _tcpSocket{ this };
 	void IncomingProc(Packet packet);
 
+signals:
+	void NeedDelete();
+
 private slots:
+
+	void SlotDeleteMe()
+	{
+		_closed = true;
+		emit NeedDelete();
+	}
 
 	void SlotReadyRead()
 	{
@@ -51,6 +57,7 @@ private slots:
 
 	void SlotConnected()
 	{
+		_closed = false;
 		_currentState = STATE::PUSHMAP;
 		IncomingProc(Packet());
 	}

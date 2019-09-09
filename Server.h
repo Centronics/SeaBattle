@@ -9,7 +9,7 @@ class Server : public NetworkInterface
 
 public:
 
-	explicit Server(Graphics& g, QObject* parent) : NetworkInterface(g, parent)
+	explicit Server(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r)
 	{
 		connect(&_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 		connect(&_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
@@ -22,6 +22,7 @@ public:
 	Server& operator=(const Server&) = delete;
 	Server& operator=(Server&&) = delete;
 
+	void Close() override;
 	void Listen(quint16 port);
 
 protected:
@@ -35,7 +36,7 @@ protected:
 private:
 
 	QTcpServer _server{ this };
-	std::unique_ptr<QTcpSocket> _socket;
+	QTcpSocket* _socket = nullptr;
 
 	void IncomingProc(Packet packet);
 
