@@ -32,7 +32,6 @@ protected:
 
 	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
-	bool _closed = true;
 	NetworkInterface** const _myRef = nullptr;
 
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);

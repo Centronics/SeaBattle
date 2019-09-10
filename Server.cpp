@@ -69,12 +69,9 @@ void Server::SlotNewConnection()
 
 void Server::Close()
 {
-	if (_closed)
-		return;
 	_server.close();
 	deleteLater();
 	*_myRef = nullptr;
-	_closed = true;
 }
 
 void Server::Listen(const quint16 port)

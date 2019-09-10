@@ -17,18 +17,20 @@ public:
 	Client& operator=(Client&&) = delete;
 
 	void Close() override;
-	void Connect(const QString& ip, const quint16 port);
+	void Connect(const QString& ip, quint16 port);
 
 protected:
 
+	bool _closed = true;
+
 	void Send(const Packet& packet) override
 	{
-		packet.Send(_tcpSocket);
+		packet.Send(*_tcpSocket);
 	}
 
 private:
 
-	QTcpSocket _tcpSocket{ this };
+	QTcpSocket* const _tcpSocket = new QTcpSocket{ this };
 	void IncomingProc(Packet packet);
 
 signals:
@@ -44,7 +46,7 @@ private slots:
 
 	void SlotReadyRead()
 	{
-		IncomingProc(Packet(_tcpSocket));
+		IncomingProc(Packet(*_tcpSocket));
 	}
 
 	void SlotError(const QAbstractSocket::SocketError err)
