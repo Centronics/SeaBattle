@@ -60,7 +60,7 @@ void Server::SlotNewConnection()
 		return;
 	}
 	//connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
-	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
+	connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnect));//pClientSocket, SLOT(deleteLater()));
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	_socket = pClientSocket;

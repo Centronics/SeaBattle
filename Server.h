@@ -25,6 +25,12 @@ public:
 	void Close() override;
 	void Listen(quint16 port);
 
+private:
+
+	QTcpServer _server{ this };
+	QTcpSocket* _socket = nullptr;
+	void IncomingProc(Packet packet);
+
 protected:
 
 	void Send(const Packet& packet) override
@@ -32,13 +38,6 @@ protected:
 		if (_socket)
 			packet.Send(*_socket);
 	}
-
-private:
-
-	QTcpServer _server{ this };
-	QTcpSocket* _socket = nullptr;
-
-	void IncomingProc(Packet packet);
 
 private slots:
 
@@ -55,5 +54,11 @@ private slots:
 			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
 		else
 			IncomingProc(Packet(GetErrorDescr(err)));
+	}
+
+	void SlotDisconnect()
+	{
+		Close();
+		_socket->deleteLater();
 	}
 };

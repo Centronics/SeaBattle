@@ -21,8 +21,6 @@ public:
 
 protected:
 
-	bool _closed = true;
-
 	void Send(const Packet& packet) override
 	{
 		packet.Send(*_tcpSocket);
@@ -33,15 +31,11 @@ private:
 	QTcpSocket* const _tcpSocket = new QTcpSocket{ this };
 	void IncomingProc(Packet packet);
 
-signals:
-	void NeedDelete();
-
 private slots:
 
 	void SlotDeleteMe()
 	{
-		_closed = true;
-		emit NeedDelete();
+		Close();
 	}
 
 	void SlotReadyRead()
@@ -59,7 +53,6 @@ private slots:
 
 	void SlotConnected()
 	{
-		_closed = false;
 		_currentState = STATE::PUSHMAP;
 		IncomingProc(Packet());
 	}

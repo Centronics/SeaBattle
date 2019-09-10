@@ -13,12 +13,10 @@ Client::Client(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInte
 
 void Client::Close()
 {
-	if (_closed)
-		return;
 	_tcpSocket->close();
+	//_tcpSocket->deleteLater();
 	deleteLater();
 	*_myRef = nullptr;
-	_closed = true;
 }
 
 void Client::Connect(const QString& ip, const quint16 port)
@@ -26,7 +24,7 @@ void Client::Connect(const QString& ip, const quint16 port)
 	_tcpSocket->close();
 	_tcpSocket->connectToHost(ip, port, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 	connect(_tcpSocket, SIGNAL(disconnected()), SLOT(SlotDeleteMe()));
-	connect(this, SIGNAL(NeedDelete()), _tcpSocket, SLOT(deleteLater()));
+	//connect(this, SIGNAL(NeedDelete()), _tcpSocket, SLOT(deleteLater()));
 }
 
 void Client::IncomingProc(Packet packet)
