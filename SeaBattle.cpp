@@ -175,6 +175,7 @@ void SeaBattle::ExitApp() const
 	if (t)
 		t->Close();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
+	Graphics::IsRivalMove = false;
 }
 
 void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)

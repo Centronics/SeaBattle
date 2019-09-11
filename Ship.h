@@ -86,7 +86,7 @@ public:
 		{
 		case TYPES::LINKOR: return Qt::darkMagenta;
 		case TYPES::CRUISER: return Qt::green;
-		case TYPES::ESMINEC: return Qt::red;
+		case TYPES::ESMINEC: return QColor(255, 165, 0);
 		case TYPES::VEDETTE: return Qt::cyan;
 		default:
 			throw std::exception(__func__);

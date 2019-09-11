@@ -201,12 +201,7 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 }
 
-void Graphics::DrawWarning(QPainter& painter)
-{
-	painter.setPen(DRAW_TEXT_PEN);
-	painter.setFont(DRAW_FONT);
-	painter.drawText(CursorX - 12, CursorY + 20, "!");
-}
+
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
@@ -228,7 +223,15 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		painter.drawRect(xMarkCoord - BetweenObjects, yMarkCoord - BetweenObjects, wMarkCoord + W, hMarkCoord + W);
 	};
 
-	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
+	int dWarnX = -1, dWarnY = -1;
+
+	const auto drawWarning = [&dWarnX, &dWarnY]
+	{
+		dWarnX = CursorX;
+		dWarnY = CursorY;
+	};
+
+	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, &drawWarning, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		const int xw = x + w, yh = y + h;
 		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
@@ -240,7 +243,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		{
 			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
-				DrawWarning(painter);
+				drawWarning();
 			return;
 		}
 
@@ -270,12 +273,12 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawMark();
 
 		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inFrame && IsBusy(mx, my, ship, rotate))
-			DrawWarning(painter);
+			drawWarning();
 	};
 
 	const auto mBeat = [&painter](const int x, const int y, const Ship& s)
 	{
-		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
+		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
 		const Ship::BIT bit = s.GetBit();
 		if ((bit == Ship::BIT::ME || bit == Ship::BIT::BOTH) && !IsRivalMove)
@@ -299,7 +302,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
-		if (!IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
+		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
 			drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
 		if ((IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) && s.GetHolding(Ship::HOLDING::ME))
 			drawShipAndFrame(x, y, mx, my, w, h, s);
@@ -343,6 +346,12 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		}
 
 	marking();
+
+	if (dWarnX < 0 || dWarnY < 0)
+		return;
+	painter.setPen(DRAW_TEXT_PEN);
+	painter.setFont(DRAW_FONT);
+	painter.drawText(dWarnX - 12, dWarnY + 20, "!");
 }
 
 bool Graphics::IsFree(const int sx, const int sy) const

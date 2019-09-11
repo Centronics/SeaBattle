@@ -41,7 +41,6 @@ protected:
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
-	static void DrawWarning(QPainter& painter);
 
 public:
 
