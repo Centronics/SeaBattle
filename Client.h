@@ -6,6 +6,8 @@ class Client : public NetworkInterface
 {
 	Q_OBJECT
 
+	friend class DoOnThread;
+
 public:
 
 	explicit Client(Graphics& g, QObject* parent, NetworkInterface** r);
@@ -16,8 +18,21 @@ public:
 	Client& operator=(const Client&) = delete;
 	Client& operator=(Client&&) = delete;
 
-	void Close() override;
-	void Connect(const QString& ip, quint16 port);
+	void Connect(const QString& ip, const quint16 port)
+	{
+		quit();
+		wait();
+		_curIP = ip;
+		_curPort = port;
+		start(NormalPriority);
+
+		/*const auto f = [this, ip, port]
+		{
+
+		};
+
+		emit SendToThread(f);*/
+	}
 
 protected:
 
@@ -28,14 +43,27 @@ protected:
 
 private:
 
-	QTcpSocket* const _tcpSocket = new QTcpSocket{ this };
+	QTcpSocket* _tcpSocket = nullptr;
 	void IncomingProc(Packet packet);
+	void Run() override;
+	QString _curIP;
+	quint16 _curPort = 0;
+
+private slots:
+	
+	void IntClose() override//можно это сделать и в этом потоке
+	{
+		if (_tcpSocket)
+			_tcpSocket->close();
+		//_tcpSocket->deleteLater();
+		deleteLater();
+	}
 
 private slots:
 
 	void SlotDeleteMe()
 	{
-		Close();
+		IntClose();
 	}
 
 	void SlotReadyRead()

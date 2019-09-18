@@ -74,10 +74,17 @@ Packet::Packet(Packet&& packet) noexcept
 
 bool Packet::SerializeToQDataStream(QDataStream& data) const
 {
-	if ((_error != STATE::NOERR && _error != STATE::BUSY) || _massive.empty())
-		return false;
-	const int sz = _massive.size();
-	return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
+	if (_error == STATE::NOERR && !_massive.empty())
+	{
+		const int sz = _massive.size();
+		return data.writeRawData(reinterpret_cast<const char*>(_massive.data()), sz) == sz;
+	}
+	if (_error == STATE::BUSY && _massive.empty())
+	{
+		const DOIT dt = DOIT::BUSY;
+		return data.writeRawData(reinterpret_cast<const char*>(&dt), 1) == 1;
+	}
+	return false;
 }
 
 Packet::STATE Packet::GetState(QString* const errStr) const

@@ -45,10 +45,10 @@ protected:
 	void closeEvent(QCloseEvent* event) override;
 	void paintEvent(QPaintEvent* event) override;
 	QMessageBox::StandardButton Message(const QString& situation, const QString& question, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
-	void Impact(bool disconnect);
+	void Impact(bool disconnect, bool disconnectMessage = true);
 	void SaveParameters() const;
 	void LoadParameters() const;
-	void ExitApp() const;
+	void ExitGame() const;
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 

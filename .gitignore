@@ -132,3 +132,11 @@
 /.vs/SeaBattle/v15/ipch/AutoPCH/11e0c20eb932e1c1/MOC_NETWORKINTERFACE.ipch
 /.vs/SeaBattle/v15/ipch/5dfd8ebd905265bd.ipch
 /Debug/SeaBattle.log
+/.vs/SeaBattle/v15/ipch/AutoPCH/fdca64c61733edc3/MOC_DOONTHREAD.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/c0edceb1e1748514/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/bb8357f5c35eb1d2/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/96b9f5374f3ade0d/MOC_NETWORKINTERFACE.ipch
+/GeneratedFiles/Debug/moc_SocketHelper.cpp
+/GeneratedFiles/Debug/moc_DoOnThread.cpp
+/x64/Debug/moc_SocketHelper.obj
+/x64/Debug/moc_DoOnThread.obj

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Server.h"
+#include <functional>
 
 using namespace std;
 
@@ -48,10 +49,22 @@ void Server::IncomingProc(Packet packet)
 	}
 }
 
+void Server::Run()
+{
+	_server = new DoOnThread;
+	connect(_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
+	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	if (!_server->listen(QHostAddress::Any, _port))
+		emit SignalReceive(Packet(_server->errorString()));
+	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
+	connect(this, SIGNAL(SendToThread(function<void()>)), _server, SLOT(DoThis(function<void()>)));
+	connect(this, SIGNAL(Do()), _server, SLOT(Do()));
+	emit Do();
+}
+
 void Server::SlotNewConnection()
 {
-	QTcpSocket* const pClientSocket = _server.nextPendingConnection();
-	//_server.close();
+	QTcpSocket* const pClientSocket = _server->nextPendingConnection();
 	if (_socket)
 	{
 		const Packet p(Packet::STATE::BUSY);
@@ -59,25 +72,26 @@ void Server::SlotNewConnection()
 		pClientSocket->close();
 		return;
 	}
-	//connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClosed()));
-	connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnect));//pClientSocket, SLOT(deleteLater()));
+	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
+	connect(pClientSocket, SIGNAL(disconnected()), SLOT(IntClose())); // ÒÎ×ÍÎ ËÈ ÐÀÁÎÒÀÅÒ?
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	_socket = pClientSocket;
 	_currentState = STATE::WAITMAP;
 }
 
-void Server::Close()
-{
-	_server.close();
-	deleteLater();
-	*_myRef = nullptr;
-}
-
 void Server::Listen(const quint16 port)
 {
-	if (_server.isListening())
-		_server.close();
-	if (!_server.listen(QHostAddress::Any, port))
-		emit SignalReceive(Packet(_server.errorString()));
+	/*const auto f = [this, port]
+	{
+		if (_server->isListening())
+			_server->close();
+		if (!_server->listen(QHostAddress::Any, port))
+			emit SignalReceive(Packet(_server->errorString()));
+	};*/
+	quit();
+	wait();
+	_port = port;
+	start(NormalPriority);
+	//emit SendToThread(f);
 }

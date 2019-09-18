@@ -18,6 +18,13 @@ std::optional<QString> NetworkInterface::SendHit()
 	return std::nullopt;
 }
 
+NetworkInterface::~NetworkInterface()
+{
+	//Close();
+	quit();
+	wait();
+}
+
 QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 {
 	switch (err)
@@ -97,4 +104,22 @@ optional<Packet> NetworkInterface::CreateHitPacket()
 	Packet packet;
 	packet.WriteData(Packet::DOIT::HIT, *coord);
 	return packet;
+}
+
+void NetworkInterface::run()
+{
+	try
+	{
+		Run();
+		exec();
+	}
+	catch (exception& ex)
+	{
+		emit SignalReceive(Packet(ex.what())); // œ–Œ¬≈–»“‹ –¿¡Œ“”
+	}
+	catch (...)
+	{
+		emit SignalReceive(Packet("Unknown exception in NetworkInterface."));
+	}
+	quit();
 }

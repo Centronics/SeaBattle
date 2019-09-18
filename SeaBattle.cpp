@@ -41,7 +41,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CLIENT;
 	Graphics::IsRivalMove = false;
-	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
+	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);//Убрать в отдельный поток
 	update();
 }
 
@@ -59,7 +59,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::SERVER;
 	Graphics::IsRivalMove = true;
-	Initialize<Server>()->Listen(*port);
+	Initialize<Server>()->Listen(*port);//Убрать в отдельный поток
 	update();
 }
 
@@ -163,17 +163,15 @@ bool SeaBattle::CheckGameReady()
 
 void SeaBattle::SlotBtnDisconnectClicked()
 {
-	ExitApp();
+	ExitGame();
 	update();
 }
 
-void SeaBattle::ExitApp() const
+void SeaBattle::ExitGame() const
 {
 	OffButtons(false);
-	//_clientServer.reset();
-	NetworkInterface* const t = _clientServer;
-	if (t)
-		t->Close();
+	// Исправить баг с отображением соперников в случае проигрыша при наличии промахов; Найден баг, что если произошла ошибка при открытии сервера (например), то сообщение о поражении (победе) повтоярется после неё. ПРОТЕСТИРОВАТЬ ситуацию, когда пытаются подключиться более одного клиента.
+	_clientServer->Close();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 	Graphics::IsRivalMove = false;
 }
@@ -188,13 +186,14 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 	case Packet::STATE::ERR:
 		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 		Message("Ошибка.", errStr);
-		[[fallthrough]];
+		ExitGame();
+		break;
 	case Packet::STATE::DISCONNECTED:
-		Impact(true);
+		//Impact(true, false);
 		break;
 	case Packet::STATE::BUSY:
 		Message("Сервер уже участвует в сражении.", "Повторите попытку позже.");
-		Impact(true);
+		//Impact(true);
 		break;
 	default:
 		throw exception(__func__);
@@ -393,30 +392,24 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
-void SeaBattle::Impact(const bool disconnect)
+void SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
 {
-	const auto pStop = [this]
-	{
-		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
-		Graphics::IsRivalMove = false;
-		ExitApp();
-	};
-
 	switch (_graphics.GetBroken())
 	{
 	case Graphics::BROKEN::ME:
-		pStop();
+		ExitGame();
 		Message("Поражение!", "Вы проиграли.", QMessageBox::Information);
 		return;
 	case Graphics::BROKEN::RIVAL:
-		pStop();
+		ExitGame();
 		Message("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
 		return;
 	case Graphics::BROKEN::NOTHING:
 		if (!disconnect)
 			return;
-		pStop();
-		Message("Игра прекращена.", "Соединение разорвано.");
+		ExitGame();
+		if (disconnectMessage)
+			Message("Игра прекращена.", "Соединение разорвано.");
 		return;
 	default:
 		throw exception(__func__);

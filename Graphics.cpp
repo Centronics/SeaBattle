@@ -32,7 +32,10 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(BIG_FONT);
-		painter.drawText(341, 285, ConnectionStatus == CONNECTIONSTATUS::SERVER ? "Ожидание подключения." : "Подключение...");
+		if (ConnectionStatus == CONNECTIONSTATUS::SERVER)
+			painter.drawText(341, 285, "Ожидание подключения.");
+		if (ConnectionStatus == CONNECTIONSTATUS::CLIENT)
+			painter.drawText(389, 285, "Подключение...");
 		return;
 	}
 

@@ -94,6 +94,12 @@
     <QtMoc Include="Help.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="DoOnThread.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="SocketHelper.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="SeaBattle.ui">
