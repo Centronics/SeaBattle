@@ -22,6 +22,10 @@ private slots:
 	void SlotBtnDisconnectClicked();
 	void SlotReceive(Packet packet);
 
+signals:
+
+	void SignalClose();
+
 public:
 
 	explicit SeaBattle(QWidget* parent = Q_NULLPTR) noexcept;
@@ -48,7 +52,7 @@ protected:
 	void Impact(bool disconnect, bool disconnectMessage = true);
 	void SaveParameters() const;
 	void LoadParameters() const;
-	void ExitGame() const;
+	void ExitGame();
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 
@@ -56,6 +60,7 @@ protected:
 	{
 		T* const result = new T(_graphics, this, &_clientServer);
 		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		connect(this, SIGNAL(SignalClose()), result, SLOT(SlotClose()));
 		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);

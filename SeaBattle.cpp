@@ -167,11 +167,12 @@ void SeaBattle::SlotBtnDisconnectClicked()
 	update();
 }
 
-void SeaBattle::ExitGame() const
+void SeaBattle::ExitGame()
 {
 	OffButtons(false);
 	// Исправить баг с отображением соперников в случае проигрыша при наличии промахов; Найден баг, что если произошла ошибка при открытии сервера (например), то сообщение о поражении (победе) повтоярется после неё. ПРОТЕСТИРОВАТЬ ситуацию, когда пытаются подключиться более одного клиента.
 	_clientServer->Close();
+	//emit SignalClose();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 	Graphics::IsRivalMove = false;
 }

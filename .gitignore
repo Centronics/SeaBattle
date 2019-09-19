@@ -140,3 +140,6 @@
 /GeneratedFiles/Debug/moc_DoOnThread.cpp
 /x64/Debug/moc_SocketHelper.obj
 /x64/Debug/moc_DoOnThread.obj
+/.vs/SeaBattle/v15/ipch/AutoPCH/c166cbf2b76843b0/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/a50ab56786a018ee/MOC_SEABATTLE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/3955ee9cce7e6d27/MOC_DOONTHREAD.ipch

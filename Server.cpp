@@ -54,12 +54,18 @@ void Server::Run()
 	_server = new DoOnThread;
 	connect(_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
 	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
+
+	connect(this, SIGNAL(finished()), SLOT(testConn()));
+	
+	connect(this, SIGNAL(Do()), _server, SLOT(Do()));
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()));
-	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
-	connect(this, SIGNAL(SendToThread(function<void()>)), _server, SLOT(DoThis(function<void()>)));
-	connect(this, SIGNAL(Do()), _server, SLOT(Do()));
-	emit Do();
+	
+	
+	//connect(this, SIGNAL(SendToThread(function<void()>)), _server, SLOT(DoThis(function<void()>)));
+	//connect(this, SIGNAL(Do()), _server, SLOT(Do()));
+	//emit Do();
 }
 
 void Server::SlotNewConnection()
@@ -73,7 +79,11 @@ void Server::SlotNewConnection()
 		return;
 	}
 	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
-	connect(pClientSocket, SIGNAL(disconnected()), SLOT(IntClose())); // “Œ◊ÕŒ À» –¿¡Œ“¿≈“?
+
+	connect(pClientSocket, SIGNAL(disconnected()), SLOT(testConn1()));
+	connect(this, SIGNAL(finished()), pClientSocket, SLOT(deleteLater())); // Õ”∆ÕŒ À» ›“Œ?
+	
+	//connect(pClientSocket, SIGNAL(disconnected()), SLOT(IntClose())); // “Œ◊ÕŒ À» –¿¡Œ“¿≈“?
 	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
 	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 	_socket = pClientSocket;

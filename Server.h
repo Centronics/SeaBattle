@@ -36,8 +36,6 @@ private:
 	void Run() override;
 	quint16 _port = 0;
 
-private slots:
-	
 	void IntClose() override//можно это сделать и в этом потоке
 	{
 		if (_server)
@@ -74,6 +72,16 @@ private slots:
 			IncomingProc(Packet(GetErrorDescr(err)));
 	}
 
+	void testConn()
+	{
+		
+	}
+
+	void testConn1()
+	{
+		
+	}
+	
 	/*void SlotDisconnect()
 	{
 		IntClose();

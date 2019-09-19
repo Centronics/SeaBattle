@@ -88,11 +88,7 @@ optional<Packet> NetworkInterface::CreateHitPacket()
 	if (!coord)
 		return nullopt;
 	if (_currentState != STATE::HIT)
-	{
-		if (_currentState == STATE::WAITHIT)
-			return Packet("Сейчас ход соперника.");
-		return Packet("Неверное состояние программы.");
-	}
+		return _currentState == STATE::WAITHIT ? Packet("Сейчас ход соперника.") : Packet("Неверное состояние программы.");
 	const optional<bool> v = _graphics.MyHit(*coord);
 	if (!v)
 		return Packet("По этому месту уже был удар.");
@@ -121,5 +117,4 @@ void NetworkInterface::run()
 	{
 		emit SignalReceive(Packet("Unknown exception in NetworkInterface."));
 	}
-	quit();
 }

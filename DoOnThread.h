@@ -23,7 +23,8 @@ public slots:
 	}
 
 	void Do()
-{//ÂÛÏÎËÍßÅÒÑß
-	
-}
+	{//ÂÛÏÎËÍßÅÒÑß
+		close();
+		QThread::currentThread()->quit();
+	}
 };

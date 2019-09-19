@@ -21,38 +21,16 @@ public:
 
 	[[nodiscard]] std::optional<QString> SendHit();
 
-	std::function<void()> f2;
-	
 	void Close()// ЛУЧШЕ СДЕЛАТЬ ЕГО СЛОТОМ и ВЫЗЫВАТЬ ИЗВНЕ
 	{
 		if (this == nullptr)
 			return;
 		*_myRef = nullptr;
-
-		const auto f = [this]//плохое решение
-		{
-			IntClose();//ОТСЮДА МОЖНО послать сигнал на завершение
-		};
-
-		emit SendToThread(f);//Возможно, причина неарботоспособности в том, что я пытаюсь выполнить метод из чужого потока
 		emit Do();
-
-		//const std::function<void()> f1 = f;
-		//f1();
-		//
-		f2 = f;
-		//test(f);
-		//test1();
-	}
-
-	static void test(std::function<void()> f)
-	{
-		f();
-	}
-
-	void test1()
-	{
-		f2();
+		//IntClose();//ОТСЮДА МОЖНО послать сигнал на завершение
+	
+		//emit SendToThread(f);//Возможно, причина неарботоспособности в том, что я пытаюсь выполнить метод из чужого потока
+		//emit Do();
 	}
 	
 protected:
@@ -73,7 +51,7 @@ protected:
 	[[nodiscard]] std::optional<Packet> CreateHitPacket();
 	virtual void Send(const Packet& packet) = 0;
 	virtual void Run() = 0;
-
+	
 protected slots:
 	
 	virtual void IntClose() = 0;

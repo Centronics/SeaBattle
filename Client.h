@@ -48,8 +48,6 @@ private:
 	void Run() override;
 	QString _curIP;
 	quint16 _curPort = 0;
-
-private slots:
 	
 	void IntClose() override//можно это сделать и в этом потоке
 	{
