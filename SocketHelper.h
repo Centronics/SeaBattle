@@ -14,6 +14,8 @@ public:
 	SocketDoOnThread& operator=(SocketDoOnThread&&) = delete;
 	virtual ~SocketDoOnThread() = default;
 
+
+	
 public slots:
 
 	// ReSharper disable once CppMemberFunctionMayBeStatic

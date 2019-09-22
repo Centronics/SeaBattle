@@ -17,7 +17,8 @@ void Server::IncomingProc(Packet packet)
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			_currentState = STATE::WAITMAP;
-			_socket = nullptr;
+			//_socket = nullptr;
+			emit SigClose();
 			emit SignalReceive(Packet("WAITMAP error."));
 			return;
 		}
@@ -31,7 +32,8 @@ void Server::IncomingProc(Packet packet)
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			_socket = nullptr;
+			//_socket = nullptr;
+			emit SigClose();
 			emit SignalReceive(Packet("HIT error."));
 			return;
 		}
@@ -52,21 +54,26 @@ void Server::IncomingProc(Packet packet)
 void Server::Run()
 {
 	_server = new DoOnThread;
-	connect(_server, SIGNAL(newConnection()), SLOT(SlotNewConnection()));
-	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	connect(_server, SIGNAL(newConnection()), _server, SLOT(SlotNewConnection()));
+	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()));
+	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), _server, SLOT(SlotError(QAbstractSocket::SocketError)));
+	connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
+	connect(this, SIGNAL(SigClose()), SLOT(deleteLater()));
+	//connect(_server, SIGNAL(SigClose()), _server, SLOT(SlotClose()));
 
 	connect(_server, SIGNAL(destroyed(QObject*)), _server, SLOT(Des(QObject*)));//¬ÓÁÏÓÊÌÓ, ˜ÚÓ ÌÂ ‚˚Á˚‚‡ÂÚÒˇ, Ú.Í. ÒÓÁ‰‡ÌÌ˚È ‚ ˝ÚÓÏ ÍÎ‡ÒÒÂ ÔÓÚÓÍ ÛÊÂ Á‡‚Â¯∏Ì (Õ≈ œŒ ›“ŒÃ”)
 	connect(_server, SIGNAL(destroyed(QObject*)), SLOT(Destr(QObject*))); //œŒ◊≈Ã” —»√Õ¿À »—œŒÀÕﬂ≈“—ﬂ ¬ √À¿¬ÕŒÃ œŒ“Œ ≈? »Á-Á‡ ÚÓ„Ó, ˜ÚÓ ÂÏÛ ÌÂ„‰Â ·ÓÎ¸¯Â ˝ÚÓ ‰ÂÎ‡Ú¸.
-	
+
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
 	//connect(this, SIGNAL(finished()), SLOT(testConn()));//¬€œŒÀÕﬂ≈“—ﬂ ¬ √À¿¬ÕŒÃ œŒ“Œ ≈
 	connect(this, SIGNAL(finished()), _server, SLOT(Do()));//¬€œŒÀÕﬂ≈“—ﬂ ¬ œŒ“Œ ≈ —≈–¬≈–¿
-	
+
 	connect(this, SIGNAL(Do()), _server, SLOT(Do()));
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()));
-	
+
 	//connect(this, SIGNAL(SendToThread(function<void()>)), _server, SLOT(DoThis(function<void()>)));
 	//connect(this, SIGNAL(Do()), _server, SLOT(Do()));
 	emit Do();
@@ -74,23 +81,6 @@ void Server::Run()
 
 void Server::SlotNewConnection()
 {
-	QTcpSocket* const pClientSocket = _server->nextPendingConnection();
-	if (_socket)
-	{
-		const Packet p(Packet::STATE::BUSY);
-		p.Send(*pClientSocket);
-		pClientSocket->close();
-		return;
-	}
-	connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()));
-
-	connect(pClientSocket, SIGNAL(disconnected()), SLOT(testConn1()));
-	//connect(this, SIGNAL(finished()), pClientSocket, SLOT(deleteLater())); // Õ”∆ÕŒ À» ›“Œ?
-	
-	//connect(pClientSocket, SIGNAL(disconnected()), SLOT(IntClose())); // “Œ◊ÕŒ À» –¿¡Œ“¿≈“?
-	connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
-	connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-	_socket = pClientSocket;
 	_currentState = STATE::WAITMAP;
 }
 

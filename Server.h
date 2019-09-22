@@ -31,15 +31,15 @@ public:
 private:
 
 	DoOnThread* _server = nullptr;//QTcpServer
-	QTcpSocket* _socket = nullptr;
+	
 	void IncomingProc(Packet packet);
 	void Run() override;
 	quint16 _port = 0;
 
 	void IntClose() override//можно это сделать и в этом потоке
 	{
-		if (_server)
-			_server->close();
+		//if (_server)
+			//_server->close();
 		deleteLater();
 	}
 
@@ -47,8 +47,10 @@ protected:
 
 	void Send(const Packet& packet) override
 	{
-		if (_socket)
-			packet.Send(*_socket);
+		//if (_socket)
+			//packet.Send(*_socket);
+			//
+			emit SigSend(packet);
 	}
 
 	//signals:
@@ -98,6 +100,8 @@ private:
 	signals:
 
 	void oo();//public
+	void SigSend(Packet);
+	void SigClose();
 };
 
 /*class DF : Server
