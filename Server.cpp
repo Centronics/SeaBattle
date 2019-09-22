@@ -56,7 +56,7 @@ void Server::Run()
 	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
 
 	connect(_server, SIGNAL(destroyed(QObject*)), _server, SLOT(Des(QObject*)));//¬озможно, что не вызываетс€, т.к. созданный в этом классе поток уже завершЄн (Ќ≈ ѕќ Ё“ќћ”)
-	connect(_server, SIGNAL(destroyed(QObject*)), SLOT(Destr(QObject*))); //ѕќ„≈ћ” —»√ЌјЋ »—ѕќЋЌя≈“—я ¬ √Ћј¬Ќќћ ѕќ“ќ ≈?
+	connect(_server, SIGNAL(destroyed(QObject*)), SLOT(Destr(QObject*))); //ѕќ„≈ћ” —»√ЌјЋ »—ѕќЋЌя≈“—я ¬ √Ћј¬Ќќћ ѕќ“ќ ≈? »з-за того, что ему негде больше это делать.
 	
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
