@@ -24,7 +24,14 @@ public slots:
 
 	void Do()
 	{//бшонкмъеряъ
-		close();
-		QThread::currentThread()->quit();
+		//close();
+		//QThread::currentThread()->quit();
+
+	deleteLater();
+	}
+
+	void Des(QObject*)
+	{//мер йнмрюйрю!
+
 	}
 };

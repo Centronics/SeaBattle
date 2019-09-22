@@ -30,7 +30,7 @@ public:
 
 private:
 
-	QTcpServer* _server = nullptr;
+	DoOnThread* _server = nullptr;//QTcpServer
 	QTcpSocket* _socket = nullptr;
 	void IncomingProc(Packet packet);
 	void Run() override;
@@ -81,10 +81,30 @@ private slots:
 	{
 		
 	}
+
+	void Destr(QObject*)
+	{
+		
+	}
 	
 	/*void SlotDisconnect()
 	{
 		IntClose();
 		//_socket->deleteLater();
 	}*/
+
+private:
+
+	signals:
+
+	void oo();//public
 };
+
+/*class DF : Server
+{
+	void f()
+	{
+		emit oo();
+		//SlotReadClient();
+	}
+};*/
