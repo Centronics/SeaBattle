@@ -54,34 +54,50 @@ void Server::IncomingProc(Packet packet)
 void Server::Run()
 {
 	_server = new DoOnThread;
-	connect(_server, SIGNAL(newConnection()), _server, SLOT(SlotNewConnection()));
-	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()));
-	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), _server, SLOT(SlotError(QAbstractSocket::SocketError)));
-	connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
-	connect(this, SIGNAL(SigClose()), SLOT(deleteLater()));
+	
+	
+	auto t2 = connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)),_server, SLOT(SlotError1(QAbstractSocket::SocketError)));
+
+	auto t = connect(_server, SIGNAL(newConnection()), _server, SLOT(SlotNewConnection()));//ÐÀÁÎÒÀÅÒ
+	auto t1 = connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()));
+	
+	auto t3 =  connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError2(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
+	auto t30 = connect(_server, SIGNAL(SigError1(QAbstractSocket::SocketError)), SLOT(SlotError2(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
+	
+	//auto t4 = connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
+	//auto t5 = connect(this, SIGNAL(SigClose()), SLOT(deleteLater()));
 	//connect(_server, SIGNAL(SigClose()), _server, SLOT(SlotClose()));
 
-	connect(_server, SIGNAL(destroyed(QObject*)), _server, SLOT(Des(QObject*)));//Âîçìîæíî, ÷òî íå âûçûâàåòñÿ, ò.ê. ñîçäàííûé â ýòîì êëàññå ïîòîê óæå çàâåðø¸í (ÍÅ ÏÎ ÝÒÎÌÓ)
-	connect(_server, SIGNAL(destroyed(QObject*)), SLOT(Destr(QObject*))); //ÏÎ×ÅÌÓ ÑÈÃÍÀË ÈÑÏÎËÍßÅÒÑß Â ÃËÀÂÍÎÌ ÏÎÒÎÊÅ? Èç-çà òîãî, ÷òî åìó íåãäå áîëüøå ýòî äåëàòü.
+	//auto t6 = connect(_server, SIGNAL(destroyed(QObject*)), _server, SLOT(Des(QObject*)));//Âîçìîæíî, ÷òî íå âûçûâàåòñÿ, ò.ê. ñîçäàííûé â ýòîì êëàññå ïîòîê óæå çàâåðø¸í (ÍÅ ÏÎ ÝÒÎÌÓ)
+	//auto t7 = connect(_server, SIGNAL(destroyed(QObject*)), SLOT(Destr(QObject*))); //ÏÎ×ÅÌÓ ÑÈÃÍÀË ÈÑÏÎËÍßÅÒÑß Â ÃËÀÂÍÎÌ ÏÎÒÎÊÅ? Èç-çà òîãî, ÷òî åìó íåãäå áîëüøå ýòî äåëàòü.
 
-	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
+	auto t8 = connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
 	//connect(this, SIGNAL(finished()), SLOT(testConn()));//ÂÛÏÎËÍßÅÒÑß Â ÃËÀÂÍÎÌ ÏÎÒÎÊÅ
-	connect(this, SIGNAL(finished()), _server, SLOT(Do()));//ÂÛÏÎËÍßÅÒÑß Â ÏÎÒÎÊÅ ÑÅÐÂÅÐÀ
+	//auto t9 = connect(this, SIGNAL(finished()), _server, SLOT(testConn()));//ÂÛÏÎËÍßÅÒÑß Â ÏÎÒÎÊÅ ÑÅÐÂÅÐÀ
 
-	connect(this, SIGNAL(Do()), _server, SLOT(Do()));
-	if (!_server->listen(QHostAddress::Any, _port))
-		emit SignalReceive(Packet(_server->errorString()));
+	//auto t10 = connect(this, SIGNAL(Do()), _server, SLOT(Do()));
+	
 
 	//connect(this, SIGNAL(SendToThread(function<void()>)), _server, SLOT(DoThis(function<void()>)));
 	//connect(this, SIGNAL(Do()), _server, SLOT(Do()));
-	emit Do();
+//	emit Do();
+//
+	if (!_server->listen(QHostAddress::Any, _port))
+		emit SignalReceive(Packet(_server->errorString()));
 }
 
 void Server::SlotNewConnection()
 {
 	_currentState = STATE::WAITMAP;
+}
+
+void Server::SlotError2(QAbstractSocket::SocketError err)
+{
+	if (err == QAbstractSocket::RemoteHostClosedError)
+		IncomingProc(Packet(Packet::STATE::DISCONNECTED));
+	else
+		IncomingProc(Packet(GetErrorDescr(err)));
 }
 
 void Server::Listen(const quint16 port)
@@ -97,5 +113,14 @@ void Server::Listen(const quint16 port)
 	wait();
 	_port = port;
 	start(NormalPriority);
+
+	//msleep(3000);
+
+	//_server->moveToThread(this);
+	
+	
+
+	
+	
 	//emit SendToThread(f);
 }

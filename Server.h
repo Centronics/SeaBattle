@@ -1,7 +1,7 @@
 #pragma once
+//#include "QTcpServer"
+//#include "QTcpSocket"
 #include "NetworkInterface.h"
-#include "QTcpServer"
-#include "QTcpSocket"
 
 class Server : public NetworkInterface
 {
@@ -57,7 +57,7 @@ protected:
 
 	
 	
-private slots:
+public slots:
 
 	void SlotNewConnection();
 
@@ -66,13 +66,7 @@ private slots:
 		IncomingProc(Packet(*qobject_cast<QTcpSocket*>(sender())));
 	}
 
-	void SlotError(const QAbstractSocket::SocketError err)
-	{
-		if (err == QAbstractSocket::RemoteHostClosedError)
-			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
-		else
-			IncomingProc(Packet(GetErrorDescr(err)));
-	}
+	void SlotError2(QAbstractSocket::SocketError);
 
 	void testConn()
 	{

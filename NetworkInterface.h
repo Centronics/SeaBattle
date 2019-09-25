@@ -26,7 +26,7 @@ public:
 		if (this == nullptr)
 			return;
 		*_myRef = nullptr;
-		emit Do();
+		//emit Do();
 		//IntClose();//ОТСЮДА МОЖНО послать сигнал на завершение
 	
 		//emit SendToThread(f);//Возможно, причина неарботоспособности в том, что я пытаюсь выполнить метод из чужого потока

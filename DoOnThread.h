@@ -1,6 +1,7 @@
 #pragma once
 #include "QTcpServer"
 #include "Packet.h"
+#include "qabstractsocket.h"
 
 class DoOnThread : public QTcpServer
 {
@@ -23,6 +24,7 @@ signals:
 
 	void SigNewConnection();
 	void SigError(QAbstractSocket::SocketError);
+	void SigError1(QAbstractSocket::SocketError);
 
 public slots:
 
@@ -37,11 +39,11 @@ public slots:
 	deleteLater();
 }*/
 
-	void SlotError(const QAbstractSocket::SocketError err)
+	void SlotError1(QAbstractSocket::SocketError err)
 	{
-		emit SigError(err);
-	}
-	
+	emit SigError((QAbstractSocket::SocketError)0x202202);//err);
+}
+
 	// ReSharper disable once CppMemberFunctionMayBeConst
 	void SlotSend(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
 	{
@@ -51,7 +53,7 @@ public slots:
 	}
 
 	// ReSharper disable once CppMemberFunctionMayBeStatic
-	void DoThis(const std::function<void()> f)
+	/*void DoThis(const std::function<void()> f)
 	{
 		f();//Õ≈ ¬€œŒÀÕﬂ≈“—ﬂ
 	}
@@ -67,6 +69,11 @@ public slots:
 	void Des(QObject*)
 	{//Õ≈“  ŒÕ“¿ “¿!
 
+	}*/
+
+	void testConn()
+	{
+		
 	}
 
 	void SlotNewConnection()
@@ -86,8 +93,14 @@ public slots:
 
 		//connect(pClientSocket, SIGNAL(disconnected()), SLOT(IntClose())); // “Œ◊ÕŒ À» –¿¡Œ“¿≈“?
 		connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()));
-		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
+		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError1(QAbstractSocket::SocketError)));
+
+		connect(this, SIGNAL(SigError1(QAbstractSocket::SocketError)), SLOT(SlotError1(QAbstractSocket::SocketError)));
+	
 		_socket = pClientSocket;
 		emit SigNewConnection();
+
+	emit SigError1((QAbstractSocket::SocketError)0x101101);
 	}
 };
+
