@@ -150,3 +150,7 @@
 /.vs/SeaBattle/v15/ipch/AutoPCH/1c1d69b376bb1de2/MOC_SERVER.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/72af7d22ac44ac96/MOC_DOONTHREAD.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/4e1c64354d357224/MOC_DOONTHREAD.ipch
+/x64/Debug/moc_ServerThread.obj
+/x64/Debug/moc_ClientThread.obj
+/GeneratedFiles/Debug/moc_ServerThread.cpp
+/GeneratedFiles/Debug/moc_ClientThread.cpp

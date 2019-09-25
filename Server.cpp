@@ -53,8 +53,7 @@ void Server::IncomingProc(Packet packet)
 
 void Server::Run()
 {
-	_server = new DoOnThread;
-	
+	_server = new ServerThread;
 	
 	auto t2 = connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)),_server, SLOT(SlotError1(QAbstractSocket::SocketError)));
 

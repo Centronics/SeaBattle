@@ -6,7 +6,7 @@ class Client : public NetworkInterface
 {
 	Q_OBJECT
 
-	friend class DoOnThread;
+	friend class ClientThread;
 
 public:
 

@@ -14,20 +14,6 @@ class SeaBattle : public QWidget
 	NetworkInterface* _clientServer = nullptr;
 	inline static const QString SettingsFileName = "Settings.xml";
 
-private slots:
-
-	void SlotBtnHelpClicked();
-	void SlotBtnConnectClicked();
-	void SlotBtnServerStartClicked();
-	void SlotBtnDisconnectClicked();
-	void SlotReceive(Packet packet);
-
-
-	
-signals:
-
-	void SignalClose();
-
 public:
 
 	explicit SeaBattle(QWidget* parent = Q_NULLPTR) noexcept;
@@ -60,18 +46,23 @@ protected:
 
 	template<typename T> T* Initialize()
 	{
-		T* const result = new T(_graphics, nullptr, &_clientServer);//this
-		//connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
-		//connect(this, SIGNAL(SignalClose()), result, SLOT(SlotClose()));
-		//connect(result, SIGNAL(Update()), SLOT(update()));
+		T* const result = new T(_graphics, this, &_clientServer);
+		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		connect(this, SIGNAL(SignalClose()), result, SLOT(SlotClose()));
+		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}
 
-	public slots:
-	void SlotError(QAbstractSocket::SocketError)
-	{
-		int i=1;
-	i++;
-	}
+private slots:
+
+	void SlotBtnHelpClicked();
+	void SlotBtnConnectClicked();
+	void SlotBtnServerStartClicked();
+	void SlotBtnDisconnectClicked();
+	void SlotReceive(Packet packet);
+
+signals:
+
+	void SignalClose();
 };

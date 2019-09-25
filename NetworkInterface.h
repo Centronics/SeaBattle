@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include "QTcpSocket"
 #include <QThread>
-#include "DoOnThread.h"
+#include "ServerThread.h"
 
 class NetworkInterface : public QThread
 {

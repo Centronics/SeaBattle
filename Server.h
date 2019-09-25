@@ -7,7 +7,7 @@ class Server : public NetworkInterface
 {
 	Q_OBJECT
 
-	friend class DoOnThread;
+	friend class ServerThread;
 
 public:
 
@@ -30,7 +30,7 @@ public:
 
 private:
 
-	DoOnThread* _server = nullptr;//QTcpServer
+	ServerThread* _server = nullptr;//QTcpServer
 	
 	void IncomingProc(Packet packet);
 	void Run() override;

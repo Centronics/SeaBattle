@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Client.h"
 #include <functional>
-#include "SocketHelper.h"
+#include "ClientThread.h"
 
 using namespace std;
 

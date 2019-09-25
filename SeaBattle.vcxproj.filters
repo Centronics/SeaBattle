@@ -94,10 +94,10 @@
     <QtMoc Include="Help.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="DoOnThread.h">
+    <QtMoc Include="ServerThread.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="SocketHelper.h">
+    <QtMoc Include="ClientThread.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
