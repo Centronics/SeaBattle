@@ -6,8 +6,6 @@ class Client : public NetworkInterface
 {
 	Q_OBJECT
 
-	friend class ClientThread;
-
 public:
 
 	explicit Client(Graphics& g, QObject* parent, NetworkInterface** r);

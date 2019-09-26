@@ -1,24 +1,13 @@
 #pragma once
-//#include "QTcpServer"
-//#include "QTcpSocket"
 #include "NetworkInterface.h"
 
 class Server : public NetworkInterface
 {
 	Q_OBJECT
 
-	friend class ServerThread;
-
 public:
 
-	explicit Server(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r)
-	{
-		//connect(this, SIGNAL(SignalReceive(Packet)), parent, SLOT(SlotReceive(Packet)));
-		//start(NormalPriority);
-		//while(!isRunning())
-			//sleep(1);
-	}
-
+	explicit Server(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r) { }
 	Server() = delete;
 	virtual ~Server() = default;
 	Server(const Server&) = delete;
@@ -30,16 +19,20 @@ public:
 
 private:
 
-	ServerThread* _server = nullptr;//QTcpServer
-	
+	ServerThread* _server = nullptr;
+
 	void IncomingProc(Packet packet);
 	void Run() override;
 	quint16 _port = 0;
 
-	void IntClose() override//можно это сделать и в этом потоке
+	void IntClose() override
 	{
-		//if (_server)
-			//_server->close();
+		ServerThread* s = _server;
+		if (s)
+		{
+			s->deleteLater();
+			_server = nullptr;
+		}
 		deleteLater();
 	}
 
@@ -47,16 +40,9 @@ protected:
 
 	void Send(const Packet& packet) override
 	{
-		//if (_socket)
-			//packet.Send(*_socket);
-			//
-			emit SigSend(packet);
+		emit SigSend(packet);
 	}
 
-	//signals:
-
-	
-	
 public slots:
 
 	void SlotNewConnection();
@@ -66,43 +52,15 @@ public slots:
 		IncomingProc(Packet(*qobject_cast<QTcpSocket*>(sender())));
 	}
 
-	void SlotError2(QAbstractSocket::SocketError);
-
-	void testConn()
+	void SlotError(QAbstractSocket::SocketError err)
 	{
-		
+		if (err == QAbstractSocket::RemoteHostClosedError)
+			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
+		else
+			IncomingProc(Packet(GetErrorDescr(err)));
 	}
 
-	void testConn1()
-	{
-		
-	}
+signals:
 
-	void Destr(QObject*)
-	{
-		
-	}
-	
-	/*void SlotDisconnect()
-	{
-		IntClose();
-		//_socket->deleteLater();
-	}*/
-
-private:
-
-	signals:
-
-	void oo();//public
-	void SigSend(Packet);
-	void SigClose();
+	void SigSend(Packet);//Возможно переделать на invoke.
 };
-
-/*class DF : Server
-{
-	void f()
-	{
-		emit oo();
-		//SlotReadClient();
-	}
-};*/

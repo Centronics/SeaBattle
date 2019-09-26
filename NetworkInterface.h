@@ -1,7 +1,6 @@
 #pragma once
 #include "Packet.h"
 #include "Graphics.h"
-#include "QTcpSocket"
 #include <QThread>
 #include "ServerThread.h"
 
@@ -21,16 +20,12 @@ public:
 
 	[[nodiscard]] std::optional<QString> SendHit();
 
-	void Close()// ЛУЧШЕ СДЕЛАТЬ ЕГО СЛОТОМ и ВЫЗЫВАТЬ ИЗВНЕ
+	void Close()
 	{
 		if (this == nullptr)
 			return;
 		*_myRef = nullptr;
-		//emit Do();
-		//IntClose();//ОТСЮДА МОЖНО послать сигнал на завершение
-	
-		//emit SendToThread(f);//Возможно, причина неарботоспособности в том, что я пытаюсь выполнить метод из чужого потока
-		//emit Do();
+		IntClose();
 	}
 	
 protected:
@@ -64,6 +59,4 @@ signals:
 
 	void SignalReceive(Packet);
 	void Update();
-	void SendToThread(std::function<void()>);
-	void Do();
 };

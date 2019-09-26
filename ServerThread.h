@@ -8,7 +8,11 @@ class ServerThread : public QTcpServer
 
 public:
 
-	ServerThread() = default;
+	ServerThread()
+	{
+		connect(this, SIGNAL(newConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection);
+	}
+
 	ServerThread(const ServerThread&) = delete;
 	ServerThread(ServerThread&&) = delete;
 	ServerThread& operator=(const ServerThread&) = delete;
@@ -23,7 +27,6 @@ signals:
 
 	void SigNewConnection();
 	void SigRead(QTcpSocket*);
-	void SigClose();
 	void SigError(QAbstractSocket::SocketError);
 
 private slots:
@@ -45,11 +48,6 @@ private slots:
 			packet.Send(*s);
 	}
 
-	void SlotClose()
-	{
-		emit SigClose();
-	}
-
 	void SlotNewConnection()
 	{
 		QTcpSocket* pClientSocket = nextPendingConnection();
@@ -62,7 +60,6 @@ private slots:
 			return;
 		}
 
-		connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotClose()), Qt::DirectConnection);
 		connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()), Qt::DirectConnection);
 		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
 

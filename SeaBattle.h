@@ -48,7 +48,6 @@ protected:
 	{
 		T* const result = new T(_graphics, this, &_clientServer);
 		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
-		connect(this, SIGNAL(SignalClose()), result, SLOT(SlotClose()));
 		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
@@ -61,8 +60,4 @@ private slots:
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
 	void SlotReceive(Packet packet);
-
-signals:
-
-	void SignalClose();
 };
