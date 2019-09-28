@@ -3,11 +3,13 @@
 
 using namespace std;
 
-std::optional<QString> NetworkInterface::SendHit()
+optional<QString> NetworkInterface::SendHit()
 {
-	const std::optional<Packet> p = CreateHitPacket();
+	if (this == nullptr)
+		return nullopt;
+	const optional<Packet> p = CreateHitPacket();
 	if (!p)
-		return std::nullopt;
+		return nullopt;
 	if (!(*p))
 	{
 		QString s;
@@ -15,13 +17,14 @@ std::optional<QString> NetworkInterface::SendHit()
 		return s;
 	}
 	Send(*p);
-	return std::nullopt;
+	return nullopt;
 }
 
 NetworkInterface::~NetworkInterface()
 {
-	//Close();
+	*_myRef = nullptr;
 	quit();
+	//currentThreadId() œ–Œ¬≈–»“‹, Õ¿ÿ ›“Œ œŒ“Œ  »À» Õ≈“?
 	wait();
 }
 
@@ -106,12 +109,13 @@ void NetworkInterface::run()
 {
 	try
 	{
+		//throw exception("My Test Error.");
 		Run();
 		exec();
 	}
 	catch (exception& ex)
 	{
-		emit SignalReceive(Packet(ex.what())); // œ–Œ¬≈–»“‹ –¿¡Œ“”
+		emit SignalReceive(Packet(ex.what()));
 	}
 	catch (...)
 	{

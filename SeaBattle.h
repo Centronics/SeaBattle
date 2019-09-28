@@ -46,9 +46,11 @@ protected:
 
 	template<typename T> T* Initialize()
 	{
+		if (_clientServer)
+			_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
-		connect(result, SIGNAL(Update()), SLOT(update()));
+		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)), Qt::BlockingQueuedConnection);
+		connect(result, SIGNAL(Update()), SLOT(update()), Qt::BlockingQueuedConnection);
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}

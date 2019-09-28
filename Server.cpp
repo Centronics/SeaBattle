@@ -8,6 +8,7 @@ void Server::IncomingProc(Packet packet)
 	if (!packet)
 	{
 		emit SignalReceive(move(packet));
+		Close();
 		return;
 	}
 	switch (Packet out; _currentState)
@@ -17,7 +18,7 @@ void Server::IncomingProc(Packet packet)
 		{
 			_currentState = STATE::WAITMAP;
 			emit SignalReceive(Packet("WAITMAP error."));
-			IntClose();
+			Close();
 			return;
 		}
 		out.WriteData(_graphics.GetData());
@@ -31,7 +32,7 @@ void Server::IncomingProc(Packet packet)
 		{
 			_currentState = STATE::WAITMAP;
 			emit SignalReceive(Packet("HIT error."));
-			IntClose();
+			Close();
 			return;
 		}
 		if (!_graphics.RivalHit(coord))
@@ -51,9 +52,9 @@ void Server::IncomingProc(Packet packet)
 void Server::Run()
 {
 	_server = new ServerThread;
-	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection);
+	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
-	connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+	connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()));
@@ -66,6 +67,8 @@ void Server::SlotNewConnection()
 
 void Server::Listen(const quint16 port)
 {
+	if (this == nullptr)
+		return;
 	quit();
 	wait();
 	_port = port;

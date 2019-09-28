@@ -154,3 +154,6 @@
 /x64/Debug/moc_ClientThread.obj
 /GeneratedFiles/Debug/moc_ServerThread.cpp
 /GeneratedFiles/Debug/moc_ClientThread.cpp
+/.vs/SeaBattle/v15/ipch/AutoPCH/e96131ab1b3de4ea/MOC_SERVER.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/325ef26ecad9d584/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/2b40cc2d239c495c/MOC_SERVERTHREAD.ipch

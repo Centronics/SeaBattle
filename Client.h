@@ -18,6 +18,8 @@ public:
 
 	void Connect(const QString& ip, const quint16 port)
 	{
+		if (this == nullptr)
+			return;
 		quit();
 		wait();
 		_curIP = ip;
@@ -46,20 +48,12 @@ private:
 	void Run() override;
 	QString _curIP;
 	quint16 _curPort = 0;
-	
-	void IntClose() override//можно это сделать и в этом потоке
-	{
-		if (_tcpSocket)
-			_tcpSocket->close();
-		//_tcpSocket->deleteLater();
-		deleteLater();
-	}
 
 private slots:
 
 	void SlotDeleteMe()
 	{
-		IntClose();
+		//	IntClose();
 	}
 
 	void SlotReadyRead()

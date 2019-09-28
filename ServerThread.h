@@ -52,6 +52,7 @@ private slots:
 	{
 		QTcpSocket* pClientSocket = nextPendingConnection();
 		connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()), Qt::DirectConnection);
+	
 		if (_socket)
 		{
 			const Packet p(Packet::STATE::BUSY);

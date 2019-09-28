@@ -25,17 +25,6 @@ private:
 	void Run() override;
 	quint16 _port = 0;
 
-	void IntClose() override
-	{
-		ServerThread* s = _server;
-		if (s)
-		{
-			s->deleteLater();
-			_server = nullptr;
-		}
-		deleteLater();
-	}
-
 protected:
 
 	void Send(const Packet& packet) override
@@ -43,7 +32,7 @@ protected:
 		emit SigSend(packet);
 	}
 
-public slots:
+private slots:
 
 	void SlotNewConnection();
 
@@ -52,7 +41,7 @@ public slots:
 		IncomingProc(Packet(*qobject_cast<QTcpSocket*>(sender())));
 	}
 
-	void SlotError(QAbstractSocket::SocketError err)
+	void SlotError(const QAbstractSocket::SocketError err)
 	{
 		if (err == QAbstractSocket::RemoteHostClosedError)
 			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
@@ -62,5 +51,5 @@ public slots:
 
 signals:
 
-	void SigSend(Packet);//Возможно переделать на invoke.
+	void SigSend(Packet);
 };
