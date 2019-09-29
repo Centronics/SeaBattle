@@ -37,14 +37,22 @@ optional<QString> NetworkInterface::SendHit()
 void NetworkInterface::Close()
 {
 	_mutex.lock();
-	if ((this == nullptr) || ((*_myRef) == nullptr))
+	try
+	{
+		if ((this == nullptr) || ((*_myRef) == nullptr))
+		{
+			_mutex.unlock();
+			return;
+		}
+		*_myRef = nullptr;
+		deleteLater();
+		_mutex.unlock();
+	}
+	catch (...)
 	{
 		_mutex.unlock();
-		return;
+		throw;
 	}
-	*_myRef = nullptr;
-	deleteLater();
-	_mutex.unlock();
 }
 
 QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
