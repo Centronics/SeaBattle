@@ -10,11 +10,7 @@ class NetworkInterface : public QThread
 
 public:
 
-	explicit NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r) : QThread(parent), _graphics(g), _myRef(r)
-	{
-		//гюохяюрэ хдфемрхтхйюрнп онрнйю
-	}
-	
+	explicit NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r);
 	NetworkInterface() = delete;
 	virtual ~NetworkInterface();
 	NetworkInterface(const NetworkInterface&) = delete;
@@ -23,15 +19,7 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	[[nodiscard]] std::optional<QString> SendHit();
-
-	void Close()
-	{//менаундхлн хгаефюрэ бгюхлнакнйхпнбйх опх сдюкемхх яюлнцн яеаъ!!
-		//яхмупнмхгхпнбюрэ онрнйх
-		if (this == nullptr || !(*_myRef))
-			return;
-		*_myRef = nullptr;
-		deleteLater();
-	}
+	void Close();
 
 protected:
 
@@ -45,6 +33,7 @@ protected:
 
 	STATE _currentState = STATE::PUSHMAP;
 	Graphics& _graphics;
+	QMutex _mutex;
 
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
 	virtual void Send(const Packet&) = 0;

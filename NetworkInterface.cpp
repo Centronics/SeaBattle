@@ -3,6 +3,20 @@
 
 using namespace std;
 
+NetworkInterface::NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r) : QThread(parent), _graphics(g), _myRef(r)
+{
+	setTerminationEnabled(false);
+	setObjectName(typeid(NetworkInterface).name());
+}
+
+NetworkInterface::~NetworkInterface()
+{
+	*_myRef = nullptr;
+	quit();
+	if (currentThread()->objectName() != objectName())
+		wait();
+}
+
 optional<QString> NetworkInterface::SendHit()
 {
 	if (this == nullptr)
@@ -20,12 +34,17 @@ optional<QString> NetworkInterface::SendHit()
 	return nullopt;
 }
 
-NetworkInterface::~NetworkInterface()
+void NetworkInterface::Close()
 {
+	_mutex.lock();
+	if ((this == nullptr) || ((*_myRef) == nullptr))
+	{
+		_mutex.unlock();
+		return;
+	}
 	*_myRef = nullptr;
-	quit();
-	//currentThreadId() œ–Œ¬≈–»“‹, Õ¿ÿ ›“Œ œŒ“Œ  »À» Õ≈“?
-	wait();
+	deleteLater();
+	_mutex.unlock();
 }
 
 QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
