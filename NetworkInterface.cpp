@@ -36,7 +36,8 @@ optional<QString> NetworkInterface::SendHit()
 
 void NetworkInterface::Close()
 {
-	_mutex.lock();
+	if (!_mutex.try_lock())
+		return;
 	try
 	{
 		if ((this == nullptr) || ((*_myRef) == nullptr))
