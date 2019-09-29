@@ -40,7 +40,7 @@ protected:
 	void Impact(bool disconnect, bool disconnectMessage = true);
 	void SaveParameters() const;
 	void LoadParameters() const;
-	void ExitGame();
+	void ExitGame() const;
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 
@@ -49,8 +49,8 @@ protected:
 		if (_clientServer)
 			_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)), Qt::BlockingQueuedConnection);
-		connect(result, SIGNAL(Update()), SLOT(update()), Qt::BlockingQueuedConnection);
+		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)), Qt::DirectConnection);
+		connect(result, SIGNAL(Update()), SLOT(update()), Qt::DirectConnection);
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}

@@ -167,7 +167,7 @@ void SeaBattle::SlotBtnDisconnectClicked()
 	update();
 }
 
-void SeaBattle::ExitGame()
+void SeaBattle::ExitGame() const
 {
 	OffButtons(false);
 	// Исправить баг с отображением соперников в случае проигрыша при наличии промахов; Найден баг, что если произошла ошибка при открытии сервера (например), то сообщение о поражении (победе) повтоярется после неё. ПРОТЕСТИРОВАТЬ ситуацию, когда пытаются подключиться более одного клиента.
@@ -189,11 +189,11 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 		ExitGame();
 		break;
 	case Packet::STATE::DISCONNECTED:
-		//Impact(true, false);
+		Impact(true);
 		break;
 	case Packet::STATE::BUSY:
 		Message("Сервер уже участвует в сражении.", "Повторите попытку позже.");
-		//Impact(true);
+		Impact(true, false);
 		break;
 	default:
 		throw exception(__func__);
