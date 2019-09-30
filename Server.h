@@ -19,7 +19,7 @@ public:
 
 private:
 
-	ServerThread* _server = nullptr;
+	QTcpServer* _server = nullptr;
 
 	void IncomingProc(Packet packet);
 	void Run() override;
@@ -41,12 +41,19 @@ private slots:
 		IncomingProc(Packet(*qobject_cast<QTcpSocket*>(sender())));
 	}
 
-	void SlotError(const QAbstractSocket::SocketError err)
+	void SlotError(const std::optional<QAbstractSocket::SocketError> err)
 	{
-		if (err == QAbstractSocket::RemoteHostClosedError)
+		if (!err || err == QAbstractSocket::RemoteHostClosedError)
 			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
 		else
-			IncomingProc(Packet(GetErrorDescr(err)));
+			IncomingProc(Packet(GetErrorDescr(*err)));
+		Close();
+	}
+
+	void SlotAcceptError(const QAbstractSocket::SocketError err)
+	{
+		IncomingProc(Packet(GetErrorDescr(err)));
+		Close();
 	}
 
 signals:

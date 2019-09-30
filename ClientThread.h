@@ -1,31 +1,42 @@
 #pragma once
-#include "QTcpSocket"
+#include "Packet.h"
 
-class SocketDoOnThread : public QTcpSocket
+class ClientThread : public QTcpSocket
 {
 	Q_OBJECT
 
 public:
 
-	SocketDoOnThread() = default;
-	SocketDoOnThread(const SocketDoOnThread&) = delete;
-	SocketDoOnThread(SocketDoOnThread&&) = delete;
-	SocketDoOnThread& operator=(const SocketDoOnThread&) = delete;
-	SocketDoOnThread& operator=(SocketDoOnThread&&) = delete;
-	virtual ~SocketDoOnThread() = default;
-
-
-	
-public slots:
-
-	// ReSharper disable once CppMemberFunctionMayBeStatic
-	void DoThis(const std::function<void()> f)
+	ClientThread()
 	{
-		f();//Õ≈ ¬€œŒÀÕﬂ≈“—ﬂ
+		connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
+		connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
 	}
 
-	void Do()
-{
-	
-}
+	ClientThread(const ClientThread&) = delete;
+	ClientThread(ClientThread&&) = delete;
+	ClientThread& operator=(const ClientThread&) = delete;
+	ClientThread& operator=(ClientThread&&) = delete;
+	virtual ~ClientThread() = default;
+
+private slots:
+
+	void SlotSend(const Packet packet)
+	{
+		packet.Send(*this);
+	}
+
+	void SlotDisconnected()
+	{
+		emit SigError(std::nullopt);
+	}
+
+	void SlotError(SocketError err)
+	{
+		emit SigError(err);
+	}
+
+signals:
+
+	void SigError(std::optional<SocketError>);
 };

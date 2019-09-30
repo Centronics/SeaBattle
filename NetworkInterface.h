@@ -20,7 +20,7 @@ public:
 
 	[[nodiscard]] std::optional<QString> SendHit();
 	void Close();
-
+	
 protected:
 
 	enum class STATE : quint8

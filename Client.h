@@ -8,7 +8,7 @@ class Client : public NetworkInterface
 
 public:
 
-	explicit Client(Graphics& g, QObject* parent, NetworkInterface** r);
+	explicit Client(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r) { }
 	Client() = delete;
 	virtual ~Client() = default;
 	Client(const Client&) = delete;
@@ -25,48 +25,36 @@ public:
 		_curIP = ip;
 		_curPort = port;
 		start(NormalPriority);
-
-		/*const auto f = [this, ip, port]
-		{
-
-		};
-
-		emit SendToThread(f);*/
 	}
 
 protected:
 
 	void Send(const Packet& packet) override
 	{
-		packet.Send(*_tcpSocket);
+		emit SigSend(packet);
 	}
 
 private:
 
 	QTcpSocket* _tcpSocket = nullptr;
-	void IncomingProc(Packet packet);
-	void Run() override;
 	QString _curIP;
 	quint16 _curPort = 0;
+	void Run() override;
+	void IncomingProc(Packet packet);
 
 private slots:
-
-	void SlotDeleteMe()
-	{
-		//	IntClose();
-	}
 
 	void SlotReadyRead()
 	{
 		IncomingProc(Packet(*_tcpSocket));
 	}
 
-	void SlotError(const QAbstractSocket::SocketError err)
+	void SlotError(const std::optional<QAbstractSocket::SocketError> err)
 	{
-		if (err == QAbstractSocket::RemoteHostClosedError)
+		if (!err || err == QAbstractSocket::RemoteHostClosedError)
 			IncomingProc(Packet(Packet::STATE::DISCONNECTED));
 		else
-			IncomingProc(Packet(GetErrorDescr(err)));
+			IncomingProc(Packet(GetErrorDescr(*err)));
 	}
 
 	void SlotConnected()
@@ -74,4 +62,8 @@ private slots:
 		_currentState = STATE::PUSHMAP;
 		IncomingProc(Packet());
 	}
+
+signals:
+
+	void SigSend(Packet);
 };

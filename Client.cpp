@@ -1,17 +1,8 @@
 #include "stdafx.h"
 #include "Client.h"
-#include <functional>
 #include "ClientThread.h"
 
 using namespace std;
-
-Client::Client(Graphics& g, QObject* parent, NetworkInterface** r) : NetworkInterface(g, parent, r)
-{
-	//start(NormalPriority);
-
-	//connect(this, SIGNAL(SignalReceive(Packet)), parent, SLOT(SlotReceive(Packet)), Qt::BlockingQueuedConnection);
-//	connect(this, SIGNAL(ConnectSig(QString, quint16)), SLOT(SlotConnect(QString, quint16)));
-}
 
 void Client::IncomingProc(Packet packet)
 {
@@ -68,12 +59,12 @@ void Client::IncomingProc(Packet packet)
 
 void Client::Run()
 {
-	_tcpSocket = new SocketDoOnThread;
-	connect(_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));
-	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));
-	connect(_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)));
-	connect(_tcpSocket, SIGNAL(disconnected()), SLOT(SlotDeleteMe()));
+	_tcpSocket = new ClientThread;
+
+	connect(_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()), Qt::BlockingQueuedConnection);
+	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)));
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
-	connect(this, SIGNAL(SendToThread(function<void()>)), _tcpSocket, SLOT(DoThis(function<void()>)));
+
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }

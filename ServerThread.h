@@ -27,13 +27,18 @@ signals:
 
 	void SigNewConnection();
 	void SigRead(QTcpSocket*);
-	void SigError(QAbstractSocket::SocketError);
+	void SigError(std::optional<QAbstractSocket::SocketError>);
 
 private slots:
 
 	void SlotError(const QAbstractSocket::SocketError err)
 	{
 		emit SigError(err);
+	}
+
+	void SlotDisconnected()
+	{
+		emit SigError(std::nullopt);
 	}
 
 	void SlotReadClient()
@@ -51,10 +56,10 @@ private slots:
 	void SlotNewConnection()
 	{
 		QTcpSocket* pClientSocket = nextPendingConnection();
-		connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()), Qt::DirectConnection);
-	
+
 		if (_socket)
 		{
+			connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()), Qt::DirectConnection);
 			const Packet p(Packet::STATE::BUSY);
 			p.Send(*pClientSocket);
 			pClientSocket->close();
@@ -63,6 +68,7 @@ private slots:
 
 		connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()), Qt::DirectConnection);
 		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+		connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
 
 		_socket = pClientSocket;
 		emit SigNewConnection();

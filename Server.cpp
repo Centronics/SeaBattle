@@ -52,10 +52,13 @@ void Server::IncomingProc(Packet packet)
 void Server::Run()
 {
 	_server = new ServerThread;
+
 	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
-	connect(_server, SIGNAL(SigError(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
+	connect(_server, SIGNAL(SigError(optional<QAbstractSocket::SocketError>)), SLOT(SlotError(optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
+	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
+
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()));
 }
