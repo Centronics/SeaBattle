@@ -159,3 +159,11 @@
 /.vs/SeaBattle/v15/ipch/AutoPCH/2b40cc2d239c495c/MOC_SERVERTHREAD.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/82b14d0cd0bc07c1/MOC_NETWORKINTERFACE.ipch
 /.vs/SeaBattle/v15/ipch/AutoPCH/6089f3da9aef24e9/MOC_SERVERTHREAD.ipch
+/x64/Debug/qrc_SeaBattle.asm
+/x64/Debug/moc_ServerThread.asm
+/x64/Debug/moc_Server.asm
+/x64/Debug/moc_SeaBattle.asm
+/x64/Debug/moc_NetworkInterface.asm
+/x64/Debug/moc_Help.asm
+/x64/Debug/moc_ClientThread.asm
+/x64/Debug/moc_Client.asm

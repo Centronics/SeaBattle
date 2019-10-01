@@ -6,14 +6,14 @@ using namespace std;
 NetworkInterface::NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r) : QThread(parent), _graphics(g), _myRef(r)
 {
 	setTerminationEnabled(false);
-	setObjectName(typeid(NetworkInterface).name());
+	//setObjectName(typeid(NetworkInterface).name());
 }
 
 NetworkInterface::~NetworkInterface()
 {
-	*_myRef = nullptr;
+	*_myRef = nullptr;// ÓÂÅÐÅÍ, ×ÒÎ ÇÄÅÑÜ ÂÑÅÃÄÀ ÁÓÄÅÒ ÒÎËÜÊÎ ÃËÀÂÍÛÉ ÏÎÒÎÊ
 	quit();
-	if (currentThread()->objectName() != objectName())
+	//if (currentThread()->objectName() != objectName())
 		wait();
 }
 

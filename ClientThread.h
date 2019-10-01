@@ -7,7 +7,7 @@ class ClientThread : public QTcpSocket
 
 public:
 
-	ClientThread()
+	explicit ClientThread(QObject* creator) : _creator(creator)
 	{
 		connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
 		connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
@@ -19,6 +19,10 @@ public:
 	ClientThread& operator=(ClientThread&&) = delete;
 	virtual ~ClientThread() = default;
 
+private:
+
+	QObject* const _creator = nullptr;
+
 private slots:
 
 	void SlotSend(const Packet packet)
@@ -29,14 +33,18 @@ private slots:
 	void SlotDisconnected()
 	{
 		emit SigError(std::nullopt);
+		if (_creator)
+			_creator->deleteLater();
 	}
 
-	void SlotError(SocketError err)
+	void SlotError(QAbstractSocket::SocketError err)
 	{
 		emit SigError(err);
+		if (_creator)
+			_creator->deleteLater();
 	}
 
 signals:
 
-	void SigError(std::optional<SocketError>);
+	void SigError(std::optional<QAbstractSocket::SocketError>);
 };
