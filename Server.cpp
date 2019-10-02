@@ -51,7 +51,7 @@ void Server::IncomingProc(Packet packet)
 
 void Server::Run()
 {
-	_server = new ServerThread;
+	_server = new ServerThread;//Сделать creator?
 
 	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
