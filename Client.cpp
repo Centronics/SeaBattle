@@ -4,12 +4,12 @@
 
 using namespace std;
 
-void Client::IncomingProc(Packet packet)
+optional<Packet> Client::IncomingProc(Packet packet)
 {
 	if (!packet)
 	{
 		emit SignalReceive(move(packet));
-		return;
+		return nullopt;
 	}
 
 	const auto close = [this]
@@ -18,30 +18,33 @@ void Client::IncomingProc(Packet packet)
 		_tcpSocket->close();
 	};
 
-	switch (Packet out; _currentState)
+	switch (_currentState)
 	{
 	case STATE::PUSHMAP:
+	{
+		Packet out;
 		out.WriteData(_graphics.GetData());
-		Send(out);
+		//Send(out);
 		_currentState = STATE::WAITMAP;
-		break;
+		return out;
+	}
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			close();
 			emit SignalReceive(Packet("WAITMAP error."));
-			break;
+			return nullopt;
 		}
 		_currentState = STATE::HIT;
 		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
-		break;
+		return nullopt;
 	case STATE::WAITHIT:
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			close();
 			emit SignalReceive(Packet("HIT error."));
-			break;
+			return nullopt;
 		}
 		if (!_graphics.RivalHit(coord))
 		{
@@ -49,9 +52,9 @@ void Client::IncomingProc(Packet packet)
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
-		break;
+		return nullopt;
 	case STATE::HIT:
-		return;
+		return nullopt;
 	default:
 		throw exception(__func__);
 	}
@@ -61,10 +64,14 @@ void Client::Run()
 {
 	_tcpSocket = new ClientThread(this);
 
-	connect(_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()));//, Qt::BlockingQueuedConnection);
-	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()));//, Qt::BlockingQueuedConnection);
+	//connect(_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()), Qt::BlockingQueuedConnection);
+	//SigConnected(std::optional<Packet>*)
+	
+	connect(_tcpSocket, SIGNAL(SigConnected(std::optional<Packet>*)), SLOT(SlotConnected(std::optional<Packet>*)), Qt::BlockingQueuedConnection);
+	
+	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
-	//connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)));
+	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);//BlockingQueuedConnection реярнбне
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
 
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);

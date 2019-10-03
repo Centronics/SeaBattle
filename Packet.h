@@ -25,6 +25,8 @@ public:
 
 private:
 
+	void MoveFunc(Packet&& packet);
+
 	std::vector<quint8> _massive;
 	STATE _error = STATE::NOERR;
 	QString _errorMessage;
@@ -39,7 +41,7 @@ public:
 	Packet(Packet&& packet) noexcept;
 	~Packet() = default;
 	Packet& operator=(const Packet&) = delete;
-	Packet& operator=(Packet&&) = delete;
+	Packet& operator=(Packet&& packet) noexcept;
 
 	void WriteData(DOIT doit, quint8 param);
 	void WriteData(const std::vector<Ship>& mas);

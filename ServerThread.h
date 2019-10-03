@@ -8,7 +8,7 @@ class ServerThread : public QTcpServer
 
 public:
 
-	ServerThread()
+	ServerThread(QObject* creator) : _creator(creator)
 	{
 		connect(this, SIGNAL(newConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection);
 	}
@@ -21,12 +21,14 @@ public:
 
 private:
 
+	QObject* _creator = nullptr;
+	std::optional<Packet> _sendMe;
 	QTcpSocket* _socket = nullptr;
 
 signals:
 
 	void SigNewConnection();
-	void SigRead(QTcpSocket*);
+	void SigRead(QTcpSocket*, std::optional<Packet>*);
 	void SigError(std::optional<QAbstractSocket::SocketError>);
 
 private slots:
@@ -43,7 +45,9 @@ private slots:
 
 	void SlotReadClient()
 	{
-		emit SigRead(_socket);
+		emit SigRead(_socket, &_sendMe);
+		if (_sendMe)
+			_sendMe->Send(*qobject_cast<QTcpSocket*>(sender()));
 	}
 
 	void SlotSend(const Packet packet)

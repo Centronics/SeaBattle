@@ -9,12 +9,13 @@ public:
 
 	explicit ClientThread(QObject* creator) : _creator(creator)
 	{
+		connect(this, SIGNAL(connected()), SLOT(SlotConnected()), Qt::DirectConnection);
 		connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
 		connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
 
 		//connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)));
 
-		connect(_creator, SIGNAL(SigSend(Packet)), this, SLOT(SlotSend(Packet)),Qt::BlockingQueuedConnection);
+		//connect(_creator, SIGNAL(SigSend(Packet)), this, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	}
 
 	ClientThread(const ClientThread&) = delete;
@@ -28,10 +29,14 @@ public:
 private:
 
 	QObject* _creator = nullptr;
+	std::optional<Packet> _sendMe;
 
-public slots:
+private slots:
 
-	void SlotSend(Packet);
+	void SlotSend(Packet packet)
+	{
+		packet.Send(*this);
+	}
 
 	void SlotDisconnected()
 	{
@@ -51,12 +56,15 @@ public slots:
 		_creator = nullptr;
 	}
 
+	void SlotConnected()
+	{
+		emit SigConnected(&_sendMe);
+		if (_sendMe)
+			_sendMe->Send(*this);
+	}
+
 signals:
 
 	void SigError(std::optional<QAbstractSocket::SocketError>);
+	void SigConnected(std::optional<Packet>*);
 };
-
-inline void ClientThread::SlotSend(Packet packet)
-{
-	packet.Send(*this);
-}

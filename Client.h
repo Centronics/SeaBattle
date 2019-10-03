@@ -40,13 +40,13 @@ private:
 	QString _curIP;
 	quint16 _curPort = 0;
 	void Run() override;
-	void IncomingProc(Packet packet);
+	std::optional<Packet> IncomingProc(Packet packet);
 
 private slots:
 
 	void SlotReadyRead()
 	{
-		IncomingProc(Packet(*_tcpSocket));
+		IncomingProc(Packet(*_tcpSocket));// Õ¿  À»≈Õ“≈ —“¿“”— Õ≈ Œ¡ÕŒ¬Àﬂ≈“—ﬂ
 	}
 
 	void SlotError(const std::optional<QAbstractSocket::SocketError> err)
@@ -57,10 +57,15 @@ private slots:
 			IncomingProc(Packet(GetErrorDescr(*err)));
 	}
 
-	void SlotConnected()
+	void SlotConnected(std::optional<Packet>* sendMe)
 	{
 		_currentState = STATE::PUSHMAP;
-		IncomingProc(Packet());
+		std::optional<Packet> packet = IncomingProc(Packet());//ÓÚÓÒÎ‡Ú¸ ÓÚ‚ÂÚ ‚ÓÁ‚‡˘‡ÂÏ˚È
+		if (sendMe)
+			*sendMe = std::move(packet);
+		//sendMe->emplace(*packet);
+		//if (packet)
+			//Send(*packet);
 	}
 
 signals:

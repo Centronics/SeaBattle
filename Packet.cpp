@@ -65,11 +65,22 @@ Packet::Packet(QTcpSocket& socket)
 	}
 }
 
-Packet::Packet(Packet&& packet) noexcept
+void Packet::MoveFunc(Packet&& packet)
 {
 	_massive = move(packet._massive);
 	_error = packet._error;
 	_errorMessage = move(packet._errorMessage);
+}
+
+Packet::Packet(Packet&& packet) noexcept
+{
+	MoveFunc(move(packet));
+}
+
+Packet& Packet::operator=(Packet&& packet) noexcept
+{
+	MoveFunc(move(packet));
+	return *this;
 }
 
 bool Packet::SerializeToQDataStream(QDataStream& data) const
