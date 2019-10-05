@@ -1,5 +1,6 @@
 #pragma once
 #include "NetworkInterface.h"
+#include "QTcpServer"
 
 class Server : public NetworkInterface
 {
@@ -38,7 +39,7 @@ private slots:
 
 	void SlotReadClient(QTcpSocket* socket, std::optional<Packet>* sendMe)
 	{
-		std::optional<Packet> packet = IncomingProc(Packet(*socket)); // *qobject_cast<QTcpSocket*>(sender())));
+		std::optional<Packet> packet = IncomingProc(Packet(*socket));
 		if (sendMe)
 			*sendMe = std::move(packet);
 	}

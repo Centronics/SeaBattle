@@ -1,6 +1,7 @@
 #pragma once
-#include "QTcpServer"
 #include "Packet.h"
+#include "NetworkInterface.h"
+#include "QTcpServer"
 
 class ServerThread : public QTcpServer
 {
@@ -8,7 +9,7 @@ class ServerThread : public QTcpServer
 
 public:
 
-	ServerThread(QObject* creator) : _creator(creator)
+	explicit ServerThread(NetworkInterface* creator) : _creator(creator)
 	{
 		connect(this, SIGNAL(newConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection);
 	}
@@ -17,11 +18,11 @@ public:
 	ServerThread(ServerThread&&) = delete;
 	ServerThread& operator=(const ServerThread&) = delete;
 	ServerThread& operator=(ServerThread&&) = delete;
-	virtual ~ServerThread() = default;//¬€œŒÀÕﬂ≈“—ﬂ À»?
+	virtual ~ServerThread() = default;
 
 private:
 
-	QObject* _creator = nullptr;
+	NetworkInterface* _creator = nullptr;
 	std::optional<Packet> _sendMe;
 	QTcpSocket* _socket = nullptr;
 
@@ -33,14 +34,22 @@ signals:
 
 private slots:
 
-	void SlotError(const QAbstractSocket::SocketError err)
-	{
-		emit SigError(err);
-	}
-
 	void SlotDisconnected()
 	{
+		if (!_creator)
+			return;
 		emit SigError(std::nullopt);
+		_creator->Close();
+		_creator = nullptr;
+	}
+
+	void SlotError(const QAbstractSocket::SocketError err)
+	{
+		if (!_creator)
+			return;
+		emit SigError(err);
+		_creator->Close();
+		_creator = nullptr;
 	}
 
 	void SlotReadClient()
@@ -50,7 +59,7 @@ private slots:
 			_sendMe->Send(*qobject_cast<QTcpSocket*>(sender()));
 	}
 
-	void SlotSend(const Packet packet)
+	void SlotSend(const Packet packet) const
 	{
 		QTcpSocket* s = _socket;
 		if (s)
@@ -71,7 +80,7 @@ private slots:
 		}
 
 		connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()), Qt::DirectConnection);
-		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);//“≈—“»–Œ¬¿“‹ ¬«¿»ÃŒ¡ÀŒ »–Œ¬ » — √À¿¬Õ€Ã œŒ“Œ ŒÃ
+		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
 		connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
 
 		_socket = pClientSocket;

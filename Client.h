@@ -63,9 +63,6 @@ private slots:
 		std::optional<Packet> packet = IncomingProc(Packet());//отослать ответ возвращаемый
 		if (sendMe)
 			*sendMe = std::move(packet);
-		//sendMe->emplace(*packet);
-		//if (packet)
-			//Send(*packet);
 	}
 
 signals:

@@ -2,7 +2,6 @@
 #include "Packet.h"
 #include "Graphics.h"
 #include <QThread>
-#include "ServerThread.h"
 
 class NetworkInterface : public QThread
 {

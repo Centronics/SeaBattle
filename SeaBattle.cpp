@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "SeaBattle.h"
 #include "Packet.h"
+#include "Client.h"
 #include "Server.h"
 #include "MyMessageBox.h"
-#include "Client.h"
 
 using namespace std;
 
@@ -41,7 +41,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CLIENT;
 	Graphics::IsRivalMove = false;
-	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);//Убрать в отдельный поток
+	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	update();
 }
 
@@ -59,7 +59,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::SERVER;
 	Graphics::IsRivalMove = true;
-	Initialize<Server>()->Listen(*port);//Убрать в отдельный поток
+	Initialize<Server>()->Listen(*port);
 	update();
 }
 

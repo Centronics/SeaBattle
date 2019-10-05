@@ -1,5 +1,6 @@
 #pragma once
 #include "Packet.h"
+#include "NetworkInterface.h"
 
 class ClientThread : public QTcpSocket
 {
@@ -7,15 +8,11 @@ class ClientThread : public QTcpSocket
 
 public:
 
-	explicit ClientThread(QObject* creator) : _creator(creator)
+	explicit ClientThread(NetworkInterface* creator) : _creator(creator)
 	{
 		connect(this, SIGNAL(connected()), SLOT(SlotConnected()), Qt::DirectConnection);
 		connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
 		connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
-
-		//connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)));
-
-		//connect(_creator, SIGNAL(SigSend(Packet)), this, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	}
 
 	ClientThread(const ClientThread&) = delete;
@@ -28,22 +25,17 @@ public:
 
 private:
 
-	QObject* _creator = nullptr;
+	NetworkInterface* _creator = nullptr;
 	std::optional<Packet> _sendMe;
 
 private slots:
-
-	void SlotSend(Packet packet)
-	{
-		packet.Send(*this);
-	}
 
 	void SlotDisconnected()
 	{
 		if (!_creator)
 			return;
 		emit SigError(std::nullopt);
-		_creator->deleteLater();
+		_creator->Close();
 		_creator = nullptr;
 	}
 
@@ -52,7 +44,7 @@ private slots:
 		if (!_creator)
 			return;
 		emit SigError(err);
-		_creator->deleteLater();
+		_creator->Close();
 		_creator = nullptr;
 	}
 

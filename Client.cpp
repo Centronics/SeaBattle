@@ -4,7 +4,7 @@
 
 using namespace std;
 
-optional<Packet> Client::IncomingProc(Packet packet)
+optional<Packet> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEEDCLEAN
 {
 	if (!packet)
 	{
@@ -14,7 +14,7 @@ optional<Packet> Client::IncomingProc(Packet packet)
 
 	const auto close = [this]
 	{
-		_currentState = STATE::PUSHMAP;
+		_currentState = STATE::PUSHMAP;//Õ≈œ–¿¬»À‹ÕŒ œ–Œ»«¬Œƒ»“—ﬂ Œ◊»—“ ¿
 		_tcpSocket->close();
 	};
 
@@ -24,7 +24,6 @@ optional<Packet> Client::IncomingProc(Packet packet)
 	{
 		Packet out;
 		out.WriteData(_graphics.GetData());
-		//Send(out);
 		_currentState = STATE::WAITMAP;
 		return out;
 	}
@@ -63,15 +62,10 @@ optional<Packet> Client::IncomingProc(Packet packet)
 void Client::Run()
 {
 	_tcpSocket = new ClientThread(this);
-
-	//connect(_tcpSocket, SIGNAL(connected()), SLOT(SlotConnected()), Qt::BlockingQueuedConnection);
-	//SigConnected(std::optional<Packet>*)
 	
 	connect(_tcpSocket, SIGNAL(SigConnected(std::optional<Packet>*)), SLOT(SlotConnected(std::optional<Packet>*)), Qt::BlockingQueuedConnection);
-	
 	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);//BlockingQueuedConnection “≈—“Œ¬Œ≈
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
 
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
