@@ -23,13 +23,13 @@ public:
 private:
 
 	NetworkInterface* _creator = nullptr;
-	std::optional<Packet> _sendMe;
+	std::variant<Packet, NetworkInterface::STATUS> _sendMe;
 	QTcpSocket* _socket = nullptr;
 
 signals:
 
 	void SigNewConnection();
-	void SigRead(QTcpSocket*, std::optional<Packet>*);
+	void SigRead(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*);
 	void SigError(std::optional<QAbstractSocket::SocketError>);
 
 private slots:
@@ -55,8 +55,8 @@ private slots:
 	void SlotReadClient()
 	{
 		emit SigRead(_socket, &_sendMe);
-		if (_sendMe)
-			_sendMe->Send(*qobject_cast<QTcpSocket*>(sender()));
+		if (_creator)
+			_creator->ErrorHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
 	void SlotSend(const Packet packet) const

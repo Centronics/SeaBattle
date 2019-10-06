@@ -26,7 +26,7 @@ public:
 private:
 
 	NetworkInterface* _creator = nullptr;
-	std::optional<Packet> _sendMe;
+	std::variant<Packet, NetworkInterface::STATUS> _sendMe;
 
 private slots:
 
@@ -51,12 +51,12 @@ private slots:
 	void SlotConnected()
 	{
 		emit SigConnected(&_sendMe);
-		if (_sendMe)
-			_sendMe->Send(*this);
+		if (_creator)
+			_creator->ErrorHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
 signals:
 
 	void SigError(std::optional<QAbstractSocket::SocketError>);
-	void SigConnected(std::optional<Packet>*);
+	void SigConnected(std::variant<Packet, NetworkInterface::STATUS>*);
 };

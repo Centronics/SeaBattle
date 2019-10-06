@@ -14,7 +14,7 @@ NetworkInterface::~NetworkInterface()
 	*_myRef = nullptr;// ÓÂÅÐÅÍ, ×ÒÎ ÇÄÅÑÜ ÂÑÅÃÄÀ ÁÓÄÅÒ ÒÎËÜÊÎ ÃËÀÂÍÛÉ ÏÎÒÎÊ
 	quit();
 	//if (currentThread()->objectName() != objectName())
-		wait();
+	wait();
 }
 
 optional<QString> NetworkInterface::SendHit()
@@ -106,6 +106,24 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 	default:
 		return "GetErrorDescr: Unknown error.";
 	}
+}
+
+void NetworkInterface::ErrorHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket)
+{
+	if (const auto status = get_if<STATUS>(&sendMe))
+		switch (*status)
+		{
+		case STATUS::NEEDCLEAN:
+			Close();
+			return;
+		case STATUS::NOTHING:
+			return;
+		default:
+			throw exception(__func__);
+		}
+
+	if (const auto packet = get_if<Packet>(&sendMe))
+		packet->Send(socket);
 }
 
 optional<Packet> NetworkInterface::CreateHitPacket()

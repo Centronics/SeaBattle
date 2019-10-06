@@ -4,12 +4,12 @@
 
 using namespace std;
 
-optional<Packet> Server::IncomingProc(Packet packet)
+std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packet)
 {
 	if (!packet)
 	{
 		emit SignalReceive(move(packet));
-		return nullopt;
+		return STATUS::NOTHING;
 	}
 	switch (_currentState)
 	{
@@ -19,8 +19,8 @@ optional<Packet> Server::IncomingProc(Packet packet)
 		{
 			_currentState = STATE::WAITMAP;
 			emit SignalReceive(Packet("WAITMAP error."));
-			Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
-			return nullopt;
+			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
+			return STATUS::NEEDCLEAN;
 		}
 		Packet out;
 		out.WriteData(_graphics.GetData());
@@ -34,8 +34,8 @@ optional<Packet> Server::IncomingProc(Packet packet)
 		{
 			_currentState = STATE::WAITMAP;
 			emit SignalReceive(Packet("HIT error."));
-			Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
-			return nullopt;
+			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
+			return STATUS::NEEDCLEAN;
 		}
 		if (!_graphics.RivalHit(coord))
 		{
@@ -43,9 +43,9 @@ optional<Packet> Server::IncomingProc(Packet packet)
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
-		return nullopt;
+		return STATUS::NOTHING;
 	case STATE::HIT:
-		return nullopt;
+		return STATUS::NOTHING;
 	default:
 		throw exception(__func__);
 	}
@@ -56,10 +56,10 @@ void Server::Run()
 	_server = new ServerThread(this);
 
 	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection);
-	connect(_server, SIGNAL(SigRead(QTcpSocket*, std::optional<Packet>*)), SLOT(SlotReadClient(QTcpSocket*, std::optional<Packet>*)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
+	connect(_server, SIGNAL(SigRead(QTcpSocket*, std::variant<Packet, STATUS>*)), SLOT(SlotReadClient(QTcpSocket*, std::variant<Packet, STATUS>*)), Qt::BlockingQueuedConnection);
 	connect(_server, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
 	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
+	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
 	if (!_server->listen(QHostAddress::Any, _port))

@@ -4,19 +4,19 @@
 
 using namespace std;
 
-optional<Packet> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEEDCLEAN
+std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEEDCLEAN
 {
 	if (!packet)
 	{
 		emit SignalReceive(move(packet));
-		return nullopt;
+		return STATUS::NOTHING;
 	}
 
-	const auto close = [this]
+	/*const auto close = [this]
 	{
 		_currentState = STATE::PUSHMAP;//Õ≈œ–¿¬»À‹ÕŒ œ–Œ»«¬Œƒ»“—ﬂ Œ◊»—“ ¿
 		_tcpSocket->close();
-	};
+	};*/
 
 	switch (_currentState)
 	{
@@ -30,20 +30,20 @@ optional<Packet> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEE
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			close();
+			//close();
 			emit SignalReceive(Packet("WAITMAP error."));
-			return nullopt;
+			return STATUS::NEEDCLEAN;
 		}
 		_currentState = STATE::HIT;
 		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
-		return nullopt;
+		return STATUS::NOTHING;
 	case STATE::WAITHIT:
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			close();
+			//close();
 			emit SignalReceive(Packet("HIT error."));
-			return nullopt;
+			return STATUS::NEEDCLEAN;
 		}
 		if (!_graphics.RivalHit(coord))
 		{
@@ -51,9 +51,9 @@ optional<Packet> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEE
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
-		return nullopt;
+		return STATUS::NOTHING;
 	case STATE::HIT:
-		return nullopt;
+		return STATUS::NOTHING;
 	default:
 		throw exception(__func__);
 	}
@@ -63,7 +63,7 @@ void Client::Run()
 {
 	_tcpSocket = new ClientThread(this);
 	
-	connect(_tcpSocket, SIGNAL(SigConnected(std::optional<Packet>*)), SLOT(SlotConnected(std::optional<Packet>*)), Qt::BlockingQueuedConnection);
+	connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, STATUS>*)), SLOT(SlotConnected(std::variant<Packet, STATUS>*)), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));

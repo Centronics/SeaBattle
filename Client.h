@@ -1,6 +1,7 @@
 #pragma once
 #include "NetworkInterface.h"
 #include "QTcpSocket"
+#include <variant>
 
 class Client : public NetworkInterface
 {
@@ -40,7 +41,7 @@ private:
 	QString _curIP;
 	quint16 _curPort = 0;
 	void Run() override;
-	std::optional<Packet> IncomingProc(Packet packet);
+	std::variant<Packet, STATUS> IncomingProc(Packet packet);
 
 private slots:
 
@@ -57,12 +58,11 @@ private slots:
 			IncomingProc(Packet(GetErrorDescr(*err)));
 	}
 
-	void SlotConnected(std::optional<Packet>* sendMe)
+	void SlotConnected(std::variant<Packet, STATUS>* sendMe)
 	{
 		_currentState = STATE::PUSHMAP;
-		std::optional<Packet> packet = IncomingProc(Packet());//отослать ответ возвращаемый
 		if (sendMe)
-			*sendMe = std::move(packet);
+			*sendMe = IncomingProc(Packet());
 	}
 
 signals:

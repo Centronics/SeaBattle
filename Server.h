@@ -22,7 +22,7 @@ private:
 
 	QTcpServer* _server = nullptr;
 
-	std::optional<Packet> IncomingProc(Packet packet);
+	std::variant<Packet, STATUS> IncomingProc(Packet packet);
 	void Run() override;
 	quint16 _port = 0;
 
@@ -37,11 +37,9 @@ private slots:
 
 	void SlotNewConnection();
 
-	void SlotReadClient(QTcpSocket* socket, std::optional<Packet>* sendMe)
+	void SlotReadClient(QTcpSocket* socket, std::variant<Packet, STATUS>* sendMe)
 	{
-		std::optional<Packet> packet = IncomingProc(Packet(*socket));
-		if (sendMe)
-			*sendMe = std::move(packet);
+		*sendMe = IncomingProc(Packet(*socket));
 	}
 
 	void SlotError(const std::optional<QAbstractSocket::SocketError> err)

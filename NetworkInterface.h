@@ -2,12 +2,19 @@
 #include "Packet.h"
 #include "Graphics.h"
 #include <QThread>
+#include <variant>
 
 class NetworkInterface : public QThread
 {
 	Q_OBJECT
 
 public:
+
+	enum class STATUS : quint8
+	{
+		NOTHING,
+		NEEDCLEAN
+	};
 
 	explicit NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r);
 	NetworkInterface() = delete;
@@ -18,8 +25,9 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	[[nodiscard]] std::optional<QString> SendHit();
+	void ErrorHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket);
 	void Close();
-	
+
 protected:
 
 	enum class STATE : quint8
