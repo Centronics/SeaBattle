@@ -56,7 +56,7 @@ private slots:
 	{
 		emit SigRead(_socket, &_sendMe);
 		if (_creator)
-			_creator->ErrorHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
+			_creator->EventHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
 	void SlotSend(const Packet packet) const

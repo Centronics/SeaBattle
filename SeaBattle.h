@@ -48,8 +48,8 @@ protected:
 	{
 		_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)), Qt::DirectConnection);
-		connect(result, SIGNAL(Update()), SLOT(update()), Qt::DirectConnection);
+		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}

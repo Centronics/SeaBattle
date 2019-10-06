@@ -27,7 +27,7 @@ optional<QString> NetworkInterface::SendHit()
 	if (!(*p))
 	{
 		QString s;
-		Q_UNUSED((*p).GetState(&s));
+		Q_UNUSED(p->GetState(&s));
 		return s;
 	}
 	Send(*p);
@@ -108,7 +108,7 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 	}
 }
 
-void NetworkInterface::ErrorHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket)
+void NetworkInterface::EventHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket)
 {
 	if (const auto status = get_if<STATUS>(&sendMe))
 		switch (*status)

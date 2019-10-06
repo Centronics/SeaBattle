@@ -32,7 +32,7 @@ protected:
 
 	void Send(const Packet& packet) override
 	{
-		emit SigSend(packet);
+		emit SigSend(packet);//ме янедхм╗м!!! днкфем янедхмърэяъ б Run().
 	}
 
 private:
@@ -58,7 +58,7 @@ private slots:
 			IncomingProc(Packet(GetErrorDescr(*err)));
 	}
 
-	void SlotConnected(std::variant<Packet, STATUS>* sendMe)
+	void SlotConnected(std::variant<Packet, NetworkInterface::STATUS>* sendMe)
 	{
 		_currentState = STATE::PUSHMAP;
 		if (sendMe)

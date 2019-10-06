@@ -25,7 +25,7 @@ public:
 	NetworkInterface& operator=(NetworkInterface&&) = delete;
 
 	[[nodiscard]] std::optional<QString> SendHit();
-	void ErrorHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket);
+	void EventHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket);
 	void Close();
 
 protected:

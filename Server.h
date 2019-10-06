@@ -37,7 +37,7 @@ private slots:
 
 	void SlotNewConnection();
 
-	void SlotReadClient(QTcpSocket* socket, std::variant<Packet, STATUS>* sendMe)
+	void SlotReadClient(QTcpSocket* socket, std::variant<Packet, NetworkInterface::STATUS>* sendMe)
 	{
 		*sendMe = IncomingProc(Packet(*socket));
 	}

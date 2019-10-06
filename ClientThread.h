@@ -29,7 +29,7 @@ private:
 	std::variant<Packet, NetworkInterface::STATUS> _sendMe;
 
 private slots:
-
+	// ÃÄÅ SlotSend??
 	void SlotDisconnected()
 	{
 		if (!_creator)
@@ -52,7 +52,7 @@ private slots:
 	{
 		emit SigConnected(&_sendMe);
 		if (_creator)
-			_creator->ErrorHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
+			_creator->EventHandler(_sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
 signals:

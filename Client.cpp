@@ -63,7 +63,7 @@ void Client::Run()
 {
 	_tcpSocket = new ClientThread(this);
 	
-	connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, STATUS>*)), SLOT(SlotConnected(std::variant<Packet, STATUS>*)), Qt::BlockingQueuedConnection);
+	connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotConnected(std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
