@@ -32,7 +32,7 @@ protected:
 
 	void Send(const Packet& packet) override
 	{
-		emit SigSend(packet);//ÍÅ ÑÎÅÄÈÍ¨Í!!! ÄÎËÆÅÍ ÑÎÅÄÈÍßÒÜÑß Â Run().
+		emit SigSend(packet);// ÍÅ ÑÎÅÄÈÍßÅÒÑß (íå ïåğåäà¸òñÿ ñèãíàë)
 	}
 
 private:

@@ -29,7 +29,7 @@ private:
 	std::variant<Packet, NetworkInterface::STATUS> _sendMe;
 
 private slots:
-	// ÃÄÅ SlotSend??
+	
 	void SlotDisconnected()
 	{
 		if (!_creator)
@@ -46,6 +46,11 @@ private slots:
 		emit SigError(err);
 		_creator->Close();
 		_creator = nullptr;
+	}
+
+	void SlotSend(const Packet packet)
+	{
+		packet.Send(*this);
 	}
 
 	void SlotConnected()

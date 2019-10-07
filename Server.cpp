@@ -59,7 +59,7 @@ void Server::Run()
 	connect(_server, SIGNAL(SigRead(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotReadClient(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection);
 	connect(_server, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
 	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)));
+	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
 	if (!_server->listen(QHostAddress::Any, _port))
