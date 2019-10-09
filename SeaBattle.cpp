@@ -179,9 +179,12 @@ void SeaBattle::ExitGame() const
 
 void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* status)  // NOLINT(performance-unnecessary-value-param)
 {
-	NetworkInterface::STATUS s = NetworkInterface::STATUS::NOTHING;
+	NetworkInterface::STATUS s;
 	switch (QString errStr; packet.GetState(&errStr))
 	{
+	case Packet::STATE::NOERR:
+		s = Impact(false, false);
+		break;
 	case Packet::STATE::CONNECTED:
 		s = NetworkInterface::STATUS::NOTHING;
 		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CONNECTED;
@@ -193,8 +196,7 @@ void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* statu
 		ExitGame();
 		break;
 	case Packet::STATE::DISCONNECTED:
-		s = NetworkInterface::STATUS::NEEDCLEAN;
-		Impact(true);
+		s = Impact(true, true);
 		break;
 	case Packet::STATE::BUSY:
 		s = NetworkInterface::STATUS::NEEDCLEAN;
@@ -321,8 +323,8 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		{
 			if (const std::optional<QString> s = _clientServer->SendHit())
 				Message("Сюда ударить нельзя.", *s, QMessageBox::Information);
-			else
-				Impact(false);
+			//else
+				//Impact(false, false);
 		}
 		else
 			AddShip();
@@ -400,25 +402,25 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
-void SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
+NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
 {
 	switch (_graphics.GetBroken())
 	{
 	case Graphics::BROKEN::ME:
 		ExitGame();
 		Message("Поражение!", "Вы проиграли.", QMessageBox::Information);
-		return;
+		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::RIVAL:
 		ExitGame();
 		Message("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
-		return;
+		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::NOTHING:
 		if (!disconnect)
-			return;
+			return NetworkInterface::STATUS::NOTHING;
 		ExitGame();
 		if (disconnectMessage)
 			Message("Игра прекращена.", "Соединение разорвано.");
-		return;
+		return NetworkInterface::STATUS::NEEDCLEAN;
 	default:
 		throw exception(__func__);
 	}

@@ -45,6 +45,7 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
+		emit SignalReceive(move(packet), &status);
 		return status;
 	case STATE::HIT:
 		return status;
