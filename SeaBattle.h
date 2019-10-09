@@ -48,7 +48,7 @@ protected:
 	{
 		_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		connect(result, SIGNAL(SignalReceive(Packet)), SLOT(SlotReceive(Packet)));
+		connect(result, SIGNAL(SignalReceive(Packet, NetworkInterface::STATUS*)), SLOT(SlotReceive(Packet, NetworkInterface::STATUS*)));
 		connect(result, SIGNAL(Update()), SLOT(update()));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
@@ -60,5 +60,5 @@ private slots:
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
-	void SlotReceive(Packet packet);
+	void SlotReceive(Packet packet, NetworkInterface::STATUS*);
 };

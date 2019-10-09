@@ -171,27 +171,33 @@ void SeaBattle::SlotBtnDisconnectClicked()
 void SeaBattle::ExitGame() const
 {
 	OffButtons(false);
+	//_clientServer->Close();////////// НЕОБХОДИМО РАЗЪЕДИНЯТЬСЯ КОРРЕКТНО!
 	// Исправить баг с отображением соперников в случае проигрыша при наличии промахов; Найден баг, что если произошла ошибка при открытии сервера (например), то сообщение о поражении (победе) повтоярется после неё. ПРОТЕСТИРОВАТЬ ситуацию, когда пытаются подключиться более одного клиента.
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 	Graphics::IsRivalMove = false;
 }
 
-void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecessary-value-param)
+void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* status)  // NOLINT(performance-unnecessary-value-param)
 {
+	NetworkInterface::STATUS s = NetworkInterface::STATUS::NOTHING;
 	switch (QString errStr; packet.GetState(&errStr))
 	{
 	case Packet::STATE::CONNECTED:
+		s = NetworkInterface::STATUS::NOTHING;
 		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CONNECTED;
 		break;
 	case Packet::STATE::ERR:
+		s = NetworkInterface::STATUS::NEEDCLEAN;
 		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 		Message("Ошибка.", errStr);
 		ExitGame();
 		break;
 	case Packet::STATE::DISCONNECTED:
+		s = NetworkInterface::STATUS::NEEDCLEAN;
 		Impact(true);
 		break;
 	case Packet::STATE::BUSY:
+		s = NetworkInterface::STATUS::NEEDCLEAN;
 		Message("Сервер уже участвует в сражении.", "Повторите попытку позже.");
 		Impact(true, false);
 		break;
@@ -199,6 +205,8 @@ void SeaBattle::SlotReceive(const Packet packet)  // NOLINT(performance-unnecess
 		throw exception(__func__);
 	}
 	update();
+	if (status)
+		*status = s;
 }
 
 tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const

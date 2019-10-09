@@ -6,10 +6,11 @@ using namespace std;
 
 std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEEDCLEAN
 {
+	STATUS status = STATUS::NOTHING;
 	if (!packet)
 	{
-		emit SignalReceive(move(packet));
-		return STATUS::NOTHING;
+		emit SignalReceive(move(packet), &status);
+		return status;
 	}
 
 	/*const auto close = [this]
@@ -31,19 +32,19 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			//close();
-			emit SignalReceive(Packet("WAITMAP error."));
-			return STATUS::NEEDCLEAN;
+			emit SignalReceive(Packet("WAITMAP error."), &status);
+			return status;
 		}
 		_currentState = STATE::HIT;
-		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
-		return STATUS::NOTHING;
+		emit SignalReceive(Packet(Packet::STATE::CONNECTED), &status);
+		return status;
 	case STATE::WAITHIT:
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			//close();
-			emit SignalReceive(Packet("HIT error."));
-			return STATUS::NEEDCLEAN;
+			emit SignalReceive(Packet("HIT error."), &status);
+			return status;
 		}
 		if (!_graphics.RivalHit(coord))
 		{
@@ -51,9 +52,9 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
-		return STATUS::NOTHING;
+		return status;
 	case STATE::HIT:
-		return STATUS::NOTHING;
+		return status;
 	default:
 		throw exception(__func__);
 	}

@@ -6,10 +6,11 @@ using namespace std;
 
 std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packet)
 {
+	STATUS status = STATUS::NOTHING;
 	if (!packet)
 	{
-		emit SignalReceive(move(packet));
-		return STATUS::NOTHING;
+		emit SignalReceive(move(packet), &status);
+		return status;
 	}
 	switch (_currentState)
 	{
@@ -18,14 +19,14 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			_currentState = STATE::WAITMAP;
-			emit SignalReceive(Packet("WAITMAP error."));
+			emit SignalReceive(Packet("WAITMAP error."), &status);
 			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
-			return STATUS::NEEDCLEAN;
+			return status;
 		}
 		Packet out;
 		out.WriteData(_graphics.GetData());
 		_currentState = STATE::WAITHIT;
-		emit SignalReceive(Packet(Packet::STATE::CONNECTED));
+		emit SignalReceive(Packet(Packet::STATE::CONNECTED), &status);
 		return out;
 	}
 	case STATE::WAITHIT:
@@ -33,9 +34,10 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			emit SignalReceive(Packet("HIT error."));
+			// нрйкчвюрэ янедхмемхе днкфмю онбепфеммюъ ярнпнмю, дкъ щрнцн мюдн днаюбхрэ ткюц, бнгбпюыюелши я йкхемрю
+			emit SignalReceive(Packet("HIT error."), &status);
 			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
-			return STATUS::NEEDCLEAN;
+			return status;
 		}
 		if (!_graphics.RivalHit(coord))
 		{
@@ -43,9 +45,9 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 			Graphics::IsRivalMove = false;
 		}
 		emit Update();
-		return STATUS::NOTHING;
+		return status;
 	case STATE::HIT:
-		return STATUS::NOTHING;
+		return status;
 	default:
 		throw exception(__func__);
 	}
@@ -63,7 +65,7 @@ void Server::Run()
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
 
 	if (!_server->listen(QHostAddress::Any, _port))
-		emit SignalReceive(Packet(_server->errorString()));
+		emit SignalReceive(Packet(_server->errorString()), nullptr);
 }
 
 void Server::SlotNewConnection()

@@ -55,6 +55,6 @@ private:
 
 signals:
 
-	void SignalReceive(Packet);
+	void SignalReceive(Packet, NetworkInterface::STATUS*);
 	void Update();
 };

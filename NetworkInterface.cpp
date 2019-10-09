@@ -156,10 +156,10 @@ void NetworkInterface::run()
 	}
 	catch (exception& ex)
 	{
-		emit SignalReceive(Packet(ex.what()));
+		emit SignalReceive(Packet(ex.what()), nullptr);
 	}
 	catch (...)
 	{
-		emit SignalReceive(Packet("Unknown exception in NetworkInterface."));
+		emit SignalReceive(Packet("Unknown exception in NetworkInterface."), nullptr);
 	}
 }
