@@ -4,10 +4,12 @@
 #include "NetworkInterface.h"
 #include "Help.h"
 
+//using qint32 = qint32;
+
 class SeaBattle : public QWidget
 {
 	Q_OBJECT
-	
+
 	Ui::SeaBattleForm _mainForm;
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
@@ -36,7 +38,7 @@ protected:
 	void keyReleaseEvent(QKeyEvent* event) override;
 	void closeEvent(QCloseEvent* event) override;
 	void paintEvent(QPaintEvent* event) override;
-	QMessageBox::StandardButton Message(const QString& situation, const QString& question, QMessageBox::Icon icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
+	QMessageBox::StandardButton Message(const QString& situation, const QString& question, qint32 icon = QMessageBox::Icon::Critical, QMessageBox::StandardButtons btnSet = QMessageBox::Ok, QMessageBox::StandardButton btnDef = QMessageBox::Ok, QMessageBox::StandardButton btnEsc = QMessageBox::Ok);
 	NetworkInterface::STATUS Impact(bool disconnect, bool disconnectMessage);
 	void SaveParameters() const;
 	void LoadParameters() const;
@@ -61,4 +63,9 @@ private slots:
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
 	void SlotReceive(Packet packet, NetworkInterface::STATUS*);
+	void SlotMessage(QString situation, QString question, qint32 icon);
+
+signals:
+
+	void SigMessage(QString, QString, qint32);
 };
