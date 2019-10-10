@@ -387,12 +387,12 @@ optional<quint16> SeaBattle::GetPort() const
 	return nullopt;
 }
 
-QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const QString& question, const qint32 icon, const QMessageBox::StandardButtons btnSet, const QMessageBox::StandardButton btnDef, const QMessageBox::StandardButton btnEsc)
+QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const QString& question, const QMessageBox::Icon icon, const QMessageBox::StandardButtons btnSet, const QMessageBox::StandardButton btnDef, const QMessageBox::StandardButton btnEsc)
 {
 	MyMessageBox msgBox(this);
 	msgBox.setText(situation);
 	msgBox.setInformativeText(question);
-	msgBox.setIcon((QMessageBox::Icon)icon);
+	msgBox.setIcon(icon);
 	msgBox.setStandardButtons(btnSet);
 	msgBox.setDefaultButton(btnDef);
 	msgBox.setEscapeButton(btnEsc);
@@ -405,7 +405,7 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 
 void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon)
 {
-	Message(situation, question, icon);
+	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
 }
 
 NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
