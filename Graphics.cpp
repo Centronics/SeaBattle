@@ -204,8 +204,6 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 }
 
-
-
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
 	static const QPen G(Qt::gray, BetweenObjects);

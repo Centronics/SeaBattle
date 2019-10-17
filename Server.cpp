@@ -20,7 +20,6 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		{
 			_currentState = STATE::WAITMAP;
 			emit SignalReceive(Packet("WAITMAP error."), &status);
-			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
 			return status;
 		}
 		Packet out;
@@ -34,9 +33,7 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			// нрйкчвюрэ янедхмемхе днкфмю онбепфеммюъ ярнпнмю, дкъ щрнцн мюдн днаюбхрэ ткюц, бнгбпюыюелши я йкхемрю
 			emit SignalReceive(Packet("HIT error."), &status);
-			//Close();//меопюбхкэмн опнхгбндхряъ нвхярйю
 			return status;
 		}
 		if (!_graphics.RivalHit(coord))

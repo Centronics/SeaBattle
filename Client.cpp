@@ -4,7 +4,7 @@
 
 using namespace std;
 
-std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packet) // œ–≈ƒÀ¿√¿ﬁ ¬Œ«¬–¿Ÿ¿“‹ NEEDCLEAN
+std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packet)
 {
 	STATUS status = STATUS::NOTHING;
 	if (!packet)
@@ -12,12 +12,6 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 		emit SignalReceive(move(packet), &status);
 		return status;
 	}
-
-	/*const auto close = [this]
-	{
-		_currentState = STATE::PUSHMAP;//Õ≈œ–¿¬»À‹ÕŒ œ–Œ»«¬Œƒ»“—ﬂ Œ◊»—“ ¿
-		_tcpSocket->close();
-	};*/
 
 	switch (_currentState)
 	{
@@ -31,7 +25,6 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			//close();
 			emit SignalReceive(Packet("WAITMAP error."), &status);
 			return status;
 		}
@@ -42,7 +35,6 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			//close();
 			emit SignalReceive(Packet("HIT error."), &status);
 			return status;
 		}
@@ -68,7 +60,7 @@ void Client::Run()
 	connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotConnected(std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);//ÌÂ ‡·ÓÚ‡ÂÚ
+	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
 
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);

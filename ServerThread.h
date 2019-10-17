@@ -18,7 +18,10 @@ public:
 	ServerThread(ServerThread&&) = delete;
 	ServerThread& operator=(const ServerThread&) = delete;
 	ServerThread& operator=(ServerThread&&) = delete;
-	virtual ~ServerThread() = default;
+	virtual ~ServerThread()// = default;
+	{
+		
+	}
 
 private:
 

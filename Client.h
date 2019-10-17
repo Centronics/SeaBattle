@@ -32,7 +32,7 @@ protected:
 
 	void Send(const Packet& packet) override
 	{
-		emit SigSend(packet);// ÍÅ ÑÎÅÄÈÍßÅÒÑß (íå ïåğåäà¸òñÿ ñèãíàë)
+		emit SigSend(packet);
 	}
 
 private:
@@ -47,7 +47,7 @@ private slots:
 
 	void SlotReadyRead()
 	{
-		IncomingProc(Packet(*_tcpSocket));// ÍÀ ÊËÈÅÍÒÅ ÑÒÀÒÓÑ ÍÅ ÎÁÍÎÂËßÅÒÑß
+		IncomingProc(Packet(*_tcpSocket));
 	}
 
 	void SlotError(const std::optional<QAbstractSocket::SocketError> err)

@@ -6,14 +6,12 @@ using namespace std;
 NetworkInterface::NetworkInterface(Graphics& g, QObject* parent, NetworkInterface** r) : QThread(parent), _graphics(g), _myRef(r)
 {
 	setTerminationEnabled(false);
-	//setObjectName(typeid(NetworkInterface).name());
 }
 
 NetworkInterface::~NetworkInterface()
 {
-	*_myRef = nullptr;// ÓÂÅÐÅÍ, ×ÒÎ ÇÄÅÑÜ ÂÑÅÃÄÀ ÁÓÄÅÒ ÒÎËÜÊÎ ÃËÀÂÍÛÉ ÏÎÒÎÊ
+	*_myRef = nullptr;
 	quit();
-	//if (currentThread()->objectName() != objectName())
 	wait();
 }
 
@@ -150,7 +148,6 @@ void NetworkInterface::run()
 {
 	try
 	{
-		//throw exception("My Test Error.");
 		Run();
 		exec();
 	}

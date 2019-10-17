@@ -172,8 +172,6 @@ void SeaBattle::SlotBtnDisconnectClicked()
 void SeaBattle::ExitGame() const
 {
 	OffButtons(false);
-	//_clientServer->Close();////////// Ќ≈ќЅ’ќƒ»ћќ –ј«Џ≈ƒ»Ќя“№—я  ќ––≈ “Ќќ!
-	// »справить баг с отображением соперников в случае проигрыша при наличии промахов; Ќайден баг, что если произошла ошибка при открытии сервера (например), то сообщение о поражении (победе) повто€ретс€ после неЄ. ѕ–ќ“≈—“»–ќ¬ј“№ ситуацию, когда пытаютс€ подключитьс€ более одного клиента.
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 	Graphics::IsRivalMove = false;
 }
@@ -324,8 +322,6 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 		{
 			if (const std::optional<QString> s = _clientServer->SendHit())
 				Message("—юда ударить нельз€.", *s, QMessageBox::Information);
-			//else
-				//Impact(false, false);
 		}
 		else
 			AddShip();
