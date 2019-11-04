@@ -20,7 +20,7 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
 	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
 	_helpForm.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
-	connect(this, SIGNAL(SigMessage(QString, QString, qint32)), SLOT(SlotMessage(QString, QString, qint32)), Qt::QueuedConnection);
+	connect(this, SIGNAL(SigMessage(QString, QString, qint32, bool)), SLOT(SlotMessage(QString, QString, qint32, bool)), Qt::QueuedConnection);
 }
 
 void SeaBattle::SlotBtnHelpClicked()
@@ -320,7 +320,7 @@ void SeaBattle::mouseReleaseEvent(QMouseEvent* event)
 	case Qt::LeftButton:
 		if (Graphics::ConnectionStatus == Graphics::CONNECTIONSTATUS::CONNECTED)
 		{
-			if (const std::optional<QString> s = _clientServer->SendHit())
+			if (const optional<QString> s = _clientServer->SendHit())
 				Message("Сюда ударить нельзя.", *s, QMessageBox::Information);
 		}
 		else
@@ -399,9 +399,11 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
-void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon)
+void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon, const bool clearBits)
 {
 	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
+	if (clearBits)
+		_graphics.ClearBitShips();
 }
 
 NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
@@ -410,18 +412,18 @@ NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool dis
 	{
 	case Graphics::BROKEN::ME:
 		ExitGame();
-		emit SigMessage("Поражение!", "Вы проиграли.", QMessageBox::Information);
+		emit SigMessage("Поражение!", "Вы проиграли.", QMessageBox::Information, true);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::RIVAL:
 		ExitGame();
-		emit SigMessage("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
+		emit SigMessage("Победа!", "Соперник потерпел поражение.", QMessageBox::Information, true);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::NOTHING:
 		if (!disconnect)
 			return NetworkInterface::STATUS::NOTHING;
 		ExitGame();
 		if (disconnectMessage)
-			emit SigMessage("Игра прекращена.", "Соединение разорвано.", QMessageBox::Critical);
+			emit SigMessage("Игра прекращена.", "Соединение разорвано.", QMessageBox::Critical, true);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	default:
 		throw exception(__func__);

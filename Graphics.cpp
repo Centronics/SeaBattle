@@ -11,7 +11,6 @@ static const QPen DRAW_TEXT_PEN(Qt::red, 3);
 
 void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	DrawField(painter);
 	DrawShips(painter, ship, rotate);
 }
 
@@ -43,7 +42,7 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(406, 250, "Ход соперника.");
+		painter.drawText(411, 250, "Ход соперника.");
 		painter.setPen(Rp);
 		painter.setBrush(Rb);
 	}
@@ -51,7 +50,7 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Gpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(432, 250, "Ваш ход.");
+		painter.drawText(434, 250, "Ваш ход.");
 		painter.setPen(Gp);
 		painter.setBrush(Gb);
 	}
@@ -206,6 +205,29 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
+	const auto drawField = [&painter]
+	{
+		const auto proc = [&painter](const int x, const int y, const int mx, const int my)
+		{
+			static const QPen Penb(Qt::blue, BetweenObjects);
+			painter.setPen(Penb);
+			painter.setRenderHint(QPainter::Antialiasing);
+			painter.drawLine(x, y, mx, my);
+		};
+
+		for (int x = 0, yc = Margin, xc = Margin + (10 * ObjectWidth); x < 11; ++x)
+		{
+			proc(Margin, yc, xc, yc);
+			yc += ObjectWidth;
+		}
+
+		for (int y = 0, xc = Margin, yc = Margin + (10 * ObjectWidth); y < 11; ++y)
+		{
+			proc(xc, Margin, xc, yc);
+			xc += ObjectWidth;
+		}
+	};
+
 	static const QPen G(Qt::gray, BetweenObjects);
 	static const QBrush D(Qt::gray, Qt::Dense6Pattern);
 	static constexpr int W = BetweenObjects * 2;
@@ -232,7 +254,24 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		dWarnY = CursorY;
 	};
 
-	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, &drawWarning, this](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
+	const auto isShipBeat = [this](const int x, const int y)
+	{
+		const Ship* s = &_screenObjects[(y * 10) + x];
+		const Ship::ROTATE r = s->GetRotate();
+		if (r != Ship::ROTATE::STARTRIGHT && r != Ship::ROTATE::STARTDOWN)
+		{
+			if (r == Ship::ROTATE::NIL)
+				return false;
+			throw exception("isShipBeat");
+		}
+		const int floors = Ship::GetFloors(s->GetShipType());
+		for (int k = 0; k < floors; ++k, s = (r == Ship::ROTATE::STARTDOWN) ? s + 10 : s + 1)
+			if (s->GetBeat(Ship::BEAT::RIVAL))
+				return true;
+		return false;
+	};
+
+	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, &drawWarning, this, &isShipBeat](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		const int xw = x + w, yh = y + h;
 		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
@@ -252,7 +291,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		{
 			const QColor color = Ship::GetColor(s.GetShipType());
 			painter.setPen(QPen(color, BetweenObjects));
-			painter.setBrush(QBrush(color, Qt::Dense6Pattern));
+			painter.setBrush(QBrush(color, isShipBeat(mx, my) ? Qt::NoBrush : Qt::Dense6Pattern));
 			if (IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
 				drawShip(true);
 			if (!IsRivalMove && inShip && inFrame)
@@ -297,7 +336,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		{
 			painter.setPen(DRAW_TEXT_PEN);
 			painter.setFont(DRAW_FONT);
-			painter.drawText(x + 4, y + (ObjectWidth - 3), "X");
+			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
 		}
 	};
 
@@ -313,6 +352,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
 			mBeat(x, y, _screenObjects[(my * 10) + mx]);
 
+	drawField();
+	
 	for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
 		{
@@ -486,28 +527,6 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 	}
 }
 
-void Graphics::DrawField(QPainter& painter)
-{
-	const auto proc = [&painter](const int x, const int y, const int mx, const int my)
-	{
-		static const QPen Penb(Qt::blue, BetweenObjects);
-		painter.setPen(Penb);
-		painter.setRenderHint(QPainter::Antialiasing);
-		painter.drawLine(x, y, mx, my);
-	};
-
-	for (int x = 0, yc = Margin, xc = Margin + (10 * ObjectWidth); x < 11; ++x)
-	{
-		proc(Margin, yc, xc, yc);
-		yc += ObjectWidth;
-	}
-	for (int y = 0, xc = Margin, yc = Margin + (10 * ObjectWidth); y < 11; ++y)
-	{
-		proc(xc, Margin, xc, yc);
-		xc += ObjectWidth;
-	}
-}
-
 int Graphics::GetShipCount(const Ship::TYPES ship) const
 {
 	int result = 0;
@@ -515,6 +534,12 @@ int Graphics::GetShipCount(const Ship::TYPES ship) const
 		if (obj.GetShipType() == ship && obj.GetRotate() != Ship::ROTATE::NIL)
 			result++;
 	return result;
+}
+
+void Graphics::ClearBitShips()
+{
+	for (auto& obj : _screenObjects)
+		obj.SetBit(Ship::BIT::NIL);
 }
 
 optional<quint8> Graphics::GetCoord() const

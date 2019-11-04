@@ -165,7 +165,6 @@ bool Packet::ReadRivals(std::vector<Ship>& mas) const
 	for (unsigned int k = 0, n = 1; k < 100; ++k, ++n)
 	{
 		Ship& to = mas[k];
-		to.SetBit(Ship::BIT::NIL);
 		if (Ship(_massive[n]).GetHolding(Ship::HOLDING::ME))
 			to.SetRivalHolding();
 		else

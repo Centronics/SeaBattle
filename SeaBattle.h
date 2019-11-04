@@ -61,9 +61,9 @@ private slots:
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
 	void SlotReceive(Packet packet, NetworkInterface::STATUS*);
-	void SlotMessage(QString situation, QString question, qint32 icon);
+	void SlotMessage(QString situation, QString question, qint32 icon, bool clearBits);
 
 signals:
 
-	void SigMessage(QString, QString, qint32);
+	void SigMessage(QString, QString, qint32, bool);
 };

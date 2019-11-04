@@ -37,7 +37,6 @@ protected:
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
-	static void DrawField(QPainter& painter);
 	[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
@@ -70,4 +69,5 @@ public:
 	[[nodiscard]] int GetShipCount(Ship::TYPES ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
+	void ClearBitShips();
 };

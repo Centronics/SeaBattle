@@ -47,7 +47,8 @@ private slots:
 
 	void SlotReadyRead()
 	{
-		IncomingProc(Packet(*_tcpSocket));
+		std::variant<Packet, STATUS> sendMe = IncomingProc(Packet(*_tcpSocket));
+		EventHandler(sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
 	void SlotError(const std::optional<QAbstractSocket::SocketError> err)

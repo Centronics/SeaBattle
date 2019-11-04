@@ -32,6 +32,24 @@ optional<QString> NetworkInterface::SendHit()
 	return nullopt;
 }
 
+void NetworkInterface::EventHandler(variant<Packet, STATUS>& sendMe, QTcpSocket& socket)
+{
+	if (const auto status = get_if<STATUS>(&sendMe))
+		switch (*status)
+		{
+		case STATUS::NEEDCLEAN:
+			Close();
+			return;
+		case STATUS::NOTHING:
+			return;
+		default:
+			throw exception(__func__);
+		}
+
+	if (const auto packet = get_if<Packet>(&sendMe))
+		packet->Send(socket);
+}
+
 void NetworkInterface::Close()
 {
 	if ((this == nullptr) || ((*_myRef) == nullptr) || !_mutex.try_lock())
@@ -104,24 +122,6 @@ QString NetworkInterface::GetErrorDescr(const QAbstractSocket::SocketError err)
 	default:
 		return "GetErrorDescr: Unknown error.";
 	}
-}
-
-void NetworkInterface::EventHandler(std::variant<Packet, STATUS>& sendMe, QTcpSocket& socket)
-{
-	if (const auto status = get_if<STATUS>(&sendMe))
-		switch (*status)
-		{
-		case STATUS::NEEDCLEAN:
-			Close();
-			return;
-		case STATUS::NOTHING:
-			return;
-		default:
-			throw exception(__func__);
-		}
-
-	if (const auto packet = get_if<Packet>(&sendMe))
-		packet->Send(socket);
 }
 
 optional<Packet> NetworkInterface::CreateHitPacket()
