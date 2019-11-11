@@ -17,7 +17,7 @@ public:
 	Server& operator=(Server&&) = delete;
 
 	void Listen(quint16 port);
-
+	
 private:
 
 	QTcpServer* _server = nullptr;
@@ -28,6 +28,11 @@ private:
 
 protected:
 
+	void CloseSocket() override
+	{
+		emit SigClose();
+	}
+	
 	void Send(const Packet& packet) override
 	{
 		emit SigSend(packet);
@@ -35,7 +40,10 @@ protected:
 
 private slots:
 
-	void SlotNewConnection();
+	void SlotNewConnection()
+	{
+		_currentState = STATE::WAITMAP;
+	}
 
 	void SlotReadClient(QTcpSocket* socket, std::variant<Packet, NetworkInterface::STATUS>* sendMe)
 	{
@@ -60,4 +68,5 @@ private slots:
 signals:
 
 	void SigSend(Packet);
+	void SigClose();
 };

@@ -20,13 +20,14 @@ public:
 	ServerThread& operator=(ServerThread&&) = delete;
 	virtual ~ServerThread()// = default;
 	{
-		
+
 	}
 
 private:
 
 	NetworkInterface* _creator = nullptr;
 	QTcpSocket* _socket = nullptr;
+	bool _raiseEvents = true;
 
 signals:
 
@@ -38,7 +39,7 @@ private slots:
 
 	void SlotDisconnected()
 	{
-		if (!_creator)
+		if (!_creator || !_raiseEvents)
 			return;
 		emit SigError(std::nullopt);
 		_creator->Close();
@@ -47,7 +48,7 @@ private slots:
 
 	void SlotError(const QAbstractSocket::SocketError err)
 	{
-		if (!_creator)
+		if (!_creator || !_raiseEvents)
 			return;
 		emit SigError(err);
 		_creator->Close();
@@ -56,6 +57,8 @@ private slots:
 
 	void SlotReadClient()
 	{
+		if (!_raiseEvents)
+			return;
 		std::variant<Packet, NetworkInterface::STATUS> sendMe;
 		emit SigRead(_socket, &sendMe);
 		if (_creator)
@@ -71,6 +74,8 @@ private slots:
 
 	void SlotNewConnection()
 	{
+		if (!_raiseEvents)
+			return;
 		QTcpSocket* pClientSocket = nextPendingConnection();
 
 		if (_socket)
@@ -88,5 +93,15 @@ private slots:
 
 		_socket = pClientSocket;
 		emit SigNewConnection();
+	}
+
+public slots:
+
+	void SlotClose()
+	{
+		_raiseEvents = false;
+		close();
+		if (_socket)
+			_socket->close();
 	}
 };

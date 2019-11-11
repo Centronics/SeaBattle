@@ -45,6 +45,7 @@ protected:
 	[[nodiscard]] static QString GetErrorDescr(QAbstractSocket::SocketError err);
 	virtual void Send(const Packet&) = 0;
 	virtual void Run() = 0;
+	virtual void CloseSocket() = 0;
 
 private:
 

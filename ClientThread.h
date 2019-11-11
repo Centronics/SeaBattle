@@ -26,12 +26,13 @@ public:
 private:
 
 	NetworkInterface* _creator = nullptr;
+	bool _raiseEvents = true;
 
 private slots:
 
 	void SlotDisconnected()
 	{
-		if (!_creator)
+		if (!_creator || !_raiseEvents)
 			return;
 		emit SigError(std::nullopt);
 		_creator->Close();
@@ -40,7 +41,7 @@ private slots:
 
 	void SlotError(QAbstractSocket::SocketError err)
 	{
-		if (!_creator)
+		if (!_creator || !_raiseEvents)
 			return;
 		emit SigError(err);
 		_creator->Close();
@@ -54,6 +55,8 @@ private slots:
 
 	void SlotConnected()
 	{
+		if (!_raiseEvents)
+			return;
 		std::variant<Packet, NetworkInterface::STATUS> sendMe;
 		emit SigConnected(&sendMe);
 		if (_creator)
@@ -64,4 +67,12 @@ signals:
 
 	void SigError(std::optional<QAbstractSocket::SocketError>);
 	void SigConnected(std::variant<Packet, NetworkInterface::STATUS>*);
+
+public slots:
+
+	void SlotClose()
+	{
+		_raiseEvents = false;
+		close();
+	}
 };

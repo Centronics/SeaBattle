@@ -62,6 +62,7 @@ void Client::Run()
 	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
+	connect(this, SIGNAL(SigClose()), _tcpSocket, SLOT(SlotClose()));
 
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }

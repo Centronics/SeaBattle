@@ -30,6 +30,11 @@ public:
 
 protected:
 
+	void CloseSocket() override
+	{
+		emit SigClose();
+	}
+
 	void Send(const Packet& packet) override
 	{
 		emit SigSend(packet);
@@ -69,4 +74,5 @@ private slots:
 signals:
 
 	void SigSend(Packet);
+	void SigClose();
 };

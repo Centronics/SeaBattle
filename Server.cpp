@@ -25,7 +25,7 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		Packet out;
 		out.WriteData(_graphics.GetData());
 		_currentState = STATE::WAITHIT;
-		emit SignalReceive(Packet(Packet::STATE::CONNECTED), &status);
+		emit SignalReceive(Packet(Packet::STATE::CONNECTED), nullptr);
 		return out;
 	}
 	case STATE::WAITHIT:
@@ -61,14 +61,10 @@ void Server::Run()
 	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
 	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
-
+	connect(this, SIGNAL(SigClose()), _server, SLOT(SlotClose()));
+	
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()), nullptr);
-}
-
-void Server::SlotNewConnection()
-{
-	_currentState = STATE::WAITMAP;
 }
 
 void Server::Listen(const quint16 port)

@@ -367,3 +367,6 @@
 /Release/Graphics.obj
 /Release/Client.obj
 /.vs/config/applicationhost.config
+/.vs/SeaBattle/v15/ipch/AutoPCH/e9e154543016b748/MOC_NETWORKINTERFACE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/512dbf31b7862bc6/MOC_SEABATTLE.ipch
+/.vs/SeaBattle/v15/ipch/AutoPCH/4b3ebb0666aa2142/MOC_SEABATTLE.ipch

@@ -57,6 +57,7 @@ void NetworkInterface::Close()
 	try
 	{
 		*_myRef = nullptr;
+		CloseSocket();
 		deleteLater();
 		_mutex.unlock();
 	}
