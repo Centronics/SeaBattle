@@ -55,14 +55,14 @@ void Server::Run()
 {
 	_server = new ServerThread(this);
 
-	connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection);
-	connect(_server, SIGNAL(SigRead(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotReadClient(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection);
-	connect(_server, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
-	connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(finished()), _server, SLOT(deleteLater()));
-	connect(this, SIGNAL(SigClose()), _server, SLOT(SlotClose()));
-	
+	Q_UNUSED(connect(_server, SIGNAL(SigNewConnection()), SLOT(SlotNewConnection()), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(_server, SIGNAL(SigRead(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotReadClient(QTcpSocket*, std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(_server, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(_server, SIGNAL(acceptError(QAbstractSocket::SocketError)), SLOT(SlotAcceptError(QAbstractSocket::SocketError)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(SigSend(Packet)), _server, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(finished()), _server, SLOT(deleteLater())));
+	Q_UNUSED(connect(this, SIGNAL(SigClose()), _server, SLOT(SlotClose())));
+
 	if (!_server->listen(QHostAddress::Any, _port))
 		emit SignalReceive(Packet(_server->errorString()), nullptr);
 }

@@ -57,12 +57,13 @@ void Client::Run()
 {
 	_tcpSocket = new ClientThread(this);
 
-	connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotConnected(std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection);
-	connect(_tcpSocket, SIGNAL(readyRead()), SLOT(SlotReadyRead()), Qt::BlockingQueuedConnection);
-	connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection);
-	connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater()));
-	connect(this, SIGNAL(SigClose()), _tcpSocket, SLOT(SlotClose()));
+	Q_UNUSED(connect(_tcpSocket, SIGNAL(SigConnected(std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotConnected(std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(_tcpSocket, SIGNAL(readyRead()), _tcpSocket, SLOT(SlotReadServer()), Qt::DirectConnection));
+	Q_UNUSED(connect(_tcpSocket, SIGNAL(SigReadServer(std::variant<Packet, NetworkInterface::STATUS>*)), SLOT(SlotReadServer(std::variant<Packet, NetworkInterface::STATUS>*)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(_tcpSocket, SIGNAL(SigError(std::optional<QAbstractSocket::SocketError>)), SLOT(SlotError(std::optional<QAbstractSocket::SocketError>)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(SigSend(Packet)), _tcpSocket, SLOT(SlotSend(Packet)), Qt::BlockingQueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(finished()), _tcpSocket, SLOT(deleteLater())));
+	Q_UNUSED(connect(this, SIGNAL(SigClose()), _tcpSocket, SLOT(SlotClose())));
 
 	_tcpSocket->connectToHost(_curIP, _curPort, QIODevice::ReadWrite, QAbstractSocket::NetworkLayerProtocol::IPv4Protocol);
 }

@@ -14,13 +14,13 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
-	LoadParameters();
-	connect(_mainForm.btnHelp, SIGNAL(clicked()), SLOT(SlotBtnHelpClicked()));
-	connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked()));
-	connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked()));
-	connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked()));
 	_helpForm.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
-	connect(this, SIGNAL(SigMessage(QString, QString, qint32)), SLOT(SlotMessage(QString, QString, qint32)), Qt::QueuedConnection);
+	LoadParameters();
+	Q_UNUSED(connect(_mainForm.btnHelp, SIGNAL(clicked()), SLOT(SlotBtnHelpClicked())));
+	Q_UNUSED(connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked())));
+	Q_UNUSED(connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked())));
+	Q_UNUSED(connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked())));
+	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32)), SLOT(SlotMessage(QString, QString, qint32)), Qt::QueuedConnection));
 }
 
 void SeaBattle::SlotBtnHelpClicked()

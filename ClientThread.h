@@ -10,18 +10,16 @@ public:
 
 	explicit ClientThread(NetworkInterface* creator) : _creator(creator)
 	{
-		connect(this, SIGNAL(connected()), SLOT(SlotConnected()), Qt::DirectConnection);
-		connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
-		connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+		Q_UNUSED(connect(this, SIGNAL(connected()), SLOT(SlotConnected()), Qt::DirectConnection));
+		Q_UNUSED(connect(this, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection));
+		Q_UNUSED(connect(this, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection));
 	}
 
 	ClientThread(const ClientThread&) = delete;
 	ClientThread(ClientThread&&) = delete;
 	ClientThread& operator=(const ClientThread&) = delete;
 	ClientThread& operator=(ClientThread&&) = delete;
-	virtual ~ClientThread()
-	{
-	}
+	virtual ~ClientThread() = default;
 
 private:
 
@@ -48,6 +46,14 @@ private slots:
 		_creator = nullptr;
 	}
 
+	void SlotReadServer()
+	{
+		std::variant<Packet, NetworkInterface::STATUS> sendMe;
+		emit SigReadServer(&sendMe);
+		if (_creator)
+			_creator->EventHandler(sendMe, *qobject_cast<QTcpSocket*>(sender()));
+	}
+
 	void SlotSend(const Packet packet)
 	{
 		packet.Send(*this);
@@ -67,6 +73,7 @@ signals:
 
 	void SigError(std::optional<QAbstractSocket::SocketError>);
 	void SigConnected(std::variant<Packet, NetworkInterface::STATUS>*);
+	void SigReadServer(std::variant<Packet, NetworkInterface::STATUS>*);
 
 public slots:
 

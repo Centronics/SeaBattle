@@ -11,17 +11,14 @@ public:
 
 	explicit ServerThread(NetworkInterface* creator) : _creator(creator)
 	{
-		connect(this, SIGNAL(newConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection);
+		Q_UNUSED(connect(this, SIGNAL(newConnection()), SLOT(SlotNewConnection()), Qt::DirectConnection));
 	}
 
 	ServerThread(const ServerThread&) = delete;
 	ServerThread(ServerThread&&) = delete;
 	ServerThread& operator=(const ServerThread&) = delete;
 	ServerThread& operator=(ServerThread&&) = delete;
-	virtual ~ServerThread()// = default;
-	{
-
-	}
+	virtual ~ServerThread() = default;
 
 private:
 
@@ -80,16 +77,16 @@ private slots:
 
 		if (_socket)
 		{
-			connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()), Qt::DirectConnection);
+			Q_UNUSED(connect(pClientSocket, SIGNAL(disconnected()), pClientSocket, SLOT(deleteLater()), Qt::DirectConnection));
 			const Packet p(Packet::STATE::BUSY);
 			p.Send(*pClientSocket);
 			pClientSocket->close();
 			return;
 		}
 
-		connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()), Qt::DirectConnection);
-		connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection);
-		connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection);
+		Q_UNUSED(connect(pClientSocket, SIGNAL(readyRead()), SLOT(SlotReadClient()), Qt::DirectConnection));
+		Q_UNUSED(connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(SlotError(QAbstractSocket::SocketError)), Qt::DirectConnection));
+		Q_UNUSED(connect(pClientSocket, SIGNAL(disconnected()), SLOT(SlotDisconnected()), Qt::DirectConnection));
 
 		_socket = pClientSocket;
 		emit SigNewConnection();

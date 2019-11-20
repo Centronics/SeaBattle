@@ -8,7 +8,7 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-	Ui::SeaBattleForm _mainForm;
+	Ui::SeaBattleForm _mainForm{};
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
 	NetworkInterface* _clientServer = nullptr;
@@ -48,8 +48,8 @@ protected:
 	{
 		_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		connect(result, SIGNAL(SignalReceive(Packet, NetworkInterface::STATUS*)), SLOT(SlotReceive(Packet, NetworkInterface::STATUS*)));
-		connect(result, SIGNAL(Update()), SLOT(update()));
+		Q_UNUSED(connect(result, SIGNAL(SignalReceive(Packet, NetworkInterface::STATUS*)), SLOT(SlotReceive(Packet, NetworkInterface::STATUS*))));
+		Q_UNUSED(connect(result, SIGNAL(Update()), SLOT(update())));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}
