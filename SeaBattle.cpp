@@ -20,7 +20,14 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	Q_UNUSED(connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked())));
 	Q_UNUSED(connect(_mainForm.btnServerStart, SIGNAL(clicked()), SLOT(SlotBtnServerStartClicked())));
 	Q_UNUSED(connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked())));
+	Q_UNUSED(connect(_mainForm.lstShipArea, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
+	Q_UNUSED(connect(_mainForm.lstDirection, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32)), SLOT(SlotMessage(QString, QString, qint32)), Qt::QueuedConnection));
+}
+
+void SeaBattle::SlotLstChange(int)
+{
+	update();
 }
 
 void SeaBattle::SlotBtnHelpClicked()
@@ -262,9 +269,7 @@ void SeaBattle::AddShip()
 		Message("Таких кораблей поставлено достаточно.", "Невозможно поставить корабль.");
 		return;
 	case Graphics::SHIPADDITION::NOCOORD:
-		return;
 	case Graphics::SHIPADDITION::NOTFREE:
-		Message("Место занято.", "Другие корабли стоят слишком близко.");
 		return;
 	case Graphics::SHIPADDITION::INCORRECTMODE:
 		Message("Неверный режим.", "Корабли добавлять или удалять можно только до начала игры.");
@@ -294,17 +299,60 @@ void SeaBattle::RemoveShip()
 
 void SeaBattle::RenewShipCount() const
 {
-	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item, const int n)
+	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item, const int n, const int maxCount)
 	{
 		QString str = item->text();
-		str[n] = QString::number(_graphics.GetShipCount(shipType))[0];
+		const int shipCount = _graphics.GetShipCount(shipType);
+		str[n] = QString::number(shipCount)[0];
 		item->setText(str);
+		if (shipCount < maxCount)
+			return;
+		const int r = _mainForm.lstShipArea->currentRow();
+		if ((_graphics.GetShipCount(Ship::TYPES::LINKOR) == 1) &&
+			(_graphics.GetShipCount(Ship::TYPES::CRUISER) == 2) &&
+			(_graphics.GetShipCount(Ship::TYPES::ESMINEC) == 3) &&
+			(_graphics.GetShipCount(Ship::TYPES::VEDETTE) == 4))
+			return;
+		switch (shipType)
+		{
+		case Ship::TYPES::LINKOR:
+			if (r != 0)
+				return;
+			break;
+		case Ship::TYPES::CRUISER:
+			if (r != 1)
+				return;
+			break;
+		case Ship::TYPES::ESMINEC:
+			if (r != 2)
+				return;
+			break;
+		case Ship::TYPES::VEDETTE:
+			if (_graphics.GetShipCount(Ship::TYPES::LINKOR) < 1)
+				_mainForm.lstShipArea->setCurrentRow(0);
+			else
+				if (_graphics.GetShipCount(Ship::TYPES::CRUISER) < 2)
+					_mainForm.lstShipArea->setCurrentRow(1);
+				else
+					if (_graphics.GetShipCount(Ship::TYPES::ESMINEC) < 3)
+						_mainForm.lstShipArea->setCurrentRow(2);
+					else
+						if (_graphics.GetShipCount(Ship::TYPES::VEDETTE) < 4)
+							_mainForm.lstShipArea->setCurrentRow(3);
+			return;
+		case Ship::TYPES::EMPTY:
+			return;
+		default:
+			throw exception("RenewShipCount");
+		}
+		if ((r >= 0) && r < (_mainForm.lstShipArea->count() - 1))
+			_mainForm.lstShipArea->setCurrentRow(r + 1);
 	};
 
-	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41);
-	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45);
-	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44);
-	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35);
+	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41, 1);
+	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45, 2);
+	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44, 3);
+	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35, 4);
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)

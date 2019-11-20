@@ -209,7 +209,7 @@
    </property>
    <item>
     <property name="text">
-     <string notr="true">Смотрит вправо</string>
+     <string notr="true">Горизонтально</string>
     </property>
     <property name="font">
      <font>
@@ -220,7 +220,7 @@
    </item>
    <item>
     <property name="text">
-     <string>Смотрит вниз</string>
+     <string>Вертикально</string>
     </property>
     <property name="whatsThis">
      <string notr="true"/>

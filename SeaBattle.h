@@ -56,6 +56,7 @@ protected:
 
 private slots:
 
+	void SlotLstChange(int);
 	void SlotBtnHelpClicked();
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
