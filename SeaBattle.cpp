@@ -11,6 +11,8 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 {
 	_mainForm.setupUi(this);
 	_mainForm.frmDrawing->installEventFilter(this);
+	_mainForm.txtIPAddress->installEventFilter(this);
+	_mainForm.txtPort->installEventFilter(this);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
@@ -120,24 +122,27 @@ void SeaBattle::LoadParameters() const
 
 bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 {
-	if (watched != _mainForm.frmDrawing)
-		return QWidget::eventFilter(watched, event);
 	switch (event->type())
 	{
 	case QEvent::Leave:
+		if (watched != _mainForm.frmDrawing)
+			return QWidget::eventFilter(watched, event);
 		Graphics::CursorX = -1;
 		Graphics::CursorY = -1;
 		_mainForm.frmDrawing->update();
-		QWidget::eventFilter(watched, event);
 		return true;
 	case QEvent::Paint:
 	{
+		if (watched != _mainForm.frmDrawing)
+			return QWidget::eventFilter(watched, event);
 		QPainter painter(_mainForm.frmDrawing);
 		const auto selShip = GetSelectedShip();
 		_graphics.Paint(painter, get<0>(selShip), get<1>(selShip));
-		QWidget::eventFilter(watched, event);
 		return true;
 	}
+	case QEvent::KeyPress:
+		return ((watched != _mainForm.txtIPAddress) && (watched != _mainForm.txtPort)) || (event->type() != QEvent::KeyPress) || (reinterpret_cast<QKeyEvent*>(event)->key() != Qt::Key::Key_Space) ?
+			QWidget::eventFilter(watched, event) : true;
 	default:
 		return QWidget::eventFilter(watched, event);
 	}
@@ -400,6 +405,12 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		return;
 	case Qt::Key::Key_Delete:
 		RemoveShip();
+		return;
+	case Qt::Key::Key_Space:
+		if (_mainForm.lstDirection->currentRow() == 0)
+			_mainForm.lstDirection->setCurrentRow(1);
+		else
+			_mainForm.lstDirection->setCurrentRow(0);
 		return;
 	default:
 		QWidget::keyReleaseEvent(event);

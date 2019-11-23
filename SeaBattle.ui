@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>595</width>
-    <height>341</height>
+    <width>1036</width>
+    <height>372</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,8 +43,8 @@
   <widget class="QLineEdit" name="txtIPAddress">
    <property name="geometry">
     <rect>
-     <x>359</x>
-     <y>10</y>
+     <x>792</x>
+     <y>9</y>
      <width>145</width>
      <height>20</height>
     </rect>
@@ -56,8 +56,8 @@
   <widget class="QPushButton" name="btnConnect">
    <property name="geometry">
     <rect>
-     <x>339</x>
-     <y>31</y>
+     <x>772</x>
+     <y>30</y>
      <width>127</width>
      <height>23</height>
     </rect>
@@ -69,8 +69,8 @@
   <widget class="QLineEdit" name="txtPort">
    <property name="geometry">
     <rect>
-     <x>540</x>
-     <y>10</y>
+     <x>973</x>
+     <y>9</y>
      <width>51</width>
      <height>20</height>
     </rect>
@@ -82,8 +82,8 @@
   <widget class="QPushButton" name="btnServerStart">
    <property name="geometry">
     <rect>
-     <x>465</x>
-     <y>31</y>
+     <x>898</x>
+     <y>30</y>
      <width>127</width>
      <height>23</height>
     </rect>
@@ -98,8 +98,8 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>339</x>
-     <y>54</y>
+     <x>772</x>
+     <y>53</y>
      <width>253</width>
      <height>23</height>
     </rect>
@@ -111,8 +111,8 @@
   <widget class="QListWidget" name="lstShipArea">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>101</y>
+     <x>773</x>
+     <y>100</y>
      <width>251</width>
      <height>81</height>
     </rect>
@@ -201,15 +201,15 @@
   <widget class="QListWidget" name="lstDirection">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>184</y>
+     <x>773</x>
+     <y>183</y>
      <width>251</width>
      <height>41</height>
     </rect>
    </property>
    <item>
     <property name="text">
-     <string notr="true">Горизонтально</string>
+     <string notr="true">Горизонтально (пробел)</string>
     </property>
     <property name="font">
      <font>
@@ -220,7 +220,7 @@
    </item>
    <item>
     <property name="text">
-     <string>Вертикально</string>
+     <string>Вертикально    (пробел)</string>
     </property>
     <property name="whatsThis">
      <string notr="true"/>
@@ -236,8 +236,8 @@
   <widget class="QPushButton" name="btnHelp">
    <property name="geometry">
     <rect>
-     <x>339</x>
-     <y>77</y>
+     <x>772</x>
+     <y>76</y>
      <width>253</width>
      <height>23</height>
     </rect>
@@ -256,8 +256,8 @@
   <widget class="QLabel" name="lblIPAddress">
    <property name="geometry">
     <rect>
-     <x>341</x>
-     <y>11</y>
+     <x>774</x>
+     <y>10</y>
      <width>16</width>
      <height>16</height>
     </rect>
@@ -269,8 +269,8 @@
   <widget class="QLabel" name="lblPort">
    <property name="geometry">
     <rect>
-     <x>507</x>
-     <y>11</y>
+     <x>940</x>
+     <y>10</y>
      <width>31</width>
      <height>16</height>
     </rect>
@@ -284,8 +284,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>341</width>
-     <height>341</height>
+     <width>761</width>
+     <height>371</height>
     </rect>
    </property>
    <property name="sizePolicy">

@@ -43,7 +43,7 @@ protected:
 
 public:
 
-	static constexpr int Margin = 10, BetweenObjects = 5, ObjectWidth = 32, MaxCoord = (ObjectWidth * 10) + Margin;
+	static constexpr int MarginX = 55, MarginY = 40, BigMargin = 432, BetweenObjects = 5, ObjectWidth = 32, MaxCoordX = (ObjectWidth * 10) + MarginX, MaxCoordY = (ObjectWidth * 10) + MarginY;
 
 	Graphics() = default;
 	~Graphics() = default;
@@ -70,4 +70,8 @@ public:
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
 	void ClearBitShips();
+
+private:
+
+	mutable quint8 _lastHitMy = 255, _lastHitRival = 255;
 };

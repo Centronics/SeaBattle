@@ -4,6 +4,7 @@
 
 using namespace std;
 
+static const QFont DRAW_FONT_MARK("Courier New", Graphics::ObjectWidth - 5);
 static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 5, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
 static const QFont BIG_FONT("Arial", 15, QFont::Bold);
@@ -88,6 +89,7 @@ Graphics::SHIPADDITION Graphics::RemoveShip()
 bool Graphics::RivalHit(const quint8 coord)
 {
 	Ship& ship = _screenObjects.at(coord);
+	_lastHitRival = coord;
 	if (ship.GetBeat(Ship::BEAT::ME))
 		ship.SetBit(Ship::BIT::BOTH);
 	else
@@ -100,6 +102,7 @@ optional<bool> Graphics::MyHit(const quint8 coord)
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::ME))
 		return nullopt;
+	_lastHitMy = coord;
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
 		ship.SetBit(Ship::BIT::BOTH);
 	else
@@ -148,21 +151,21 @@ Graphics::BROKEN Graphics::GetBroken() const
 
 tuple<bool, int, int> Graphics::GetPhysicalCoords()
 {
-	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord)
+	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
 		return make_tuple(false, -1, -1);
-	int mx = CursorX - Margin, my = CursorY - Margin;
+	int mx = CursorX - MarginX, my = CursorY - MarginY;
 	mx = mx - (mx % ObjectWidth);
 	my = my - (my % ObjectWidth);
-	mx += Margin;
-	my += Margin;
+	mx += MarginX;
+	my += MarginY;
 	return make_tuple(true, mx, my);
 }
 
 tuple<bool, int, int> Graphics::GetMassiveCoords()
 {
-	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord)
+	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
 		return make_tuple(false, -1, -1);
-	int mx = CursorX - Margin, my = CursorY - Margin;
+	int mx = CursorX - MarginX, my = CursorY - MarginY;
 	mx = mx - (mx % ObjectWidth);
 	my = my - (my % ObjectWidth);
 	mx /= ObjectWidth;
@@ -173,7 +176,7 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 {
 	const optional<quint8> mas = GetCoord();
-	if (CursorX < Margin || CursorX >= MaxCoord || CursorY < Margin || CursorY >= MaxCoord || !mas)
+	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY || !mas)
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const Ship& ship = _screenObjects[*mas];
 	if (ship.GetShipType() == Ship::TYPES::EMPTY)
@@ -207,24 +210,82 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 {
 	const auto drawField = [&painter]
 	{
-		const auto proc = [&painter](const int x, const int y, const int mx, const int my)
+		const auto drawText = [&painter](const int x, const int y, const QString& s, const QPen& pen, const QFont& f)
 		{
-			static const QPen Penb(Qt::blue, BetweenObjects);
-			painter.setPen(Penb);
+			painter.setPen(pen);
+			painter.setFont(f);
+			painter.drawText(x, y, s);
+		};
+
+		const auto proc = [&painter](const int x, const int y, const int mx, const int my, const QPen& pen)
+		{
+			painter.setPen(pen);
 			painter.setRenderHint(QPainter::Antialiasing);
 			painter.drawLine(x, y, mx, my);
 		};
 
-		for (int x = 0, yc = Margin, xc = Margin + (10 * ObjectWidth); x < 11; ++x)
+		const auto drawMarkingX = [&drawText](const int x, const int y, const QPen& pen)
 		{
-			proc(Margin, yc, xc, yc);
-			yc += ObjectWidth;
+			drawText(x + 4, y, "А", pen, DRAW_FONT_MARK);
+			drawText(x + 37, y, "Б", pen, DRAW_FONT_MARK);
+			drawText(x + 69, y, "В", pen, DRAW_FONT_MARK);
+			drawText(x + 102, y, "Г", pen, DRAW_FONT_MARK);
+			drawText(x + 133, y, "Д", pen, DRAW_FONT_MARK);
+			drawText(x + 165, y, "Е", pen, DRAW_FONT_MARK);
+			drawText(x + 197, y, "Ж", pen, DRAW_FONT_MARK);
+			drawText(x + 228, y, "З", pen, DRAW_FONT_MARK);
+			drawText(x + 261, y, "И", pen, DRAW_FONT_MARK);
+			drawText(x + 292, y, "К", pen, DRAW_FONT_MARK);
+		};
+
+		const auto drawMarkingY = [&drawText](const int x, const int y, const QPen& pen)
+		{
+			drawText(x - 3, y + 16, "1", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 49, "2", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 80, "3", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 113, "4", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 144, "5", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 176, "6", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 208, "7", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 240, "8", pen, DRAW_FONT_MARK);
+			drawText(x - 3, y + 272, "9", pen, DRAW_FONT_MARK);
+			drawText(x - 24, y + 304, "10", pen, DRAW_FONT_MARK);
+		};
+
+		{
+			const QPen blue(QColor(100, 129, 181), BetweenObjects);
+			drawMarkingX(MarginX, 30, blue);
+			drawMarkingY(MarginX - 25, 50, blue);
+
+			for (int x = 0, yc = MarginY, xc = MarginX + (10 * ObjectWidth); x < 11; ++x)
+			{
+				proc(MarginX, yc, xc, yc, blue);
+				yc += ObjectWidth;
+			}
+
+			for (int y = 0, xc = MarginX, yc = MarginY + (10 * ObjectWidth); y < 11; ++y)
+			{
+				proc(xc, MarginY, xc, yc, blue);
+				xc += ObjectWidth;
+			}
 		}
 
-		for (int y = 0, xc = Margin, yc = Margin + (10 * ObjectWidth); y < 11; ++y)
 		{
-			proc(xc, Margin, xc, yc);
-			xc += ObjectWidth;
+			const QPen red(ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED ? QColor(216, 216, 216) : QColor(206, 96, 45), BetweenObjects);
+			drawMarkingX(BigMargin, 30, red);
+			drawMarkingY(BigMargin - 25, 50, red);
+
+			for (int x = 0, yc = MarginY, xc = BigMargin + (10 * ObjectWidth); x < 11; ++x)
+			{
+				proc(BigMargin, yc, xc, yc, red);
+				yc += ObjectWidth;
+			}
+
+			for (int y = 0, xc = BigMargin, yc = MarginY + (10 * ObjectWidth); y < 11; ++y)
+			{
+				proc(xc, MarginY, xc, yc, red);
+				xc += ObjectWidth;
+			}
 		}
 	};
 
@@ -279,7 +340,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [x, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = x, yMarkCoord = y; };
 
-		if ((xw > MaxCoord || yh > MaxCoord) && inShip && inFrame)
+		if ((xw > MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
 			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
@@ -320,26 +381,39 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	{
 		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
+
+		const auto drawX = [&painter](const int x, const int y)
+		{
+			painter.setPen(DRAW_TEXT_PEN);
+			painter.setFont(DRAW_FONT);
+			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
+		};
+
 		const Ship::BIT bit = s.GetBit();
 		if ((bit == Ship::BIT::ME || bit == Ship::BIT::BOTH) && !IsRivalMove)
 		{
+			if (s.GetHolding(Ship::HOLDING::RIVAL))
+			{
+				drawX(x, y);
+				return;
+			}
 			static constexpr int Wd = ObjectWidth / 2;
 			static const QPen B(Qt::black, Wd);
-			static const QPen R(Qt::red, Wd);
-			painter.setPen(s.GetHolding(Ship::HOLDING::RIVAL) ? R : B);
+			painter.setPen(B);
 			static constexpr int Wc = (Wd / 2);
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 			painter.drawPoint(x + Wd, y + Wd);
 			return;
 		}
 		if ((bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH) && IsRivalMove && s.GetShipType() != Ship::TYPES::EMPTY && s.GetHolding(Ship::HOLDING::ME))
-		{
-			painter.setPen(DRAW_TEXT_PEN);
-			painter.setFont(DRAW_FONT);
-			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
-		}
+			drawX(x, y);
 	};
 
+	const auto drawKilledShips = [&painter]
+	{
+		//Процедуру определения неэффенктивного места сделать отдельно!
+	};
+	
 	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
@@ -348,14 +422,43 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawShipAndFrame(x, y, mx, my, w, h, s);
 	};
 
-	for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
-		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
+	drawKilledShips();
+	
+	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
+	{
+		const auto drawMark = [&painter](const int x, const int y)
+		{
+			static const QColor HitColor = QColor(255, 168, 153);
+			painter.setPen(QPen(HitColor, BetweenObjects));
+			painter.setBrush(Qt::NoBrush);
+			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
+		};
+
+		if (_lastHitMy < 100)
+		{
+			const int x = ((_lastHitMy % 100) * ObjectWidth) + MarginX, y = ((_lastHitMy / 100) * ObjectWidth) + MarginY;
+			drawMark(x, y);
+		}
+		if (_lastHitRival < 100)
+		{
+			const int x = ((_lastHitMy % 100) * ObjectWidth) + BigMargin, y = ((_lastHitMy / 100) * ObjectWidth) + MarginY;
+			drawMark(x, y);
+		}
+	}
+	else
+	{
+		_lastHitMy = 255;
+		_lastHitRival = 255;
+	}
+
+	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
+		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
 			mBeat(x, y, _screenObjects[(my * 10) + mx]);
 
 	drawField();
-	
-	for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
-		for (int my = 0, y = Margin; my < 10; ++my, y += ObjectWidth)
+
+	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
+		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
 		{
 			const Ship& s = _screenObjects[(my * 10) + mx];
 			const Ship::ROTATE r = (!IsRivalMove && ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED) ? Ship::ROTATE::NIL : s.GetRotate();
