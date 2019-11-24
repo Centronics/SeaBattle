@@ -225,6 +225,13 @@ public:
 		return static_cast<TYPES>((_currentState & 0x0Cu) >> 2u);
 	}
 
+	[[nodiscard]] int GetFloors() const
+	{
+		if (GetRotate() == ROTATE::NIL)
+			return 0;
+		return GetFloors(GetShipType());
+	}
+
 	void SetShipType(const TYPES value)
 	{
 		switch (value)
@@ -278,7 +285,7 @@ public:
 
 	void Delete() noexcept
 	{
-		_currentState = quint8{};
+		_currentState = quint8{ 0 };
 	}
 
 	explicit operator quint8() const noexcept

@@ -206,6 +206,90 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 }
 
+const Ship* Graphics::IsKilled(const quint8 coord) const
+{
+	if (coord > 99)
+		return nullptr;
+	const Ship* const ps = &_screenObjects[coord];
+	const int floors = ps->GetFloors();
+	if (floors <= 0)
+		return nullptr;
+	switch (ps->GetRotate())
+	{
+	case Ship::ROTATE::STARTRIGHT:
+		for (const Ship *s = ps, *ms = s + floors; s < ms; ++s)
+			if (!s->GetBeat(Ship::BEAT::RIVAL))
+				return nullptr;
+		return ps;
+	case Ship::ROTATE::STARTDOWN:
+		for (const Ship *s = ps, *ms = s + (floors * 10); s < ms; s += 10)
+			if (!s->GetBeat(Ship::BEAT::RIVAL))
+				return nullptr;
+		return ps;
+	default:
+		throw exception(__func__);
+	}
+}
+
+bool Graphics::IsAllowNearBeat(const quint8 coord) const
+{
+	enum class VALUE
+	{
+		START,
+		END,
+		BOTH
+	};
+
+	const auto inRangeX = [coord](const quint8 x, const VALUE value)
+	{
+		if (value == VALUE::END || value == VALUE::BOTH)
+			if (const quint8 ix = x + 1; (ix < 10) && (ix == coord))
+				return true;
+		if (value == VALUE::START || value == VALUE::BOTH)
+			if ((x > 0) && ((x - 1) == coord))
+				return true;
+		return false;
+	};
+
+	const auto inRangeY = [coord](const quint8 y, const VALUE value)
+	{
+		if (value == VALUE::END || value == VALUE::BOTH)
+			if (const quint8 iy = y + 1; (iy < 10) && (iy == coord))
+				return true;
+		if (value == VALUE::START || value == VALUE::BOTH)
+			if ((y > 0) && ((y - 1) == coord))
+				return true;
+		return false;
+	};
+
+	for (quint8 n = 0; n < 100; ++n)
+		if (const Ship* s = IsKilled(n))
+			switch (const quint8 x = n % 10, y = n / 10; s->GetRotate())
+			{
+			case Ship::ROTATE::STARTRIGHT:
+				if (inRangeX(x, VALUE::START))
+					return false;
+				for (quint8 j = 1, mj = s->GetFloors() - 1; j < mj; ++j)
+					if (inRangeY(x, VALUE::BOTH))
+						return false;
+				if (inRangeX(x, VALUE::END))
+					return false;
+				continue;
+			case Ship::ROTATE::STARTDOWN:
+				if (inRangeY(y, VALUE::START))
+					return false;
+				for (quint8 j = 1, mj = s->GetFloors() - 1; j < mj; ++j)
+					if (inRangeX(y, VALUE::BOTH))
+						return false;
+				if (inRangeY(y, VALUE::END))
+					return false;
+				continue;
+			default:
+				throw exception("drawKilledShips");
+			}
+	return true;
+}
+
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
 	const auto drawField = [&painter]
@@ -409,11 +493,25 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawX(x, y);
 	};
 
-	const auto drawKilledShips = [&painter]
+	const auto drawKilledShips = [&painter, this]
 	{
-		//Процедуру определения неэффенктивного места сделать отдельно!
+		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
+			return;
+		const auto drawBusy = [&painter](const int x, const int y)
+		{
+			static constexpr int Wd = ObjectWidth / 2;
+			static const QPen B(Qt::black, Wd);
+			painter.setPen(B);
+			static constexpr int Wc = (Wd / 2);
+			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
+			painter.drawPoint(x + Wd, y + Wd);
+		};
+
+		for (quint8 k = 0; k < 100; ++k)
+			if (IsAllowNearBeat(k))
+				drawBusy(k % 10, k / 10);
 	};
-	
+
 	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
@@ -423,7 +521,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	};
 
 	drawKilledShips();
-	
+
 	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
 	{
 		const auto drawMark = [&painter](const int x, const int y)

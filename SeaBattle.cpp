@@ -45,7 +45,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	const optional<quint16> port = GetPort();
 	if (!port)
 	{
-		Message("Порт не указан.", "Укажите порт, к которому необходимо подключиться!");
+		Message("Укажите допустимое значение прослушиваемого порта.", "Укажите порт, к которому необходимо подключиться!");
 		return;
 	}
 	OffButtons();
@@ -63,7 +63,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	const optional<quint16> port = GetPort();
 	if (!port)
 	{
-		Message("Порт не указан.", "Укажите порт, который необходимо прослушивать!");
+		Message("Укажите допустимое значение прослушиваемого порта.", "Укажите порт, который необходимо прослушивать!");
 		return;
 	}
 	OffButtons();
