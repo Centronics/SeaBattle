@@ -33,9 +33,9 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 		painter.setPen(Rpen);
 		painter.setFont(BIG_FONT);
 		if (ConnectionStatus == CONNECTIONSTATUS::SERVER)
-			painter.drawText(341, 285, "Ожидание подключения.");
+			painter.drawText(776, 301, "Ожидание подключения.");
 		if (ConnectionStatus == CONNECTIONSTATUS::CLIENT)
-			painter.drawText(389, 285, "Подключение...");
+			painter.drawText(826, 301, "Подключение...");
 		return;
 	}
 
@@ -43,7 +43,7 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Rpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(411, 250, "Ход соперника.");
+		painter.drawText(843, 266, "Ход соперника.");
 		painter.setPen(Rp);
 		painter.setBrush(Rb);
 	}
@@ -51,15 +51,15 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	{
 		painter.setPen(Gpen);
 		painter.setFont(TEXT_FONT);
-		painter.drawText(434, 250, "Ваш ход.");
+		painter.drawText(866, 266, "Ваш ход.");
 		painter.setPen(Gp);
 		painter.setBrush(Gb);
 	}
 
-	painter.drawEllipse(440, 265, 50, 50);
+	painter.drawEllipse(872, 281, 50, 50);
 	painter.setPen(Bp);
 	painter.setBrush(Qt::NoBrush);
-	painter.drawRect(395, 230, 140, 100);
+	painter.drawRect(827, 246, 140, 100);
 }
 
 Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
@@ -524,33 +524,6 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	drawKilledShips();
 
-	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
-	{
-		const auto drawMark = [&painter](const int x, const int y)
-		{
-			static const QColor HitColor = QColor(255, 168, 153);
-			painter.setPen(QPen(HitColor, BetweenObjects));
-			painter.setBrush(Qt::NoBrush);
-			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
-		};
-
-		if (_lastHitMy < 100)
-		{
-			const int x = ((_lastHitMy % 100) * ObjectWidth) + MarginX, y = ((_lastHitMy / 100) * ObjectWidth) + MarginY;
-			drawMark(x, y);
-		}
-		if (_lastHitRival < 100)
-		{
-			const int x = ((_lastHitMy % 100) * ObjectWidth) + BigMargin, y = ((_lastHitMy / 100) * ObjectWidth) + MarginY;
-			drawMark(x, y);
-		}
-	}
-	else
-	{
-		_lastHitMy = 255;
-		_lastHitRival = 255;
-	}
-
 	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
 			mBeat(x, y, _screenObjects[(my * 10) + mx]);
@@ -591,6 +564,33 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		}
 
 	marking();
+
+	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
+	{
+		const auto drawMark = [&painter](const int x, const int y)
+		{
+			static const QColor HitColor = QColor(255, 168, 153);
+			painter.setPen(QPen(HitColor, BetweenObjects));
+			painter.setBrush(Qt::NoBrush);
+			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
+		};
+
+		if (_lastHitMy < 100)
+		{
+			const int x = ((_lastHitMy % 10) * ObjectWidth) + BigMargin, y = ((_lastHitMy / 10) * ObjectWidth) + MarginY;
+			drawMark(x, y);
+		}
+		if (_lastHitRival < 100)
+		{
+			const int x = ((_lastHitRival % 10) * ObjectWidth) + MarginX, y = ((_lastHitRival / 10) * ObjectWidth) + MarginY;
+			drawMark(x, y);
+		}
+	}
+	else
+	{
+		_lastHitMy = 255;
+		_lastHitRival = 255;
+	}
 
 	if (dWarnX < 0 || dWarnY < 0)
 		return;
