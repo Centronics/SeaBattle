@@ -97,17 +97,19 @@ bool Graphics::RivalHit(const quint8 coord)
 	return ship.GetHolding(Ship::HOLDING::ME);
 }
 
-optional<bool> Graphics::MyHit(const quint8 coord)
+Graphics::HITSTATUS Graphics::MyHit(const quint8 coord)
 {
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::ME))
-		return nullopt;
+		return HITSTATUS::BUSY;
+	if (!IsAllowNearBeat(coord))
+		return HITSTATUS::NONEFFECTIVE;
 	_lastHitMy = coord;
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
 		ship.SetBit(Ship::BIT::BOTH);
 	else
 		ship.SetBit(Ship::BIT::ME);
-	return ship.GetHolding(Ship::HOLDING::RIVAL);
+	return ship.GetHolding(Ship::HOLDING::RIVAL) ? HITSTATUS::OK : HITSTATUS::FAIL;
 }
 
 bool Graphics::IsReadyToPlay(const Ship::TYPES ship) const
@@ -473,43 +475,43 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
 		};
 
-		const Ship::BIT bit = s.GetBit();
-		if ((bit == Ship::BIT::ME || bit == Ship::BIT::BOTH) && !IsRivalMove)
+		const auto drawBall = [&painter](const int x, const int y, const Qt::GlobalColor color)
 		{
-			if (s.GetHolding(Ship::HOLDING::RIVAL))
-			{
-				drawX(x, y);
-				return;
-			}
 			static constexpr int Wd = ObjectWidth / 2;
-			static const QPen B(Qt::black, Wd);
-			painter.setPen(B);
 			static constexpr int Wc = (Wd / 2);
+			static const QPen B(color, Wd);
+			painter.setPen(B);
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 			painter.drawPoint(x + Wd, y + Wd);
-			return;
+		};
+
+		if (const Ship::BIT bit = s.GetBit(); (bit == Ship::BIT::ME || bit == Ship::BIT::BOTH) && !IsRivalMove)
+		{
+			if (s.GetHolding(Ship::HOLDING::RIVAL))
+				drawX(x, y);
+			else
+				drawBall(x, y, Qt::black);
 		}
-		if ((bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH) && IsRivalMove && s.GetShipType() != Ship::TYPES::EMPTY && s.GetHolding(Ship::HOLDING::ME))
-			drawX(x, y);
+		else
+			if ((bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH) && IsRivalMove && s.GetShipType() != Ship::TYPES::EMPTY)
+				drawBall(x, y, Qt::red);
 	};
 
 	const auto drawKilledShips = [&painter, this]
 	{
 		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
-		const auto drawBusy = [&painter](const int x, const int y)
-		{
-			static constexpr int Wd = ObjectWidth / 2;
-			static const QPen B(Qt::black, Wd);
-			painter.setPen(B);
-			static constexpr int Wc = (Wd / 2);
-			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
-			painter.drawPoint(x + Wd, y + Wd);
-		};
-
 		for (quint8 k = 0; k < 100; ++k)
-			if (IsAllowNearBeat(k))
-				drawBusy(k % 10, k / 10);
+			if (!IsAllowNearBeat(k))
+			{
+				static constexpr int Wd = ObjectWidth / 2;
+				static constexpr int Wc = (Wd / 2);
+				static const QPen B(Qt::red, Wd);
+				const int x = k % 10, y = k / 10;
+				painter.setPen(B);
+				painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
+				painter.drawPoint(x + Wd, y + Wd);
+			}
 	};
 
 	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)

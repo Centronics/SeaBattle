@@ -29,6 +29,14 @@ public:
 		CONNECTED
 	};
 
+	enum class HITSTATUS
+	{
+		OK,
+		FAIL,
+		BUSY,
+		NONEFFECTIVE
+	};
+
 protected:
 
 	std::vector<Ship> _screenObjects{ 100 };
@@ -60,7 +68,7 @@ public:
 
 	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	bool RivalHit(quint8 coord);
-	std::optional<bool> MyHit(quint8 coord);
+	HITSTATUS MyHit(quint8 coord);
 
 	static void DrawMoveQuad(QPainter& painter);
 

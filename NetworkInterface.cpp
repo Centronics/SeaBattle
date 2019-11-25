@@ -132,17 +132,24 @@ optional<Packet> NetworkInterface::CreateHitPacket()
 		return nullopt;
 	if (_currentState != STATE::HIT)
 		return _currentState == STATE::WAITHIT ? Packet("Сейчас ход соперника.") : Packet("Неверное состояние программы.");
-	const optional<bool> v = _graphics.MyHit(*coord);
-	if (!v)
-		return Packet("По этому месту уже был удар.");
-	if (!(*v))
+	switch (_graphics.MyHit(*coord))
 	{
+	case Graphics::HITSTATUS::FAIL:
 		_currentState = STATE::WAITHIT;
 		Graphics::IsRivalMove = true;
+	case Graphics::HITSTATUS::OK:
+	{
+		Packet packet;
+		packet.WriteData(Packet::DOIT::HIT, *coord);
+		return packet;
 	}
-	Packet packet;
-	packet.WriteData(Packet::DOIT::HIT, *coord);
-	return packet;
+	case Graphics::HITSTATUS::BUSY:
+		return Packet("По этому месту уже был удар.");
+	case Graphics::HITSTATUS::NONEFFECTIVE:
+		return Packet("По этому месту бить не имеет смысла, т.к. рядом с потопленным кораблём не может быть других вражеских кораблей.");
+	default:
+		return Packet("Неизвестная ошибка (CreateHitPacket).");
+	}
 }
 
 void NetworkInterface::run()
