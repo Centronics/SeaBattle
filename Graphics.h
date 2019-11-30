@@ -53,7 +53,7 @@ protected:
 
 public:
 
-	static constexpr int MarginX = 55, MarginY = 40, BigMargin = 432, BetweenObjects = 5, ObjectWidth = 32, MaxCoordX = (ObjectWidth * 10) + MarginX, MaxCoordY = (ObjectWidth * 10) + MarginY;
+	static constexpr int MarginX = 55, MarginY = 40, BigMargin = 432, BetweenObjects = 5, ObjectWidth = 32, MaxCoordX = (ObjectWidth * 10) + MarginX, BigMaxCoordX = (ObjectWidth * 10) + BigMargin, MaxCoordY = (ObjectWidth * 10) + MarginY;
 
 	Graphics() = default;
 	~Graphics() = default;

@@ -151,7 +151,7 @@ Graphics::BROKEN Graphics::GetBroken() const
 	return BROKEN::NOTHING;
 }
 
-/*tuple<bool, int, int> Graphics::GetPhysicalCoords()
+/*tuple<bool, int, int> Graphics::GetPhysicalCoords() // сапюрэ пюлйс опх сдюпе, ядекюрэ йпсфнй онлемэье, янцкюянбюрэ жберю йпсфйнб х лемъ х опнрхбмхйю, ядекюрэ нрнапюфемхе опнрхбмхйнб оняке люрвю
 {
 	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
 		return make_tuple(false, -1, -1);
@@ -165,9 +165,11 @@ Graphics::BROKEN Graphics::GetBroken() const
 
 tuple<bool, int, int> Graphics::GetMassiveCoords()
 {
-	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
+	const bool conn = ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED;
+	const int marginX = conn ? BigMargin : MarginX, maxCoordX = conn ? BigMaxCoordX : MaxCoordX;
+	if (CursorX < marginX || CursorX >= maxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
 		return make_tuple(false, -1, -1);
-	int mx = CursorX - MarginX, my = CursorY - MarginY;
+	int mx = CursorX - marginX, my = CursorY - MarginY;
 	mx = mx - (mx % ObjectWidth);
 	my = my - (my % ObjectWidth);
 	mx /= ObjectWidth;
@@ -390,6 +392,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		if (wMarkCoord < 0 || hMarkCoord < 0)
 			wMarkCoord = hMarkCoord = ObjectWidth;
 		grey();
+		//if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
+			//xMarkCoord += BigMaxCoordX - MaxCoordX;
 		painter.drawRect(xMarkCoord - BetweenObjects, yMarkCoord - BetweenObjects, wMarkCoord + W, hMarkCoord + W);
 	};
 
@@ -421,17 +425,18 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	const auto drawShipAndFrame = [&painter, ship, rotate, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &grey, &drawWarning, this, &isShipBeat](const int px, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
 	{
 		const int x = px + MarginX;
+		const int frameX = px + (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMargin : MarginX);
 		const int xw = x + w, yh = y + h;
-		const auto inFrame = CursorX >= x && CursorX < (x + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
+		const bool inFrame = CursorX >= frameX && CursorX < (frameX + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
 		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now) { if (now) painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); else { xMarkCoord = x; yMarkCoord = y; wMarkCoord = w; hMarkCoord = h; } };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord]
 		{
-			const int sx = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX);
+			const int sx = px + (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMargin : MarginX);
 			xMarkCoord = sx, yMarkCoord = y;
 		};
 
-		if ((xw > MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
+		if ((xw > /*(ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMaxCoordX :*/ MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
 			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
