@@ -8,7 +8,6 @@ static const QFont DRAW_FONT_MARK("Courier New", Graphics::ObjectWidth - 5);
 static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 5, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
 static const QFont BIG_FONT("Arial", 15, QFont::Bold);
-static const QPen DRAW_TEXT_PEN(Qt::red, 3);
 
 void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
@@ -473,42 +472,59 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawWarning();
 	};
 
-	const auto mBeat = [&painter](const int x, const int y, const Ship& s)
+	const auto mBeat = [&painter, this](const int x, const int y, const int masNumber)
 	{
 		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
 
-		const auto drawX = [&painter](const int x, const int y)
+		const Ship& s = _screenObjects[masNumber];
+
+		const auto drawMark = [&painter](const int x, const int y)
 		{
-			painter.setPen(DRAW_TEXT_PEN);
-			painter.setFont(DRAW_FONT);
-			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
+			static const QColor HitColor = Qt::red; //QColor(255, 168, 153);
+			painter.setPen(QPen(HitColor, BetweenObjects));
+			painter.setBrush(Qt::NoBrush);
+			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
 		};
 
-		const auto drawBall = [&painter](const int x, const int y, const Qt::GlobalColor color)
-		{
-			static constexpr int Wd = ObjectWidth / 2;
+		const auto drawBall = [&painter](const int x, const int y, const QColor color)
+		{// œ–Œ¬≈–»“‹ ‘À¿√» —Œ—“ŒﬂÕ»ﬂ œŒƒ Àﬁ◊≈Õ»ﬂ » Œ“Œ¡–¿∆≈Õ»ﬂ  ”–—Œ–¿ Õ¿ —ŒŒ“¬≈“—“¬”ﬁŸ≈Ã œŒÀ≈!!
+			/*static constexpr int Wd = ObjectWidth / 2;
 			static constexpr int Wc = (Wd / 2);
 			painter.setPen(QPen(color, Wd));
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
-			painter.drawPoint(x + Wd, y + Wd);
+			painter.drawPoint(x + Wd, y + Wd);*/
+
+			static constexpr int Wd = (ObjectWidth / 3) - 3;
+			static constexpr int Wc = (Wd / 2) + 8;
+			painter.setPen(QPen(color, Wd));
+			painter.drawEllipse(x + Wc/* + 3*/, y + Wc, Wd/* - 6*/, Wd/* - 6*/);
+		};
+
+		const auto drawX = [&painter](const int x, const int y, const QColor& color)
+		{
+			painter.setPen(QPen(color, 3));
+			painter.setFont(DRAW_FONT);
+			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
 		};
 
 		const Ship::BIT bit = s.GetBit();
 		if (const int dx = (BigMargin - MarginX) + x; bit == Ship::BIT::ME || bit == Ship::BIT::BOTH)
 		{
 			if (s.GetHolding(Ship::HOLDING::RIVAL))
-				drawX(dx, y);
+				drawX(dx, y, _lastHitMy == masNumber ? Qt::red: QColor(0xff, 0x7e, 0x67));
 			else
-				drawBall(dx, y, Qt::black);
+				drawBall(dx, y, _lastHitMy == masNumber ? Qt::red: Qt::black);
+			/*if ()
+				drawMark(dx, y);*/
 		}
 		else
-			if (bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
+			if (const QColor c = _lastHitRival == masNumber ? Qt::red : QColor(0xff, 0x7e, 0x67); bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
 			{
 				if (s.GetHolding(Ship::HOLDING::ME))
-					drawX(x, y);
+					drawX(x, y, c);
 				else
-					drawBall(x, y, Qt::red);
+					drawBall(x, y, c);
 			}
 	};
 
@@ -539,9 +555,9 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	drawKilledShips();
 
-	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
-		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
-			mBeat(x, y, _screenObjects[(my * 10) + mx]);
+	for (int mx = 0, x = MarginX, masNumber = 0; mx < 10; ++mx, x += ObjectWidth, ++masNumber)
+		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth, masNumber += 10)
+			mBeat(x, y, (my * 10) + mx);
 
 	drawField();
 
@@ -582,7 +598,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
 	{
-		const auto drawMark = [&painter](const int x, const int y)
+		/*const auto drawMark = [&painter](const int x, const int y)
 		{
 			static const QColor HitColor = QColor(255, 168, 153);
 			painter.setPen(QPen(HitColor, BetweenObjects));
@@ -598,8 +614,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		if (_lastHitRival < 100)
 		{
 			const int x = ((_lastHitRival % 10) * ObjectWidth) + MarginX, y = ((_lastHitRival / 10) * ObjectWidth) + MarginY;
-			drawMark(x, y);
-		}
+			drawBall(x, y, Qt::darkYellow);
+		}*/
 	}
 	else
 	{
@@ -609,7 +625,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	if (dWarnX < 0 || dWarnY < 0)
 		return;
-	painter.setPen(DRAW_TEXT_PEN);
+	painter.setPen(QPen(Qt::red, 3));
 	painter.setFont(DRAW_FONT);
 	painter.drawText(dWarnX - 12, dWarnY + 20, "!");
 }
