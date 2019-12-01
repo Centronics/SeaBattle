@@ -431,7 +431,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord]
 		{
-			const int sx = px + (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMargin : MarginX);
+			const int sx = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX);
 			xMarkCoord = sx, yMarkCoord = y;
 		};
 
@@ -487,7 +487,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawRect(x - BetweenObjects, y - BetweenObjects, ObjectWidth + W, ObjectWidth + W);
 		};
 
-		const auto drawBall = [&painter](const int x, const int y, const QColor color)
+		const auto drawBall = [&painter](const int x, const int y, const QColor& color)
 		{// ÏÐÎÂÅÐÈÒÜ ÔËÀÃÈ ÑÎÑÒÎßÍÈß ÏÎÄÊËÞ×ÅÍÈß È ÎÒÎÁÐÀÆÅÍÈß ÊÓÐÑÎÐÀ ÍÀ ÑÎÎÒÂÅÒÑÒÂÓÞÙÅÌ ÏÎËÅ!!
 			/*static constexpr int Wd = ObjectWidth / 2;
 			static constexpr int Wc = (Wd / 2);
@@ -495,10 +495,22 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 			painter.drawPoint(x + Wd, y + Wd);*/
 
-			static constexpr int Wd = (ObjectWidth / 3) - 3;
-			static constexpr int Wc = (Wd / 2) + 8;
+			static constexpr int Wd = (ObjectWidth / 8);// - 3;
+			static constexpr int Wc = ObjectWidth / 2;
 			painter.setPen(QPen(color, Wd));
-			painter.drawEllipse(x + Wc/* + 3*/, y + Wc, Wd/* - 6*/, Wd/* - 6*/);
+			//painter.drawEllipse(x + Wc/* + 3*/, y + (Wc - 1), Wd/* - 6*/, Wd/* - 6*/);
+			painter.setPen(QPen(Qt::black, Wd));
+
+			const QPointF pf(x + Wc+0.5, y + Wc+0.5);
+			painter.drawEllipse(pf, Wd+0.5/* - 6*/, Wd/* - 6*/+0.5);
+
+			//painter.setPen(QPen(Qt::red, Wd));
+			const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
+			
+			painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
+			const QPointF pf2(x + (Wc+0.5), y + (Wc+0.5));
+			painter.drawPoint(pf2);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
+			//painter.drawPoint(x + (ObjectWidth/2)/* + 3*/, y + (ObjectWidth /2));
 		};
 
 		const auto drawX = [&painter](const int x, const int y, const QColor& color)
