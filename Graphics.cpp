@@ -209,7 +209,7 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 }
 
-const Ship* Graphics::IsKilled(const quint8 coord) const
+/*const Ship* Graphics::IsKilled(const quint8 coord) const
 {
 	if (coord > 99)
 		return nullptr;
@@ -232,6 +232,72 @@ const Ship* Graphics::IsKilled(const quint8 coord) const
 	default:
 		throw exception(__func__);
 	}
+}*/
+
+Ship Graphics::IsRivalKilled(const quint8 coord) const
+{
+	if (coord > 99)
+		return Ship();
+
+	const Ship& s = _screenObjects[coord];
+	if (!s.GetBeat(Ship::BEAT::ME) || !s.GetHolding(Ship::HOLDING::RIVAL))
+		return Ship();
+
+	struct result
+	{
+		result() = default;
+		result(const result&) = default;
+		result(result&&) = delete;
+		~result() = default;
+		result& operator=(const result&) = delete;
+		result& operator=(result&&) = delete;
+
+		const int ShipSize = 0;
+		const Ship::ROTATE ShipRotate = Ship::ROTATE::NIL;
+
+		bool operator> (const result& a) const
+		{
+			return ShipSize > a.ShipSize;
+		}
+
+		operator Ship::TYPES() const
+		{
+			return Ship::GetShipTypeBySize(ShipSize);
+		}
+
+		operator bool() const
+		{
+			return ShipRotate != Ship::ROTATE::NIL;
+		}
+	};
+
+	const auto rX = [this, coord]
+	{
+		int shipSize = 1;
+		for (int k = coord + 1, km = coord + 3; k < km; ++k)
+			if (const Ship& ship = _screenObjects[k]; ship.GetBeat(Ship::BEAT::ME) && ship.GetHolding(Ship::HOLDING::RIVAL))
+				shipSize++;
+		return result{ shipSize, Ship::ROTATE::STARTRIGHT };
+	};
+
+	const auto rY = [this, coord]
+	{
+		int shipSize = 1;
+		for (int k = coord + 10, km = coord + 30; k < km; k += 10)
+			if (const Ship& ship = _screenObjects[k]; ship.GetBeat(Ship::BEAT::ME) && ship.GetHolding(Ship::HOLDING::RIVAL))
+				shipSize++;
+		return result{ shipSize, Ship::ROTATE::STARTDOWN };
+	};
+
+	const result aX = rX();
+	const result aY = rY();
+	const result a = aX > aY ? aX : aY;
+	Ship res;
+	if (!a)
+		return res;
+	res.SetShipType(a);
+	res.SetRotate(a.ShipRotate);
+	return res;
 }
 
 bool Graphics::IsAllowNearBeat(const quint8 coord) const
@@ -264,32 +330,31 @@ bool Graphics::IsAllowNearBeat(const quint8 coord) const
 				return true;
 		return false;
 	};
-
+	// опхмжхохюкэмюъ ньхайю гюйкчвюеряъ б рнл, врн йнцдю асдер хяйюрэяъ йнпюакэ он нях Y, рн бнгмхймер йнмткхйр х йнпюакэ асдер мюидем меяйнкэйн пюг!!!
 	for (quint8 n = 0; n < 100; ++n)
-		if (const Ship* s = IsKilled(n))
-			switch (const quint8 x = n % 10, y = n / 10; s->GetRotate())
-			{
-			case Ship::ROTATE::STARTRIGHT:
-				if (inRangeX(x, VALUE::START))
+	{
+		const Ship s = IsRivalKilled(n);
+		switch (const quint8 x = n % 10, y = n / 10; s.GetRotate())
+		{
+		case Ship::ROTATE::STARTRIGHT:
+			if (inRangeX(x, VALUE::START))
+				return false;
+			for (quint8 j = 1, mj = s.GetFloors() - 1; j < mj; ++j)
+				if (inRangeY(x, VALUE::BOTH))
 					return false;
-				for (quint8 j = 1, mj = s->GetFloors() - 1; j < mj; ++j)
-					if (inRangeY(x, VALUE::BOTH))
-						return false;
-				if (inRangeX(x, VALUE::END))
+			if (inRangeX(x, VALUE::END))
+				return false;
+			continue;
+		case Ship::ROTATE::STARTDOWN:
+			if (inRangeY(y, VALUE::START))
+				return false;
+			for (quint8 j = 1, mj = s.GetFloors() - 1; j < mj; ++j)
+				if (inRangeX(y, VALUE::BOTH))
 					return false;
-				continue;
-			case Ship::ROTATE::STARTDOWN:
-				if (inRangeY(y, VALUE::START))
-					return false;
-				for (quint8 j = 1, mj = s->GetFloors() - 1; j < mj; ++j)
-					if (inRangeX(y, VALUE::BOTH))
-						return false;
-				if (inRangeY(y, VALUE::END))
-					return false;
-				continue;
-			default:
-				throw exception("drawKilledShips");
-			}
+			if (inRangeY(y, VALUE::END))
+				return false;
+		}
+	}
 	return true;
 }
 
@@ -495,25 +560,25 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 			painter.drawPoint(x + Wd, y + Wd);*/
 
-			static constexpr int Wd = (ObjectWidth / 8)-1;// - 3;
+			static constexpr int Wd = (ObjectWidth / 8) - 1;// - 3;
 			static constexpr int Wc = ObjectWidth / 2;
 			painter.setPen(QPen(color, Wd));
 			//painter.drawEllipse(x + Wc/* + 3*/, y + (Wc - 1), Wd/* - 6*/, Wd/* - 6*/);
 			//painter.setPen(QPen(Qt::black, Wd));
 
-			const QPointF pf(x + Wc+0.5, y + Wc+0.5);
-			painter.drawEllipse(pf, Wd+0.5/* - 6*/, Wd/* - 6*/+0.5);
+			const QPointF pf(x + Wc + 0.5, y + Wc + 0.5);
+			painter.drawEllipse(pf, Wd + 0.5/* - 6*/, Wd/* - 6*/ + 0.5);
 
 			//painter.setPen(QPen(Qt::red, Wd));
 			//const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
-			
+
 			//painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
-			const QPointF pf2(x + (Wc+0.5), y + (Wc+0.5));
+			const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
 			painter.drawPoint(pf2);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
 			//painter.drawPoint(x + (ObjectWidth/2)/* + 3*/, y + (ObjectWidth /2));
 
-			painter.setPen(QPen(QColor(240,240,240), 1));
-			const QPointF pf3(x + (ObjectWidth/2)-1+0.5/* + 3*/, y + (ObjectWidth /2)-4+(Wc/2)+0.5);
+			painter.setPen(QPen(QColor(240, 240, 240), 1));
+			const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5/* + 3*/, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
 			painter.drawPoint(pf3);
 		};
 
@@ -528,9 +593,9 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		if (const int dx = (BigMargin - MarginX) + x; bit == Ship::BIT::ME || bit == Ship::BIT::BOTH)
 		{
 			if (s.GetHolding(Ship::HOLDING::RIVAL))
-				drawX(dx, y, _lastHitMy == masNumber ? Qt::red: QColor(0xff, 0x7e, 0x67));
+				drawX(dx, y, _lastHitMy == masNumber ? Qt::red : QColor(0xff, 0x7e, 0x67));
 			else
-				drawBall(dx, y, _lastHitMy == masNumber ? Qt::red: Qt::black);
+				drawBall(dx, y, _lastHitMy == masNumber ? Qt::red : QColor(0xff, 0x7e, 0x67));
 			/*if ()
 				drawMark(dx, y);*/
 		}
@@ -569,7 +634,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawShipAndFrame(x, y, mx, my, w, h, s);
 	};
 
-	drawKilledShips();
+	//drawKilledShips();
 
 	for (int mx = 0, x = MarginX, masNumber = 0; mx < 10; ++mx, x += ObjectWidth, ++masNumber)
 		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth, masNumber += 10)

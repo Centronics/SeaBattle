@@ -52,7 +52,7 @@ public:
 
 	Ship() = default;
 	Ship(const Ship&) = delete;
-	Ship(Ship&&) = delete;
+	Ship(Ship&&) = default;
 	~Ship() = default;
 	Ship& operator=(const Ship&) = delete;
 	Ship& operator=(Ship&&) = delete;
@@ -77,6 +77,20 @@ public:
 		case TYPES::EMPTY: return 0;
 		default:
 			throw std::exception(__func__);
+		}
+	}
+
+	[[nodiscard]] static TYPES GetShipTypeBySize(const int size)
+	{
+		switch (size)
+		{
+		case 4: return TYPES::LINKOR;
+		case 3: return TYPES::CRUISER;
+		case 2: return TYPES::ESMINEC;
+		case 1: return TYPES::VEDETTE;
+		case 0: return TYPES::EMPTY;
+		default:
+			return TYPES::EMPTY;
 		}
 	}
 
