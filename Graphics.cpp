@@ -495,22 +495,26 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 			painter.drawPoint(x + Wd, y + Wd);*/
 
-			static constexpr int Wd = (ObjectWidth / 8);// - 3;
+			static constexpr int Wd = (ObjectWidth / 8)-1;// - 3;
 			static constexpr int Wc = ObjectWidth / 2;
 			painter.setPen(QPen(color, Wd));
 			//painter.drawEllipse(x + Wc/* + 3*/, y + (Wc - 1), Wd/* - 6*/, Wd/* - 6*/);
-			painter.setPen(QPen(Qt::black, Wd));
+			//painter.setPen(QPen(Qt::black, Wd));
 
 			const QPointF pf(x + Wc+0.5, y + Wc+0.5);
 			painter.drawEllipse(pf, Wd+0.5/* - 6*/, Wd/* - 6*/+0.5);
 
 			//painter.setPen(QPen(Qt::red, Wd));
-			const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
+			//const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
 			
-			painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
+			//painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
 			const QPointF pf2(x + (Wc+0.5), y + (Wc+0.5));
 			painter.drawPoint(pf2);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
 			//painter.drawPoint(x + (ObjectWidth/2)/* + 3*/, y + (ObjectWidth /2));
+
+			painter.setPen(QPen(QColor(240,240,240), 1));
+			const QPointF pf3(x + (ObjectWidth/2)-1+0.5/* + 3*/, y + (ObjectWidth /2)-4+(Wc/2)+0.5);
+			painter.drawPoint(pf3);
 		};
 
 		const auto drawX = [&painter](const int x, const int y, const QColor& color)
