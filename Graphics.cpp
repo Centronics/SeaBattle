@@ -234,13 +234,13 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	}
 }*/
 
-Ship Graphics::IsRivalKilled(const quint8 coord) const
+Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 {
-	if (coord > 99)
+	if (coord > 99 || !coordMas)
 		return Ship();
 
 	const Ship& s = _screenObjects[coord];
-	if (!s.GetBeat(Ship::BEAT::ME) || !s.GetHolding(Ship::HOLDING::RIVAL))
+	if (!s.GetBeat(Ship::BEAT::ME) || !s.GetHolding(Ship::HOLDING::RIVAL) || coordMas[coord])
 		return Ship();
 
 	struct result
@@ -271,21 +271,29 @@ Ship Graphics::IsRivalKilled(const quint8 coord) const
 		}
 	};
 
-	const auto rX = [this, coord]
+	coordMas[coord] = true;
+
+	const auto rX = [this, coord, coordMas]
 	{
 		int shipSize = 1;
 		for (int k = coord + 1, km = coord + 3; k < km; ++k)
 			if (const Ship& ship = _screenObjects[k]; ship.GetBeat(Ship::BEAT::ME) && ship.GetHolding(Ship::HOLDING::RIVAL))
+			{
 				shipSize++;
+				coordMas[k] = true;
+			}
 		return result{ shipSize, Ship::ROTATE::STARTRIGHT };
 	};
 
-	const auto rY = [this, coord]
+	const auto rY = [this, coord, coordMas]
 	{
 		int shipSize = 1;
 		for (int k = coord + 10, km = coord + 30; k < km; k += 10)
 			if (const Ship& ship = _screenObjects[k]; ship.GetBeat(Ship::BEAT::ME) && ship.GetHolding(Ship::HOLDING::RIVAL))
+			{
 				shipSize++;
+				coordMas[k] = true;
+			}
 		return result{ shipSize, Ship::ROTATE::STARTDOWN };
 	};
 
@@ -302,59 +310,43 @@ Ship Graphics::IsRivalKilled(const quint8 coord) const
 
 bool Graphics::IsAllowNearBeat(const quint8 coord) const
 {
-	enum class VALUE
+	const auto inRange = [](const quint8 curFX, const quint8 curMX, const quint8 floors)
 	{
-		START,
-		END,
-		BOTH
+		if (curFX == curMX)
+			return false;
+		const int sX = curFX > 0 ? curFX - 1 : 0;
+		const int fX = curFX + floors;
+		const int mX = fX < 10 ? fX : 9;
+		return curMX >= sX && curMX <= mX;
 	};
 
-	const auto inRangeX = [coord](const quint8 x, const VALUE value)
+	const auto inRangeX = [coord, &inRange](const quint8 curCoord, const quint8 floors)
 	{
-		if (value == VALUE::END || value == VALUE::BOTH)
-			if (const quint8 ix = x + 1; (ix < 10) && (ix == coord))
-				return true;
-		if (value == VALUE::START || value == VALUE::BOTH)
-			if ((x > 0) && ((x - 1) == coord))
-				return true;
-		return false;
+		const quint8 cX = coord % 10, cY = coord / 10;
+		const quint8 x = curCoord % 10, y = curCoord / 10;
+		return inRange(x, cX, floors) && inRange(y, cY, 1);
 	};
 
-	const auto inRangeY = [coord](const quint8 y, const VALUE value)
+	const auto inRangeY = [coord, &inRange](const quint8 curCoord, const quint8 floors)
 	{
-		if (value == VALUE::END || value == VALUE::BOTH)
-			if (const quint8 iy = y + 1; (iy < 10) && (iy == coord))
-				return true;
-		if (value == VALUE::START || value == VALUE::BOTH)
-			if ((y > 0) && ((y - 1) == coord))
-				return true;
-		return false;
+		const quint8 cX = coord % 10, cY = coord / 10;
+		const quint8 x = curCoord % 10, y = curCoord / 10;
+		return inRange(x, cX, 1) && inRange(y, cY, floors);
 	};
-	// œ–»Õ÷»œ»¿À‹Õ¿ﬂ Œÿ»¡ ¿ «¿ Àﬁ◊¿≈“—ﬂ ¬ “ŒÃ, ◊“Œ  Œ√ƒ¿ ¡”ƒ≈“ »— ¿“‹—ﬂ  Œ–¿¡À‹ œŒ Œ—» Y, “Œ ¬Œ«Õ» Õ≈“  ŒÕ‘À» “ »  Œ–¿¡À‹ ¡”ƒ≈“ Õ¿…ƒ≈Õ Õ≈— ŒÀ‹ Œ –¿«!!!
+
+	bool coordMas[100] = { false };
+
 	for (quint8 n = 0; n < 100; ++n)
-	{
-		const Ship s = IsRivalKilled(n);
-		switch (const quint8 x = n % 10, y = n / 10; s.GetRotate())
+		switch (const Ship s = IsRivalKilled(n, coordMas); s.GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-			if (inRangeX(x, VALUE::START))
-				return false;
-			for (quint8 j = 1, mj = s.GetFloors() - 1; j < mj; ++j)
-				if (inRangeY(x, VALUE::BOTH))
-					return false;
-			if (inRangeX(x, VALUE::END))
+			if (inRangeX(n, s.GetFloors()))
 				return false;
 			continue;
 		case Ship::ROTATE::STARTDOWN:
-			if (inRangeY(y, VALUE::START))
-				return false;
-			for (quint8 j = 1, mj = s.GetFloors() - 1; j < mj; ++j)
-				if (inRangeX(y, VALUE::BOTH))
-					return false;
-			if (inRangeY(y, VALUE::END))
+			if (inRangeY(n, s.GetFloors()))
 				return false;
 		}
-	}
 	return true;
 }
 
