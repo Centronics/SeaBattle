@@ -333,44 +333,43 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* const coordMas) const
 }
 
 bool Graphics::IsAllowNearBeat(const quint8 coord) const
-{// бнглнфмн, ледкеммне леярн.
+{
+	const quint8 cX = coord % 10, cY = coord / 10;
+
+	const auto inShipRange = [cX, cY](const quint8 x, const quint8 y, const quint8 floors, const Ship::ROTATE rotate)
+	{
+		switch (rotate)
+		{
+		case Ship::ROTATE::STARTDOWN:
+			return (cX == x) && (cY >= y) && (cY < (y + floors));
+		case Ship::ROTATE::STARTRIGHT:
+			return (cY == y) && (cX >= x) && (cX < (x + floors));
+		default:
+			return false;
+		}
+	};
+
 	const auto inRange = [](const quint8 curFX, const quint8 curMX, const quint8 floors)
 	{
-		if (curFX == curMX)
-			return false;
 		const int sX = curFX > 0 ? curFX - 1 : 0;
 		const int fX = curFX + floors;
 		const int mX = fX < 10 ? fX : 9;
 		return curMX >= sX && curMX <= mX;
 	};
 
-	const quint8 cX = coord % 10, cY = coord / 10;
-
-	const auto inRangeX = [cX, cY, &inRange](const quint8 curCoord, const quint8 floors)
-	{
-		const quint8 x = curCoord % 10, y = curCoord / 10;
-		return inRange(x, cX, floors) && inRange(y, cY, 1);
-	};
-
-	const auto inRangeY = [cX, cY, &inRange](const quint8 curCoord, const quint8 floors)
-	{
-		const quint8 x = curCoord % 10, y = curCoord / 10;
-		return inRange(x, cX, 1) && inRange(y, cY, floors);
-	};
-
 	bool coordMas[100] = { false };
 
 	for (quint8 n = 0; n < 100; ++n)
+	{
+		const quint8 x = n % 10, y = n / 10;
 		switch (const Ship s = IsRivalKilled(n, coordMas); s.GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-			if (inRangeX(n, s.GetFloors()))
-				return false;
-			continue;
+			return inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTRIGHT);//  !inRange(x, cX, s.GetFloors()) && !inRange(y, cY, 1);
 		case Ship::ROTATE::STARTDOWN:
-			if (inRangeY(n, s.GetFloors()))
-				return false;
+			return inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTDOWN);// && !inRange(x, cX, 1) && !inRange(y, cY, s.GetFloors());
 		}
+	}
 	return true;
 }
 
@@ -634,7 +633,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			{
 				static constexpr int Wd = ObjectWidth / 2;
 				static constexpr int Wc = (Wd / 2);
-				static const QPen B(Qt::red, Wd);
+				static const QPen B(Qt::blue, Wd);
 				const int x = ((k % 10)*ObjectWidth) + BigMargin, y = ((k / 10)*ObjectWidth) + MarginY;
 				painter.setPen(B);
 				painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
