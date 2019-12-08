@@ -1,6 +1,11 @@
 #pragma once
 #include "Ship.h"
 
+struct RivalShip//Õ¿—“–Œ»“‹  ŒÕ—“–” “Œ–€
+{
+	quint8 X = 255, Y = 255;
+};
+
 class Graphics
 {
 public:
@@ -44,8 +49,8 @@ protected:
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	//[[nodiscard]] const Ship* IsKilled(quint8 coord) const;
-	[[nodiscard]] Ship IsRivalKilled(quint8 coord, bool* coordMas) const;
-	[[nodiscard]] bool IsAllowNearBeat(quint8 coord) const;
+	[[nodiscard]] Ship IsRivalKilled(quint8 coord, bool* coordMas = nullptr) const;
+	[[nodiscard]] std::vector<RivalShip> IsAllowNearBeat(quint8 coord, bool* coordMas, quint8 kx) const;
 	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
 	//[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();

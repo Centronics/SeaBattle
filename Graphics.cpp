@@ -101,7 +101,9 @@ Graphics::HITSTATUS Graphics::MyHit(const quint8 coord)
 	Ship& ship = _screenObjects.at(coord);
 	if (ship.GetBeat(Ship::BEAT::ME))
 		return HITSTATUS::BUSY;
-	if (!IsAllowNearBeat(coord))
+	quint8 t = 0;
+	//if (!IsAllowNearBeat(coord, nullptr, t))
+	if (!IsAllowNearBeat(coord, nullptr, t).empty())
 		return HITSTATUS::NONEFFECTIVE;
 	_lastHitMy = coord;
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
@@ -234,26 +236,26 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	}
 }*/
 
-Ship Graphics::IsRivalKilled(const quint8 coord, bool* const coordMas) const
+Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 {
-	if (coord > 99 || !coordMas)
+	if (coord > 99)
 		return Ship();
 
 	const Ship& s = _screenObjects[coord];
-	if (!s.GetBeat(Ship::BEAT::ME) || !s.GetHolding(Ship::HOLDING::RIVAL) || coordMas[coord])
+	if (!s.GetBeat(Ship::BEAT::ME) || !s.GetHolding(Ship::HOLDING::RIVAL))// || (coordMas && coordMas[coord]))
 		return Ship();
 
 	struct result
 	{
 		result() = default;
-		result(const result&) = default;
+		result(const result&) = delete;
 		result(result&&) = delete;
 		~result() = default;
 		result& operator=(const result&) = delete;
-		result& operator=(result&&) = delete;
+		result& operator=(result&&) = default;
 
-		const int ShipSize = 0;
-		const Ship::ROTATE ShipRotate = Ship::ROTATE::NIL;
+		int ShipSize = 0;
+		Ship::ROTATE ShipRotate = Ship::ROTATE::NIL;
 
 		bool operator> (const result& a) const
 		{
@@ -276,19 +278,23 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* const coordMas) const
 		}
 	};
 
-	coordMas[coord] = true;
+	if (coordMas)
+		coordMas[coord] = true;
 
-	const auto rX = [this, coord, coordMas]
+	bool cMas1[100] = { false };
+	bool cMas2[100] = { false };
+
+	const auto rX = [this, coord, &cMas1]
 	{
 		int shipSize = 1;
-		for (int k = coord + 1, km = coord + 3; k < km; ++k)
+		for (int k = coord + 1, t = coord + 3, km = t > 100 ? 100 : t; k < km; ++k)
 		{
 			if (const Ship& ship = _screenObjects[k]; ship.GetHolding(Ship::HOLDING::RIVAL))
 			{
 				if (ship.GetBeat(Ship::BEAT::ME))
 				{
 					shipSize++;
-					coordMas[k] = true;
+					cMas1[k] = true;
 					continue;
 				}
 				return result{ 0, Ship::ROTATE::NIL };
@@ -298,17 +304,17 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* const coordMas) const
 		return result{ shipSize, Ship::ROTATE::STARTRIGHT };
 	};
 
-	const auto rY = [this, coord, coordMas]
+	const auto rY = [this, coord, &cMas2]
 	{
 		int shipSize = 1;
-		for (int k = coord + 10, km = coord + 30; k < km; k += 10)
+		for (int k = coord + 10, t = coord + 30, km = t > 100 ? 100 : t; k < km; k += 10)
 		{
 			if (const Ship& ship = _screenObjects[k]; ship.GetHolding(Ship::HOLDING::RIVAL))
 			{
 				if (ship.GetBeat(Ship::BEAT::ME))
 				{
 					shipSize++;
-					coordMas[k] = true;
+					cMas2[k] = true;
 					continue;
 				}
 				return result{ 0, Ship::ROTATE::NIL };
@@ -318,21 +324,41 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* const coordMas) const
 		return result{ shipSize, Ship::ROTATE::STARTDOWN };
 	};
 
+	const auto commit = [&cMas1, &cMas2, coordMas](const bool rX)
+	{
+		if (!coordMas)
+			return;
+		bool* b = rX ? cMas1 : cMas2;
+		for (quint8 k = 0; k < 100; ++k)
+			if (*b++)
+				coordMas[k] = true;
+	};
+
 	Ship res;
-	const result aX = rX();
+	result aX = rX();
 	if (!aX)
 		return res;
-	const result aY = rY();
+	result aY = rY();
 	if (!aY)
 		return res;
-	const result a = aX > aY ? aX : aY;
+	result a;
+	if (aX > aY)
+	{
+		a = move(aX);
+		commit(true);
+	}
+	else
+	{
+		a = move(aY);
+		commit(false);
+	}
 	res.SetShipType(a);
 	res.SetRotate(a);
 	res.SetShipHolder(s.GetShipHolder());
 	return res;
 }
 
-bool Graphics::IsAllowNearBeat(const quint8 coord) const
+vector<RivalShip> Graphics::IsAllowNearBeat(const quint8 coord, bool* coordMas, const quint8 kx) const
 {
 	const quint8 cX = coord % 10, cY = coord / 10;
 
@@ -357,20 +383,24 @@ bool Graphics::IsAllowNearBeat(const quint8 coord) const
 		return curMX >= sX && curMX <= mX;
 	};
 
-	bool coordMas[100] = { false };
+	vector<RivalShip> ships;
+	ships.reserve(100);
 
-	for (quint8 n = 0; n < 100; ++n)
+	for (quint8 k = kx; k < 100; ++k)
 	{
-		const quint8 x = n % 10, y = n / 10;
-		switch (const Ship s = IsRivalKilled(n, coordMas); s.GetRotate())
+		const quint8 x = k % 10, y = k / 10;
+		switch (const Ship s = IsRivalKilled(k, coordMas); s.GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-			return inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTRIGHT);//  !inRange(x, cX, s.GetFloors()) && !inRange(y, cY, 1);
+			if ((!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTRIGHT) && inRange(x, cX, s.GetFloors()) && inRange(y, cY, 1)))
+				ships.emplace_back(RivalShip{ x, y });
+			continue;
 		case Ship::ROTATE::STARTDOWN:
-			return inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTDOWN);// && !inRange(x, cX, 1) && !inRange(y, cY, s.GetFloors());
+			if ((!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTDOWN) && inRange(x, cX, 1) && inRange(y, cY, s.GetFloors())))
+				ships.emplace_back(RivalShip{ x, y });
 		}
 	}
-	return true;
+	return ships;
 }
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
@@ -628,17 +658,22 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	{
 		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
+		bool coordMas[100] = { false };
 		for (quint8 k = 0; k < 100; ++k)
-			if (!IsAllowNearBeat(k))
+		{
+			const auto t = IsAllowNearBeat(k, nullptr, 0);
+			for (const auto& f : t)
 			{
 				static constexpr int Wd = ObjectWidth / 2;
 				static constexpr int Wc = (Wd / 2);
 				static const QPen B(Qt::blue, Wd);
-				const int x = ((k % 10)*ObjectWidth) + BigMargin, y = ((k / 10)*ObjectWidth) + MarginY;
+				const int x = ((k % 10) * ObjectWidth) + BigMargin, y = ((k / 10) * ObjectWidth) + MarginY;
+				//const int x = (f.X * ObjectWidth) + BigMargin, y = (f.Y * ObjectWidth) + MarginY;
 				painter.setPen(B);
 				painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
 				painter.drawPoint(x + Wd, y + Wd);
 			}
+		}
 	};
 
 	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s)
