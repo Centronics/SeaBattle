@@ -103,7 +103,7 @@ Graphics::HITSTATUS Graphics::MyHit(const quint8 coord)
 		return HITSTATUS::BUSY;
 	quint8 t = 0;
 	//if (!IsAllowNearBeat(coord, nullptr, t))
-	if (!IsAllowNearBeat(coord, nullptr, t).empty())
+	if (!IsAllowNearBeat(coord, nullptr, t))
 		return HITSTATUS::NONEFFECTIVE;
 	_lastHitMy = coord;
 	if (ship.GetBeat(Ship::BEAT::RIVAL))
@@ -358,22 +358,28 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 	return res;
 }
 
-vector<RivalShip> Graphics::IsAllowNearBeat(const quint8 coord, bool* coordMas, const quint8 kx) const
+bool Graphics::IsAllowNearBeat(const quint8 coord, bool* coordMas, const quint8 kx) const
 {
 	const quint8 cX = coord % 10, cY = coord / 10;
 
-	const auto inShipRange = [cX, cY](const quint8 x, const quint8 y, const quint8 floors, const Ship::ROTATE rotate)
+	/*const auto inShipRange = [cX, cY, coordMas](const quint8 x, const quint8 y, const quint8 floors, const Ship::ROTATE rotate)
 	{
-		switch (rotate)
+		/*if(coordMas)
 		{
-		case Ship::ROTATE::STARTDOWN:
-			return (cX == x) && (cY >= y) && (cY < (y + floors));
+			quint8 k = (y*10)+x;
+			if(coordMas[k])
+				return true;
+		}*/
+		/*switch (rotate)
+		{
 		case Ship::ROTATE::STARTRIGHT:
 			return (cY == y) && (cX >= x) && (cX < (x + floors));
+		case Ship::ROTATE::STARTDOWN:
+			return (cX == x) && (cY >= y) && (cY < (y + floors));
 		default:
 			return false;
 		}
-	};
+	};*/
 
 	const auto inRange = [](const quint8 curFX, const quint8 curMX, const quint8 floors)
 	{
@@ -386,21 +392,61 @@ vector<RivalShip> Graphics::IsAllowNearBeat(const quint8 coord, bool* coordMas, 
 	vector<RivalShip> ships;
 	ships.reserve(100);
 
+	bool shipCoords[100] = { false };
+
 	for (quint8 k = kx; k < 100; ++k)
 	{
+		//IsRivalKilled(k, coordMas);
+
 		const quint8 x = k % 10, y = k / 10;
-		switch (const Ship s = IsRivalKilled(k, coordMas); s.GetRotate())
+		const Ship s = IsRivalKilled(k, shipCoords);
+
+		//if(s.GetRotate() != Ship::ROTATE::NIL)
+
+
+		switch (s.GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-			if ((!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTRIGHT) && inRange(x, cX, s.GetFloors()) && inRange(y, cY, 1)))
-				ships.emplace_back(RivalShip{ x, y });
-			continue;
+			if ((/*!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTRIGHT) &&*/ inRange(x, cX, s.GetFloors()) && inRange(y, cY, 1)))
+				if (coordMas)
+				{
+					if (!shipCoords[coord])
+						coordMas[coord] = true;
+					continue;
+				}
+			if (!coordMas)
+				return true;
+			//ships.emplace_back(RivalShip{ x, y });
+			break;
 		case Ship::ROTATE::STARTDOWN:
-			if ((!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTDOWN) && inRange(x, cX, 1) && inRange(y, cY, s.GetFloors())))
-				ships.emplace_back(RivalShip{ x, y });
+			if (/*!inShipRange(x, y, s.GetFloors(), Ship::ROTATE::STARTDOWN)) &&*/ inRange(x, cX, 1) && inRange(y, cY, s.GetFloors()))
+				if (coordMas)
+				{
+					if (!shipCoords[coord])
+						coordMas[coord] = true;
+					continue;
+				}
+			if (!coordMas)
+				return true;
+			//ships.emplace_back(RivalShip{ x, y });
+			break;
 		}
+		//if (s.GetRotate() == Ship::ROTATE::NIL)
+			//continue;
 	}
-	return ships;
+
+	/*if(coordMas)
+	for (quint8 k1 = 0; k1 < 100; ++k1)
+	{
+		const quint8 x = k1 % 10, y = k1 / 10;
+		//if (coordMas[k1])
+			for(quint8 k2 = 0; k2 < ships.size(); ++k2)
+			if(ships[k2].X==x&&ships[k2].Y==y)
+				ships.erase(ships.begin()+k2);
+	}*/
+	//return ships;
+
+	return true;
 }
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
@@ -661,12 +707,15 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		bool coordMas[100] = { false };
 		for (quint8 k = 0; k < 100; ++k)
 		{
-			const auto t = IsAllowNearBeat(k, nullptr, 0);
-			for (const auto& f : t)
+			const auto t = IsAllowNearBeat(k, coordMas, 0);//coordMas ÏÐÎÂÅÐßÒÜ ÇÄÅÑÜ
+			//for (const auto& f : t)
+			for (quint8 k = 0; k < 100; ++k)
 			{
 				static constexpr int Wd = ObjectWidth / 2;
 				static constexpr int Wc = (Wd / 2);
 				static const QPen B(Qt::blue, Wd);
+				if(!coordMas[k])
+					continue;
 				const int x = ((k % 10) * ObjectWidth) + BigMargin, y = ((k / 10) * ObjectWidth) + MarginY;
 				//const int x = (f.X * ObjectWidth) + BigMargin, y = (f.Y * ObjectWidth) + MarginY;
 				painter.setPen(B);
