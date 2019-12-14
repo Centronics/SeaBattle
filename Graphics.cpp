@@ -272,11 +272,6 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 		{
 			return ShipRotate;
 		}
-
-		operator bool() const
-		{
-			return ShipRotate != Ship::ROTATE::NIL;
-		}
 	};
 
 	if (coordMas)
@@ -285,35 +280,35 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 	bool cMas1[100] = { false };
 	bool cMas2[100] = { false };
 
-	const auto rX = [this, coord, &cMas1, &s, coordMas]
+	const auto rX = [this, coord, &cMas1, &s, coordMas, &retEmpty]
 	{
-		int shipSize = 1; bool ret0 = false;
+		int shipSize = 1;
 		//for (int k = coord + 1, t = coord + 3, km = t > 100 ? 100 : t; k < km; ++k)
 		{
 			int k = coord + 1;
 			if (k >= 100)
 				return s.GetBeat(Ship::BEAT::ME) ? result{ 1, Ship::ROTATE::STARTRIGHT } : result{ 0, Ship::ROTATE::NIL };
 			const Ship* ship = &_screenObjects[k];
-			while (ship->GetHolding(Ship::HOLDING::RIVAL) && (((k % 10) != 0)) || k == 0)
+			while (ship->GetHolding(Ship::HOLDING::RIVAL) && (((k % 10) != 0) || k == 0))
 			{
 				//cMas1[k] = true;
 				if (coordMas)
 					coordMas[k++] = true;
-				if (!ret0 && ship->GetBeat(Ship::BEAT::ME))
+				if (ship->GetBeat(Ship::BEAT::ME))
 					shipSize++;
 				else
-					ret0 = true;
+					retEmpty = true;
 				ship++;
 				//continue;
 			}
 			//break;
 		}
-		return ret0 ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTRIGHT };
+		return retEmpty ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTRIGHT };
 	};
 
-	const auto rY = [this, coord, &cMas2, &s, coordMas]
+	const auto rY = [this, coord, &cMas2, &s, coordMas, &retEmpty]
 	{
-		int shipSize = 1; bool ret0 = false;
+		int shipSize = 1;
 		//for (int k = coord + 10, t = coord + 30, km = t > 100 ? 100 : t; k < km; k += 10)
 		{
 			int k = coord + 10;
@@ -326,16 +321,16 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 				if (coordMas)
 					coordMas[k] = true;
 				k += 10;
-				if (!ret0 && ship->GetBeat(Ship::BEAT::ME))
+				if (ship->GetBeat(Ship::BEAT::ME))
 					shipSize++;
 				else
-					ret0 = true;
-				ship++;
+					retEmpty = true;
+				ship += 10;
 				//continue;
 			}
 			//break;
 		}
-		return ret0 ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTDOWN };
+		return retEmpty ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTDOWN };
 	};
 
 	const auto commit = [&cMas1, &cMas2, coordMas](const bool rX)
@@ -349,12 +344,7 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 	};
 
 	Ship res;
-	result aX = rX();
-	if (!aX)
-		return res;
-	result aY = rY();
-	if (!aY)
-		return res;
+	result aX = rX(), aY = rY();
 
 	if (retEmpty)
 		return Ship();
