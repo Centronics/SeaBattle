@@ -246,6 +246,11 @@ public:
 		return GetFloors(GetShipType());
 	}
 
+	[[nodiscard]] QColor GetColor() const
+	{
+		return GetColor(GetShipType());
+	}
+
 	void SetShipType(const TYPES value)
 	{
 		switch (value)
