@@ -700,7 +700,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool isDeny = IsDenyNearBeat(masNumber);
 		static const QColor WeakHitCol = QColor(0xff, 0x7e, 0x67);
 		//static const QColor StrongCol = Qt::green; // QColor(0x50, 0x32, 0x8B);
-		static const QColor WeakCol = Qt::green; //QColor(165, 225, 165); //QColor(0xC3, 0xBD, 0xD8); ÷¬≈“ —»À‹ÕŒ ¡‹®“ ¬ √À¿«¿!!!
+		static const QColor WeakCol = Qt::darkGreen; //QColor(165, 225, 165); //QColor(0xC3, 0xBD, 0xD8); ÷¬≈“ —»À‹ÕŒ ¡‹®“ ¬ √À¿«¿!!!
 		const Ship::BIT bit = s.GetBit();
 		static constexpr int Margin = BigMargin - MarginX;
 		if (const int dx = Margin + x; bit == Ship::BIT::ME || bit == Ship::BIT::BOTH)
@@ -713,18 +713,18 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 				drawMark(dx, y);*/
 		}
 		else
-		{
+			//{
 			if (isDeny)
 				drawBall(dx, y, Qt::blue);
 
-			if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
-			{
-				if (s.GetHolding(Ship::HOLDING::ME))
-					drawX(x, y, c);
-				else
-					drawBall(x, y, c);
-			}
+		if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
+		{
+			if (s.GetHolding(Ship::HOLDING::ME))
+				drawX(x, y, c);
+			else
+				drawBall(x, y, c);
 		}
+		//}
 	};
 
 	//const auto drawKilledShips = [&painter, this, &drawBall]
