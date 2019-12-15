@@ -560,9 +560,11 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	const auto marking = [&painter, &grey, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord]
 	{
+		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED && ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
+			return;
 		if (xMarkCoord < 0 || yMarkCoord < 0)
 			return;
-		if (wMarkCoord < 0 || hMarkCoord < 0)
+		if (wMarkCoord < 0 || hMarkCoord < 0 || ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
 			wMarkCoord = hMarkCoord = ObjectWidth;
 		grey();
 		//if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
@@ -602,11 +604,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool inFrame = CursorX >= frameX && CursorX < (frameX + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
 		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now) { if (now) painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); else { xMarkCoord = x; yMarkCoord = y; wMarkCoord = w; hMarkCoord = h; } };
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
-		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord]
-		{
-			const int sx = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX);
-			xMarkCoord = sx, yMarkCoord = y;
-		};
+		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX); yMarkCoord = y; };
 
 		if ((xw > /*(ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMaxCoordX :*/ MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
@@ -629,7 +627,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 		if (!IsRivalMove && inFrame)
 		{
-			if (!inShip || s.GetShipType() == Ship::TYPES::EMPTY)
+			if (!inShip || s.GetShipType() == Ship::TYPES::EMPTY /*|| ConnectionStatus == CONNECTIONSTATUS::CONNECTED*/)
 			{
 				grey();
 				drawShip(false);
@@ -645,40 +643,40 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawWarning();
 	};
 
-	const auto drawBall = [&painter](const int x, const int y, const QColor& color)
-	{// œ–Œ¬≈–»“‹ ‘À¿√» —Œ—“ŒﬂÕ»ﬂ œŒƒ Àﬁ◊≈Õ»ﬂ » Œ“Œ¡–¿∆≈Õ»ﬂ  ”–—Œ–¿ Õ¿ —ŒŒ“¬≈“—“¬”ﬁŸ≈Ã œŒÀ≈!!
-		/*static constexpr int Wd = ObjectWidth / 2;
-		static constexpr int Wc = (Wd / 2);
-		painter.setPen(QPen(color, Wd));
-		painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
-		painter.drawPoint(x + Wd, y + Wd);*/
-
-		static constexpr int Wd = (ObjectWidth / 8) - 1;// - 3;
-		static constexpr int Wc = ObjectWidth / 2;
-		painter.setPen(QPen(color, Wd));
-		//painter.drawEllipse(x + Wc/* + 3*/, y + (Wc - 1), Wd/* - 6*/, Wd/* - 6*/);
-		//painter.setPen(QPen(Qt::black, Wd));
-
-		const QPointF pf(x + Wc + 0.5, y + Wc + 0.5);
-		painter.drawEllipse(pf, Wd + 0.5/* - 6*/, Wd/* - 6*/ + 0.5);
-
-		//painter.setPen(QPen(Qt::red, Wd));
-		//const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
-
-		//painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
-		const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
-		painter.drawPoint(pf2);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
-		//painter.drawPoint(x + (ObjectWidth/2)/* + 3*/, y + (ObjectWidth /2));
-
-		painter.setPen(QPen(QColor(240, 240, 240), 1));
-		const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5/* + 3*/, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
-		painter.drawPoint(pf3);
-	};
-
-	const auto mBeat = [&painter, this, &drawBall](const int x, const int y, const int masNumber)
+	const auto mBeat = [&painter, this](const int x, const int y, const int masNumber)
 	{
 		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
 			return;
+
+		const auto drawBall = [&painter](const int x, const int y, const QColor& color)
+		{// œ–Œ¬≈–»“‹ ‘À¿√» —Œ—“ŒﬂÕ»ﬂ œŒƒ Àﬁ◊≈Õ»ﬂ » Œ“Œ¡–¿∆≈Õ»ﬂ  ”–—Œ–¿ Õ¿ —ŒŒ“¬≈“—“¬”ﬁŸ≈Ã œŒÀ≈!!
+			/*static constexpr int Wd = ObjectWidth / 2;
+			static constexpr int Wc = (Wd / 2);
+			painter.setPen(QPen(color, Wd));
+			painter.drawEllipse(x + Wc + 3, y + Wc + 3, Wd - 6, Wd - 6);
+			painter.drawPoint(x + Wd, y + Wd);*/
+
+			static constexpr int Wd = (ObjectWidth / 8) - 1;// - 3;
+			static constexpr int Wc = ObjectWidth / 2;
+			painter.setPen(QPen(color, Wd));
+			//painter.drawEllipse(x + Wc/* + 3*/, y + (Wc - 1), Wd/* - 6*/, Wd/* - 6*/);
+			//painter.setPen(QPen(Qt::black, Wd));
+
+			const QPointF pf(x + Wc + 0.5, y + Wc + 0.5);
+			painter.drawEllipse(pf, Wd + 0.5/* - 6*/, Wd/* - 6*/ + 0.5);
+
+			//painter.setPen(QPen(Qt::red, Wd));
+			//const QPointF pf1(x + (Wc+0.5)-1, y + (Wc+0.5)-1);
+
+			//painter.drawPoint(pf1);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
+			const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
+			painter.drawPoint(pf2);//x + (ObjectWidth/2)/* + 3*/, y + ObjectWidth + 1);
+			//painter.drawPoint(x + (ObjectWidth/2)/* + 3*/, y + (ObjectWidth /2));
+
+			painter.setPen(QPen(QColor(240, 240, 240), 1));
+			const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5/* + 3*/, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
+			painter.drawPoint(pf3);
+		};
 
 		const Ship& s = _screenObjects[masNumber];
 
@@ -762,8 +760,11 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	{
 		//	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED /*&& !IsRivalMove*/ && s.GetHolding(Ship::HOLDING::RIVAL) && s.GetBeat(Ship::BEAT::ME))
 			//	drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s);
-		if (/*(IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) &&*/ s.GetHolding(Ship::HOLDING::ME))
-			drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
+		//if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
+			//drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, Ship(), false);
+		//else
+			if (/*(IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) &&*/ s.GetHolding(Ship::HOLDING::ME))
+				drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
 	};
 
 	//drawKilledShips();
