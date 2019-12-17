@@ -234,7 +234,7 @@ tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 	}
 }*/
 
-Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
+Ship Graphics::GetRivalShip(const quint8 coord, bool* coordMas, const bool isKilled) const
 {
 	if (coord > 99)
 		return Ship();
@@ -242,7 +242,7 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 	const Ship& s = _screenObjects[coord];
 	if (!s.GetHolding(Ship::HOLDING::RIVAL) || (coordMas && coordMas[coord]))
 		return Ship();
-	bool retEmpty = !s.GetBeat(Ship::BEAT::ME);
+	bool retEmpty = !s.GetBeat(Ship::BEAT::ME) && isKilled;
 
 	struct result
 	{
@@ -278,21 +278,21 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 	bool cMas1[100] = { false };
 	bool cMas2[100] = { false };
 
-	const auto rX = [this, coord, &cMas1, &s, coordMas, &retEmpty]
+	const auto rX = [this, coord, &cMas1, &s, coordMas, &retEmpty, isKilled]
 	{
 		int shipSize = 1;
 		//for (int k = coord + 1, t = coord + 3, km = t > 100 ? 100 : t; k < km; ++k)
 		{
 			int k = coord + 1;
 			if (k >= 100)
-				return s.GetBeat(Ship::BEAT::ME) ? result{ 1, Ship::ROTATE::STARTRIGHT } : result{ 0, Ship::ROTATE::NIL };
+				return !isKilled || s.GetBeat(Ship::BEAT::ME) ? result{ 1, Ship::ROTATE::STARTRIGHT } : result{ 0, Ship::ROTATE::NIL };
 			const Ship* ship = &_screenObjects[k];
 			while (ship->GetHolding(Ship::HOLDING::RIVAL) && (((k % 10) != 0) || k == 0))
 			{
 				//cMas1[k] = true;
 				if (coordMas)
 					coordMas[k++] = true;
-				if (ship->GetBeat(Ship::BEAT::ME))
+				if (ship->GetBeat(Ship::BEAT::ME) || !isKilled)
 					shipSize++;
 				else
 					retEmpty = true;
@@ -304,14 +304,14 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 		return retEmpty ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTRIGHT };
 	};
 
-	const auto rY = [this, coord, &cMas2, &s, coordMas, &retEmpty]
+	const auto rY = [this, coord, &cMas2, &s, coordMas, &retEmpty, isKilled]
 	{
 		int shipSize = 1;
 		//for (int k = coord + 10, t = coord + 30, km = t > 100 ? 100 : t; k < km; k += 10)
 		{
 			int k = coord + 10;
 			if (k >= 100)
-				return s.GetBeat(Ship::BEAT::ME) ? result{ 1, Ship::ROTATE::STARTRIGHT } : result{ 0, Ship::ROTATE::NIL };
+				return !isKilled || s.GetBeat(Ship::BEAT::ME) ? result{ 1, Ship::ROTATE::STARTRIGHT } : result{ 0, Ship::ROTATE::NIL };
 			const Ship* ship = &_screenObjects[k];
 			while (ship->GetHolding(Ship::HOLDING::RIVAL) && k < 100)
 			{
@@ -319,7 +319,7 @@ Ship Graphics::IsRivalKilled(const quint8 coord, bool* coordMas) const
 				if (coordMas)
 					coordMas[k] = true;
 				k += 10;
-				if (ship->GetBeat(Ship::BEAT::ME))
+				if (ship->GetBeat(Ship::BEAT::ME) || !isKilled)
 					shipSize++;
 				else
 					retEmpty = true;
@@ -405,7 +405,7 @@ bool Graphics::IsDenyNearBeat(const quint8 coord/*, bool* coordMas, const quint8
 		//IsRivalKilled(k, coordMas);
 
 		const quint8 x = k % 10, y = k / 10;
-		const Ship s = IsRivalKilled(k, shipCoords);
+		const Ship s = GetRivalShip(k, shipCoords, true);
 
 		//if(s.GetRotate() != Ship::ROTATE::NIL)
 
@@ -469,7 +469,9 @@ bool Graphics::IsDenyNearBeat(const quint8 coord/*, bool* coordMas, const quint8
 
 void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
 {
-	const auto drawField = [&painter]
+	const bool dr = _isDrawRivals;
+
+	const auto drawField = [&painter, dr]
 	{
 		const auto drawText = [&painter](const int x, const int y, const QString& s, const QPen& pen, const QFont& f)
 		{
@@ -532,7 +534,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		}
 
 		{
-			const QPen red(ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED ? QColor(216, 216, 216) : QColor(206, 96, 45), BetweenObjects);
+			// ВВЕСТИ СОСТОЯНИЯ ОКОНЧАНИЯ ИГРЫ, от этого будет зависеть возможность отображения противников после игры и самой сетки. Они должны отображаться, если игра завершилась проигрышем одной из сторон.
+			const QPen red(ConnectionStatus == CONNECTIONSTATUS::CONNECTED || dr ? QColor(206, 96, 45) : QColor(216, 216, 216), BetweenObjects);
 			drawMarkingX(BigMargin, 30, red);
 			drawMarkingY(BigMargin - 25, 50, red);
 
@@ -643,10 +646,10 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawWarning();
 	};
 
-	const auto mBeat = [&painter, this](const int x, const int y, const int masNumber)
+	const auto mBeat = [&painter, this, dr](const int x, const int y, const int masNumber)
 	{
-		if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
-			return;
+		//if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
+			//return;
 
 		const auto drawBall = [&painter](const int x, const int y, const QColor& color)
 		{// ПРОВЕРИТЬ ФЛАГИ СОСТОЯНИЯ ПОДКЛЮЧЕНИЯ И ОТОБРАЖЕНИЯ КУРСОРА НА СООТВЕТСТВУЮЩЕМ ПОЛЕ!!
@@ -699,9 +702,9 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		static const QColor WeakHitCol = QColor(0xff, 0x7e, 0x67);
 		//static const QColor StrongCol = Qt::green; // QColor(0x50, 0x32, 0x8B);
 		static const QColor WeakCol = Qt::darkGreen; //QColor(165, 225, 165); //QColor(0xC3, 0xBD, 0xD8); ЦВЕТ СИЛЬНО БЬЁТ В ГЛАЗА!!!
-		const Ship::BIT bit = s.GetBit();
+		//const Ship::BIT bit = s.GetBit();
 		static constexpr int Margin = BigMargin - MarginX;
-		if (const int dx = Margin + x; bit == Ship::BIT::ME || bit == Ship::BIT::BOTH)
+		if (const int dx = Margin + x; s.GetBeat(Ship::BEAT::ME)) //bit == Ship::BIT::ME || bit == Ship::BIT::BOTH)
 		{
 			if (const QColor c = _lastHitMy == masNumber ? Qt::red : (isDeny ? WeakCol : WeakHitCol); s.GetHolding(Ship::HOLDING::RIVAL))
 				drawX(dx, y, c);
@@ -714,8 +717,10 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			//{
 			if (isDeny)
 				drawBall(dx, y, Qt::blue);
-
-		if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
+			else
+				if (dr && s.GetBit() == Ship::BIT::NIL && s.GetHolding(Ship::HOLDING::RIVAL))
+					drawX(dx, y, Qt::black);
+		if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; s.GetBeat(Ship::BEAT::RIVAL)) //bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
 		{
 			if (s.GetHolding(Ship::HOLDING::ME))
 				drawX(x, y, c);
@@ -763,8 +768,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		//if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
 			//drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, Ship(), false);
 		//else
-			if (/*(IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) &&*/ s.GetHolding(Ship::HOLDING::ME))
-				drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
+		if (/*(IsRivalMove || ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED) &&*/ s.GetHolding(Ship::HOLDING::ME))
+			drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
 	};
 
 	//drawKilledShips();
@@ -808,7 +813,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			}
 		}
 
-	if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED)
+	if (const bool dc = ConnectionStatus == CONNECTIONSTATUS::CONNECTED; (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && dr) || dc)
 	{
 		bool shipCoords[100] = { false };
 		static constexpr int Margin = BigMargin - MarginX;
@@ -816,7 +821,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
 			for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
 			{
-				const Ship s = IsRivalKilled((my * 10) + mx, shipCoords);
+				const Ship s = GetRivalShip((my * 10) + mx, shipCoords, dc);
 				switch (const int floors = s.GetFloors() * ObjectWidth; s.GetRotate())
 				{
 				case Ship::ROTATE::STARTRIGHT:
@@ -1012,6 +1017,12 @@ void Graphics::ClearBitShips()
 {
 	for (auto& obj : _screenObjects)
 		obj.SetBit(Ship::BIT::NIL);
+	_isDrawRivals = false;
+}
+
+void Graphics::DrawRivals()
+{
+	_isDrawRivals = true;
 }
 
 optional<quint8> Graphics::GetCoord() const

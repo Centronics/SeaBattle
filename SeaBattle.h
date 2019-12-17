@@ -40,7 +40,7 @@ protected:
 	NetworkInterface::STATUS Impact(bool disconnect, bool disconnectMessage);
 	void SaveParameters() const;
 	void LoadParameters() const;
-	void ExitGame();
+	void ExitGame(bool clearBit);
 	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 
@@ -62,9 +62,9 @@ private slots:
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
 	void SlotReceive(Packet packet, NetworkInterface::STATUS*);
-	void SlotMessage(QString situation, QString question, qint32 icon);
+	void SlotMessage(QString situation, QString question, qint32 icon, bool clearBit);
 
 signals:
 
-	void SigMessage(QString, QString, qint32);
+	void SigMessage(QString, QString, qint32, bool);
 };

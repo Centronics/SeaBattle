@@ -39,12 +39,10 @@ public:
 
 protected:
 
-	std::vector<Ship> _screenObjects{ 100 };
-
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	//[[nodiscard]] const Ship* IsKilled(quint8 coord) const;
-	[[nodiscard]] Ship IsRivalKilled(quint8 coord, bool* coordMas = nullptr) const;
+	[[nodiscard]] Ship GetRivalShip(quint8 coord, bool* coordMas, bool isKilled) const;
 	[[nodiscard]] bool IsDenyNearBeat(quint8 coord/*, bool* coordMas, quint8 kx*/) const;
 	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
@@ -81,8 +79,11 @@ public:
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
 	void ClearBitShips();
+	void DrawRivals();
 
 private:
 
+	std::vector<Ship> _screenObjects{ 100 };
 	mutable quint8 _lastHitMy = 255, _lastHitRival = 255;
+	bool _isDrawRivals = false;
 };

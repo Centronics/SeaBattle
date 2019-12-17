@@ -24,7 +24,7 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	Q_UNUSED(connect(_mainForm.btnDisconnect, SIGNAL(clicked()), SLOT(SlotBtnDisconnectClicked())));
 	Q_UNUSED(connect(_mainForm.lstShipArea, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(_mainForm.lstDirection, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
-	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32)), SLOT(SlotMessage(QString, QString, qint32)), Qt::QueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32, bool)), SLOT(SlotMessage(QString, QString, qint32, bool)), Qt::QueuedConnection));
 }
 
 void SeaBattle::SlotLstChange(int)
@@ -51,6 +51,7 @@ void SeaBattle::SlotBtnConnectClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::CLIENT;
 	Graphics::IsRivalMove = false;
+	_graphics.ClearBitShips();
 	Initialize<Client>()->Connect(_mainForm.txtIPAddress->text(), *port);
 	update();
 }
@@ -69,6 +70,7 @@ void SeaBattle::SlotBtnServerStartClicked()
 	OffButtons();
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::SERVER;
 	Graphics::IsRivalMove = true;
+	_graphics.ClearBitShips();
 	Initialize<Server>()->Listen(*port);
 	update();
 }
@@ -176,17 +178,20 @@ bool SeaBattle::CheckGameReady()
 
 void SeaBattle::SlotBtnDisconnectClicked()
 {
-	ExitGame();
+	ExitGame(true);
 	_clientServer->Close();
 	update();
 }
 
-void SeaBattle::ExitGame()
+void SeaBattle::ExitGame(const bool clearBit)
 {
 	OffButtons(false);
 	Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 	Graphics::IsRivalMove = false;
-	_graphics.ClearBitShips();
+	if (clearBit)
+		_graphics.ClearBitShips();
+	else
+		_graphics.DrawRivals();
 }
 
 void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* status)  // NOLINT(performance-unnecessary-value-param)
@@ -205,7 +210,7 @@ void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* statu
 		s = NetworkInterface::STATUS::NEEDCLEAN;
 		Graphics::ConnectionStatus = Graphics::CONNECTIONSTATUS::DISCONNECTED;
 		Message("Ошибка.", errStr);
-		ExitGame();
+		ExitGame(true);
 		break;
 	case Packet::STATE::DISCONNECTED:
 		s = Impact(true, true);
@@ -459,10 +464,10 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 	return static_cast<QMessageBox::StandardButton>(msgBox.exec());
 }
 
-void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon)
+void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon, const bool clearBit)
 {
 	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
-	ExitGame();
+	ExitGame(clearBit);
 }
 
 NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)
@@ -470,18 +475,18 @@ NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool dis
 	switch (_graphics.GetBroken())
 	{
 	case Graphics::BROKEN::ME:
-		emit SigMessage("Поражение!", "Вы проиграли.", QMessageBox::Information);
+		emit SigMessage("Поражение!", "Вы проиграли.", QMessageBox::Information, false);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::RIVAL:
-		emit SigMessage("Победа!", "Соперник потерпел поражение.", QMessageBox::Information);
+		emit SigMessage("Победа!", "Соперник потерпел поражение.", QMessageBox::Information, false);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	case Graphics::BROKEN::NOTHING:
 		if (!disconnect)
 			return NetworkInterface::STATUS::NOTHING;
 		if (disconnectMessage)
-			emit SigMessage("Игра прекращена.", "Соединение разорвано.", QMessageBox::Critical);
+			emit SigMessage("Игра прекращена.", "Соединение разорвано.", QMessageBox::Critical, true);
 		else
-			ExitGame();
+			ExitGame(true);
 		return NetworkInterface::STATUS::NEEDCLEAN;
 	default:
 		throw exception(__func__);
