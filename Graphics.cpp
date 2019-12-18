@@ -611,6 +611,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 		if ((xw > /*(ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMaxCoordX :*/ MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
+			if (px > 0 && ConnectionStatus != CONNECTIONSTATUS::CONNECTED && s.GetRotate() != Ship::ROTATE::NIL)
+				return;
 			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
 				drawWarning();
@@ -718,7 +720,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			if (isDeny)
 				drawBall(dx, y, Qt::blue);
 			else
-				if (dr && s.GetBit() == Ship::BIT::NIL && s.GetHolding(Ship::HOLDING::RIVAL))
+				if (dr && !s.GetBeat(Ship::BEAT::ME) && s.GetHolding(Ship::HOLDING::RIVAL))
 					drawX(dx, y, Qt::black);
 		if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; s.GetBeat(Ship::BEAT::RIVAL)) //bit == Ship::BIT::RIVAL || bit == Ship::BIT::BOTH)
 		{
