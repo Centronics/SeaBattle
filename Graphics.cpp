@@ -609,26 +609,34 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX); yMarkCoord = y; };
 
+		const auto drawS = [&painter, &s, drawRival, &isShipBeat, &drawShip, &drawMark, inShip, inFrame, mx, my](const bool dMrk)
+		{
+			if (s.GetRotate() != Ship::ROTATE::NIL)
+			{
+				const QColor color = s.GetColor();
+				painter.setPen(QPen(color, BetweenObjects));
+				painter.setBrush(QBrush(color, drawRival ? Qt::NoBrush : (isShipBeat(mx, my) ? Qt::NoBrush : Qt::Dense6Pattern)));
+				//if (/*IsRivalMove || */ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
+				drawShip(true);
+				if (dMrk && /*!IsRivalMove*/ ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inShip && inFrame)
+					drawMark();
+			}
+		};
+
 		if ((xw > /*(ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMaxCoordX :*/ MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
 			if (px > 0 && ConnectionStatus != CONNECTIONSTATUS::CONNECTED && s.GetRotate() != Ship::ROTATE::NIL)
+			{
+				drawS(false);
 				return;
+			}
 			drawMark();
 			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
 				drawWarning();
 			return;
 		}
 
-		if (s.GetRotate() != Ship::ROTATE::NIL)
-		{
-			const QColor color = s.GetColor();
-			painter.setPen(QPen(color, BetweenObjects));
-			painter.setBrush(QBrush(color, drawRival ? Qt::NoBrush : (isShipBeat(mx, my) ? Qt::NoBrush : Qt::Dense6Pattern)));
-			//if (/*IsRivalMove || */ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED)
-			drawShip(true);
-			if (/*!IsRivalMove*/ ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inShip && inFrame)
-				drawMark();
-		}
+		drawS(true);
 
 		if (!IsRivalMove && inFrame)
 		{
