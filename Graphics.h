@@ -41,12 +41,10 @@ protected:
 
 	[[nodiscard]] bool IsFree(int sx, int sy) const;
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
-	//[[nodiscard]] const Ship* IsKilled(quint8 coord) const;
 	[[nodiscard]] Ship GetRivalShip(quint8 coord, bool* coordMas, bool isKilled) const;
-	[[nodiscard]] bool IsDenyNearBeat(quint8 coord/*, bool* coordMas, quint8 kx*/) const;
+	[[nodiscard]] bool IsDenyNearBeat(quint8 coord) const;
 	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
-	//[[nodiscard]] static std::tuple<bool, int, int> GetPhysicalCoords();
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
 

@@ -13,6 +13,11 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	_mainForm.frmDrawing->installEventFilter(this);
 	_mainForm.txtIPAddress->installEventFilter(this);
 	_mainForm.txtPort->installEventFilter(this);
+	_mainForm.btnConnect->installEventFilter(this);
+	_mainForm.btnServerStart->installEventFilter(this);
+	_mainForm.btnHelp->installEventFilter(this);
+	_mainForm.lstShipArea->installEventFilter(this);
+	_mainForm.lstDirection->installEventFilter(this);
 	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
@@ -143,8 +148,16 @@ bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 		return true;
 	}
 	case QEvent::KeyPress:
-		return ((watched != _mainForm.txtIPAddress) && (watched != _mainForm.txtPort)) || (event->type() != QEvent::KeyPress) || (reinterpret_cast<QKeyEvent*>(event)->key() != Qt::Key::Key_Space) ?
-			QWidget::eventFilter(watched, event) : true;
+		if ((watched != _mainForm.txtIPAddress && watched != _mainForm.txtPort && watched != _mainForm.btnConnect && watched != _mainForm.btnServerStart && watched != _mainForm.btnDisconnect && watched != _mainForm.btnHelp && watched != _mainForm.lstShipArea && watched != _mainForm.lstDirection) ||
+			(event->type() != QEvent::KeyPress) || (reinterpret_cast<QKeyEvent*>(event)->key() != Qt::Key::Key_Space))
+			return QWidget::eventFilter(watched, event);
+		if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED)
+			return true;
+		if (_mainForm.lstDirection->currentRow() == 0)
+			_mainForm.lstDirection->setCurrentRow(1);
+		else
+			_mainForm.lstDirection->setCurrentRow(0);
+		return true;
 	default:
 		return QWidget::eventFilter(watched, event);
 	}
@@ -410,12 +423,6 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 		return;
 	case Qt::Key::Key_Delete:
 		RemoveShip();
-		return;
-	case Qt::Key::Key_Space:
-		if (_mainForm.lstDirection->currentRow() == 0)
-			_mainForm.lstDirection->setCurrentRow(1);
-		else
-			_mainForm.lstDirection->setCurrentRow(0);
 		return;
 	default:
 		QWidget::keyReleaseEvent(event);
