@@ -153,7 +153,7 @@ bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 		const bool isNotButton = watched != _mainForm.btnConnect && watched != _mainForm.btnServerStart && watched != _mainForm.btnDisconnect && watched != _mainForm.btnHelp;
 		if (watched != _mainForm.txtIPAddress && watched != _mainForm.txtPort && isNotButton && watched != _mainForm.lstShipArea && watched != _mainForm.lstDirection)
 			return QWidget::eventFilter(watched, event);
-		switch (auto e = reinterpret_cast<QKeyEvent*>(event); e->key())
+		switch (const auto e = reinterpret_cast<QKeyEvent*>(event); e->key())
 		{
 		case Qt::Key::Key_Space:
 			if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED || e->isAutoRepeat())
