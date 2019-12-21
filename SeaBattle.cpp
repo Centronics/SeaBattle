@@ -15,6 +15,7 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	_mainForm.txtPort->installEventFilter(this);
 	_mainForm.btnConnect->installEventFilter(this);
 	_mainForm.btnServerStart->installEventFilter(this);
+	_mainForm.btnDisconnect->installEventFilter(this);
 	_mainForm.btnHelp->installEventFilter(this);
 	_mainForm.lstShipArea->installEventFilter(this);
 	_mainForm.lstDirection->installEventFilter(this);
@@ -148,16 +149,42 @@ bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 		return true;
 	}
 	case QEvent::KeyPress:
-		if ((watched != _mainForm.txtIPAddress && watched != _mainForm.txtPort && watched != _mainForm.btnConnect && watched != _mainForm.btnServerStart && watched != _mainForm.btnDisconnect && watched != _mainForm.btnHelp && watched != _mainForm.lstShipArea && watched != _mainForm.lstDirection) ||
-			(event->type() != QEvent::KeyPress) || (reinterpret_cast<QKeyEvent*>(event)->key() != Qt::Key::Key_Space))
+	{
+		const bool isNotButton = watched != _mainForm.btnConnect && watched != _mainForm.btnServerStart && watched != _mainForm.btnDisconnect && watched != _mainForm.btnHelp;
+		if (watched != _mainForm.txtIPAddress && watched != _mainForm.txtPort && isNotButton && watched != _mainForm.lstShipArea && watched != _mainForm.lstDirection)
 			return QWidget::eventFilter(watched, event);
-		if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED)
+		switch (auto e = reinterpret_cast<QKeyEvent*>(event); e->key())
+		{
+		case Qt::Key::Key_Space:
+			if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED || e->isAutoRepeat())
+				return true;
+			if (_mainForm.lstDirection->currentRow() == 0)
+				_mainForm.lstDirection->setCurrentRow(1);
+			else
+				_mainForm.lstDirection->setCurrentRow(0);
 			return true;
-		if (_mainForm.lstDirection->currentRow() == 0)
-			_mainForm.lstDirection->setCurrentRow(1);
-		else
-			_mainForm.lstDirection->setCurrentRow(0);
-		return true;
+		case Qt::Key::Key_Enter:
+		case Qt::Key_Return:
+			if (isNotButton)
+				return QWidget::eventFilter(watched, event);
+			if (e->isAutoRepeat())
+				return true;
+			if (watched == _mainForm.btnConnect)
+				SlotBtnConnectClicked();
+			else
+				if (watched == _mainForm.btnServerStart)
+					SlotBtnServerStartClicked();
+				else
+					if (watched == _mainForm.btnDisconnect)
+						SlotBtnDisconnectClicked();
+					else
+						if (watched == _mainForm.btnHelp)
+							SlotBtnHelpClicked();
+			return true;
+		default:
+			return QWidget::eventFilter(watched, event);
+		}
+	}
 	default:
 		return QWidget::eventFilter(watched, event);
 	}
@@ -431,7 +458,7 @@ void SeaBattle::keyReleaseEvent(QKeyEvent* event)
 
 void SeaBattle::closeEvent(QCloseEvent* event)
 {
-	if (Graphics::ConnectionStatus != Graphics::CONNECTIONSTATUS::DISCONNECTED)
+	if (Graphics::ConnectionStatus == Graphics::CONNECTIONSTATUS::CONNECTED)
 		switch (Message("Партия не закончена.", "Выйти из игры?", QMessageBox::Question, QMessageBox::Yes | QMessageBox::No, QMessageBox::No, QMessageBox::No))
 		{
 		case QMessageBox::Yes:
