@@ -4,3 +4,6 @@
 #include <algorithm>
 #include <optional>
 #include <QtXml/QtXml>
+//#include <QApplication>
+//#include <QPixmap>
+//#include <QDesktopWidget>

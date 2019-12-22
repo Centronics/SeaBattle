@@ -6,7 +6,7 @@
 #include "MyMessageBox.h"
 
 using namespace std;
-
+QWidget* CUR = nullptr;
 SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 {
 	_mainForm.setupUi(this);
@@ -31,8 +31,10 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	Q_UNUSED(connect(_mainForm.lstShipArea, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(_mainForm.lstDirection, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32, bool)), SLOT(SlotMessage(QString, QString, qint32, bool)), Qt::QueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(SigRepaint()), SLOT(SlotRepaint()), Qt::QueuedConnection));
+	CUR = this;
 }
-
+QColor GlobalColor;
 void SeaBattle::SlotLstChange(int)
 {
 	update();
@@ -193,7 +195,13 @@ bool SeaBattle::eventFilter(QObject* watched, QEvent* event)
 void SeaBattle::paintEvent(QPaintEvent*)
 {
 	QPainter painter(this);
-	Graphics::DrawMoveQuad(painter);
+	Graphics::DrawMoveQuad(painter);//СОЗДАТЬ СИГНАЛ-СЛОТ ПЕРЕРИСОВКИ ДЛЯ получения пикселя формы на месте отрисовки удара.
+	static bool bNeed = true;
+	if (bNeed)
+	{
+		emit SigRepaint();
+		bNeed = false;
+	}
 }
 
 void SeaBattle::OffButtons(const bool off) const
@@ -502,6 +510,20 @@ void SeaBattle::SlotMessage(const QString situation, const QString question, con
 {
 	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
 	ExitGame(clearBit);
+}
+
+void SeaBattle::SlotRepaint()
+{
+	static bool bNeed = true;
+	if (bNeed)
+	{
+		const QPixmap p = grab(QRect(QPoint(0, 0), QSize(1, 1)));
+		auto w = p.width();
+		auto h = p.height();
+		auto r = p.rect();
+		GlobalColor = p.toImage().pixelColor(0, 0);
+		bNeed = false;
+	}
 }
 
 NetworkInterface::STATUS SeaBattle::Impact(const bool disconnect, const bool disconnectMessage)

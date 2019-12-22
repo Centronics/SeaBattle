@@ -519,7 +519,12 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	const auto mBeat = [&painter, this, dr](const int x, const int y, const int masNumber)
 	{
-		const auto drawBall = [&painter](const int x, const int y, const QColor& color)
+		/*const auto getPixel = [](const int x, const int y)
+		{
+			
+		};*/
+
+		const auto drawBall = [&painter/*, &getPixel*/](const int x, const int y, const QColor& color)
 		{
 			static constexpr int Wd = (ObjectWidth / 8) - 1;
 			static constexpr int Wc = ObjectWidth / 2;
@@ -528,7 +533,16 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawEllipse(pf, Wd + 0.5, Wd + 0.5);
 			const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
 			painter.drawPoint(pf2);
-			painter.setPen(QPen(QColor(240, 240, 240), 1));
+
+			extern QColor GlobalColor;
+			
+			QColor c = GlobalColor; //getPixel(x + (ObjectWidth / 2) - 1, y + (ObjectWidth / 2) - 4 + (Wc / 2)); // «¿ Œƒ»“‹ ÕŒ–Ã¿À‹ÕŒ!
+
+			QColor qc(240, 240, 240);
+			if(c!=qc)
+				qc=c;
+			
+			painter.setPen(QPen(c /*QColor(240, 240, 240)*/, 1));
 			const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
 			painter.drawPoint(pf3);
 		};
