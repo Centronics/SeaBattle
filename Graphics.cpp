@@ -238,10 +238,7 @@ Ship Graphics::GetRivalShip(const quint8 coord, bool* coordMas, const bool isKil
 	if (coordMas)
 		coordMas[coord] = true;
 
-	bool cMas1[100] = { false };
-	bool cMas2[100] = { false };
-
-	const auto rX = [this, coord, &cMas1, &s, coordMas, &retEmpty, isKilled]
+	const auto rX = [this, coord, &s, coordMas, &retEmpty, isKilled]
 	{
 		int shipSize = 1;
 		int k = coord + 1;
@@ -261,7 +258,7 @@ Ship Graphics::GetRivalShip(const quint8 coord, bool* coordMas, const bool isKil
 		return retEmpty ? result{ 0, Ship::ROTATE::NIL } : result{ shipSize, Ship::ROTATE::STARTRIGHT };
 	};
 
-	const auto rY = [this, coord, &cMas2, &s, coordMas, &retEmpty, isKilled]
+	const auto rY = [this, coord, &s, coordMas, &retEmpty, isKilled]
 	{
 		int shipSize = 1;
 		{
