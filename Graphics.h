@@ -43,7 +43,7 @@ protected:
 	[[nodiscard]] bool IsBusy(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate) const;
 	[[nodiscard]] Ship GetRivalShip(quint8 coord, bool* coordMas, bool isKilled) const;
 	[[nodiscard]] bool IsDenyNearBeat(quint8 coord) const;
-	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
+	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate, const QColor& neutralColor) const;
 	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
 	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
@@ -63,7 +63,7 @@ public:
 	inline static int CursorX = -1, CursorY = 0;
 	inline static CONNECTIONSTATUS ConnectionStatus = CONNECTIONSTATUS::DISCONNECTED;
 
-	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate) const;
+	void Paint(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate, const QColor& neutralColor) const;
 	bool RivalHit(quint8 coord);
 	HITSTATUS MyHit(quint8 coord);
 

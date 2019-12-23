@@ -12,6 +12,7 @@ class SeaBattle : public QWidget
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
 	NetworkInterface* _clientServer = nullptr;
+	QColor _neutralColor;
 	inline static const QString SettingsFileName = "Settings.xml";
 
 public:

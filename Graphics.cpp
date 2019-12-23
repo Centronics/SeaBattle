@@ -9,9 +9,9 @@ static const QFont DRAW_FONT("Times", Graphics::ObjectWidth - 5, QFont::Bold);
 static const QFont TEXT_FONT("Times", 13);
 static const QFont BIG_FONT("Arial", 15, QFont::Bold);
 
-void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
+void Graphics::Paint(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate, const QColor& neutralColor) const
 {
-	DrawShips(painter, ship, rotate);
+	DrawShips(painter, ship, rotate, neutralColor);
 }
 
 void Graphics::DrawMoveQuad(QPainter& painter)
@@ -334,7 +334,7 @@ bool Graphics::IsDenyNearBeat(const quint8 coord) const
 	return false;
 }
 
-void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate) const
+void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::ROTATE rotate, const QColor& neutralColor) const
 {
 	const bool dr = _isDrawRivals;
 
@@ -517,14 +517,9 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			drawWarning();
 	};
 
-	const auto mBeat = [&painter, this, dr](const int x, const int y, const int masNumber)
+	const auto mBeat = [&painter, this, dr, &neutralColor](const int x, const int y, const int masNumber)
 	{
-		/*const auto getPixel = [](const int x, const int y)
-		{
-			
-		};*/
-
-		const auto drawBall = [&painter/*, &getPixel*/](const int x, const int y, const QColor& color)
+		const auto drawBall = [&painter, &neutralColor](const int x, const int y, const QColor& color)
 		{
 			static constexpr int Wd = (ObjectWidth / 8) - 1;
 			static constexpr int Wc = ObjectWidth / 2;
@@ -533,16 +528,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawEllipse(pf, Wd + 0.5, Wd + 0.5);
 			const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
 			painter.drawPoint(pf2);
-
-			extern QColor GlobalColor;
-			
-			QColor c = GlobalColor; //getPixel(x + (ObjectWidth / 2) - 1, y + (ObjectWidth / 2) - 4 + (Wc / 2)); // «¿ Œƒ»“‹ ÕŒ–Ã¿À‹ÕŒ!
-
-			QColor qc(240, 240, 240);
-			if(c!=qc)
-				qc=c;
-			
-			painter.setPen(QPen(c /*QColor(240, 240, 240)*/, 1));
+			painter.setPen(QPen(neutralColor, 1));
 			const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
 			painter.drawPoint(pf3);
 		};
