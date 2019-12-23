@@ -315,7 +315,7 @@ bool Graphics::IsDenyNearBeat(const quint8 coord) const
 
 	bool shipCoords[100] = { false };
 
-	for (quint8 k = 0/*kx*/; k < 100; ++k)
+	for (quint8 k = 0; k < 100; ++k)
 	{
 		const quint8 x = k % 10, y = k / 10;
 		const Ship s = GetRivalShip(k, shipCoords, true);
@@ -523,14 +523,15 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		{
 			static constexpr int Wd = (ObjectWidth / 8) - 1;
 			static constexpr int Wc = ObjectWidth / 2;
+			static constexpr qreal Wc05 = Wc + 0.5;
 			painter.setPen(QPen(color, Wd));
-			const QPointF pf(x + Wc + 0.5, y + Wc + 0.5);
-			painter.drawEllipse(pf, Wd + 0.5, Wd + 0.5);
-			const QPointF pf2(x + (Wc + 0.5), y + (Wc + 0.5));
-			painter.drawPoint(pf2);
+			painter.drawEllipse(QPointF(x + Wc05, y + Wc05), Wd + 0.5, Wd + 0.5);
+			painter.drawPoint(QPointF(x + Wc05, y + Wc05));
 			painter.setPen(QPen(neutralColor, 1));
-			const QPointF pf3(x + (ObjectWidth / 2) - 1 + 0.5, y + (ObjectWidth / 2) - 4 + (Wc / 2) + 0.5);
-			painter.drawPoint(pf3);
+			static constexpr int Wcc = Wc / 2;
+			static constexpr qreal WcX = (Wc - 1) + 0.5;
+			static constexpr qreal WcY = ((Wc - 4) + Wcc) + 0.5;
+			painter.drawPoint(QPointF(x + WcX, y + WcY));
 		};
 
 		const Ship& s = _screenObjects[masNumber];
