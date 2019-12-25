@@ -530,8 +530,6 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawPoint(QPointF(x + WcX, y + WcY));
 		};
 
-		const Ship& s = _screenObjects[masNumber];
-
 		const auto drawX = [&painter](const int x, const int y, const QColor& color)
 		{
 			painter.setPen(QPen(color, 3));
@@ -539,6 +537,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			painter.drawText(x + 3, y + (ObjectWidth - 4), "X");
 		};
 
+		const Ship& s = _screenObjects[masNumber];
 		const bool isDeny = IsDenyNearBeat(masNumber);
 		static const QColor WeakHitCol = QColor(0xff, 0x7e, 0x67);
 		static const QColor WeakCol = Qt::darkGreen;
