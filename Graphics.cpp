@@ -319,7 +319,6 @@ bool Graphics::IsDenyNearBeat(const quint8 coord) const
 		switch (s.GetRotate())
 		{
 		case Ship::ROTATE::STARTRIGHT:
-
 			if (!shipCoords[coord] && (inRange(x, cX, s.GetFloors()) && inRange(y, cY, 1)))
 				return true;
 			break;

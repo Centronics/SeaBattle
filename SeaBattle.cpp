@@ -31,7 +31,7 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	Q_UNUSED(connect(_mainForm.lstShipArea, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(_mainForm.lstDirection, SIGNAL(currentRowChanged(int)), SLOT(SlotLstChange(int))));
 	Q_UNUSED(connect(this, SIGNAL(SigMessage(QString, QString, qint32, bool)), SLOT(SlotMessage(QString, QString, qint32, bool)), Qt::QueuedConnection));
-	Q_UNUSED(connect(this, SIGNAL(SigRepaint()), SLOT(SlotRepaint()), Qt::QueuedConnection));
+	Q_UNUSED(connect(this, SIGNAL(SigGrab()), SLOT(SlotGrab()), Qt::QueuedConnection));
 }
 
 void SeaBattle::SlotLstChange(int)
@@ -197,7 +197,7 @@ void SeaBattle::paintEvent(QPaintEvent*)
 	Graphics::DrawMoveQuad(painter);
 	if (static bool bNeed = true; bNeed)
 	{
-		emit SigRepaint();
+		emit SigGrab();
 		bNeed = false;
 	}
 }
@@ -364,10 +364,10 @@ void SeaBattle::RenewShipCount() const
 		if (shipCount < maxCount)
 			return;
 		const int r = _mainForm.lstShipArea->currentRow();
-		if ((_graphics.GetShipCount(Ship::TYPES::LINKOR) == 1) &&
-			(_graphics.GetShipCount(Ship::TYPES::CRUISER) == 2) &&
-			(_graphics.GetShipCount(Ship::TYPES::ESMINEC) == 3) &&
-			(_graphics.GetShipCount(Ship::TYPES::VEDETTE) == 4))
+		if (_graphics.GetShipCount(Ship::TYPES::LINKOR) == Ship::GetMaxShipCount(Ship::TYPES::LINKOR) &&
+			_graphics.GetShipCount(Ship::TYPES::CRUISER) == Ship::GetMaxShipCount(Ship::TYPES::CRUISER) &&
+			_graphics.GetShipCount(Ship::TYPES::ESMINEC) == Ship::GetMaxShipCount(Ship::TYPES::ESMINEC) &&
+			_graphics.GetShipCount(Ship::TYPES::VEDETTE) == Ship::GetMaxShipCount(Ship::TYPES::VEDETTE))
 			return;
 		switch (shipType)
 		{
@@ -384,16 +384,16 @@ void SeaBattle::RenewShipCount() const
 				return;
 			break;
 		case Ship::TYPES::VEDETTE:
-			if (_graphics.GetShipCount(Ship::TYPES::LINKOR) < 1)
+			if (_graphics.GetShipCount(Ship::TYPES::LINKOR) < Ship::GetMaxShipCount(Ship::TYPES::LINKOR))
 				_mainForm.lstShipArea->setCurrentRow(0);
 			else
-				if (_graphics.GetShipCount(Ship::TYPES::CRUISER) < 2)
+				if (_graphics.GetShipCount(Ship::TYPES::CRUISER) < Ship::GetMaxShipCount(Ship::TYPES::CRUISER))
 					_mainForm.lstShipArea->setCurrentRow(1);
 				else
-					if (_graphics.GetShipCount(Ship::TYPES::ESMINEC) < 3)
+					if (_graphics.GetShipCount(Ship::TYPES::ESMINEC) < Ship::GetMaxShipCount(Ship::TYPES::ESMINEC))
 						_mainForm.lstShipArea->setCurrentRow(2);
 					else
-						if (_graphics.GetShipCount(Ship::TYPES::VEDETTE) < 4)
+						if (_graphics.GetShipCount(Ship::TYPES::VEDETTE) < Ship::GetMaxShipCount(Ship::TYPES::VEDETTE))
 							_mainForm.lstShipArea->setCurrentRow(3);
 			return;
 		case Ship::TYPES::EMPTY:
@@ -405,10 +405,10 @@ void SeaBattle::RenewShipCount() const
 			_mainForm.lstShipArea->setCurrentRow(r + 1);
 	};
 
-	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41, 1);
-	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45, 2);
-	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44, 3);
-	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35, 4);
+	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41, Ship::GetMaxShipCount(Ship::TYPES::LINKOR));
+	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45, Ship::GetMaxShipCount(Ship::TYPES::CRUISER));
+	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44, Ship::GetMaxShipCount(Ship::TYPES::ESMINEC));
+	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35, Ship::GetMaxShipCount(Ship::TYPES::VEDETTE));
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)
@@ -510,7 +510,7 @@ void SeaBattle::SlotMessage(const QString situation, const QString question, con
 	ExitGame(clearBit);
 }
 
-void SeaBattle::SlotRepaint()
+void SeaBattle::SlotGrab()
 {
 	const QPixmap p = grab(QRect(QPoint(0, 0), QSize(1, 1)));
 	_neutralColor = p.toImage().pixelColor(0, 0);
