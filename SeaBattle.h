@@ -8,7 +8,7 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-	Ui::SeaBattleForm _mainForm{};
+		Ui::SeaBattleForm _mainForm{};
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
 	NetworkInterface* _clientServer = nullptr;
@@ -42,7 +42,7 @@ protected:
 	void SaveParameters() const;
 	void LoadParameters() const;
 	void ExitGame(bool clearBit);
-	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> GetSelectedShip() const;
+	[[nodiscard]] std::tuple<Ship::TYPES, Ship::ROTATE> GetSelectedShip() const;
 	[[nodiscard]] std::optional<quint16> GetPort() const;
 
 	template<typename T> T* Initialize()

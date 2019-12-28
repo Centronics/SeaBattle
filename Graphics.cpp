@@ -75,11 +75,11 @@ Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROT
 
 Graphics::SHIPADDITION Graphics::RemoveShip()
 {
+	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
+		return SHIPADDITION::INCORRECTMODE;
 	const auto xd = GetShipCoords();
 	if (!get<0>(xd))
 		return SHIPADDITION::NOCOORD;
-	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
-		return SHIPADDITION::INCORRECTMODE;
 	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
 	return SHIPADDITION::OK;
@@ -154,20 +154,15 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 {
 	const bool conn = ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED;
 	const int marginX = conn ? BigMargin : MarginX, maxCoordX = conn ? BigMaxCoordX : MaxCoordX;
-	if (CursorX < marginX || CursorX >= maxCoordX || CursorY < MarginY || CursorY >= MaxCoordY)
-		return make_tuple(false, -1, -1);
-	int mx = CursorX - marginX, my = CursorY - MarginY;
-	mx = mx - (mx % ObjectWidth);
-	my = my - (my % ObjectWidth);
-	mx /= ObjectWidth;
-	my /= ObjectWidth;
-	return make_tuple(true, mx, my);
+	return CursorX >= marginX && CursorX < maxCoordX && CursorY >= MarginY && CursorY < MaxCoordY ?
+		make_tuple(true, (CursorX - marginX) / ObjectWidth, (CursorY - MarginY) / ObjectWidth) :
+		make_tuple(false, -1, -1);
 }
 
 tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
 {
 	const optional<quint8> mas = GetCoord();
-	if (CursorX < MarginX || CursorX >= MaxCoordX || CursorY < MarginY || CursorY >= MaxCoordY || !mas)
+	if (!mas)
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const Ship& ship = _screenObjects[*mas];
 	if (ship.GetShipType() == Ship::TYPES::EMPTY)

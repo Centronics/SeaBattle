@@ -10,6 +10,8 @@ using namespace std;
 SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 {
 	_mainForm.setupUi(this);
+	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
+	_helpForm.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.frmDrawing->installEventFilter(this);
 	_mainForm.txtIPAddress->installEventFilter(this);
 	_mainForm.txtPort->installEventFilter(this);
@@ -19,10 +21,8 @@ SeaBattle::SeaBattle(QWidget* parent) noexcept : QWidget(parent)
 	_mainForm.btnHelp->installEventFilter(this);
 	_mainForm.lstShipArea->installEventFilter(this);
 	_mainForm.lstDirection->installEventFilter(this);
-	setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint | Qt::MSWindowsFixedSizeDialogHint);
 	_mainForm.lstShipArea->setCurrentRow(0);
 	_mainForm.lstDirection->setCurrentRow(0);
-	_helpForm.setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
 	LoadParameters();
 	Q_UNUSED(connect(_mainForm.btnHelp, SIGNAL(clicked()), SLOT(SlotBtnHelpClicked())));
 	Q_UNUSED(connect(_mainForm.btnConnect, SIGNAL(clicked()), SLOT(SlotBtnConnectClicked())));
@@ -274,10 +274,10 @@ void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* statu
 		*status = s;
 }
 
-tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() const
+tuple<Ship::TYPES, Ship::ROTATE> SeaBattle::GetSelectedShip() const
 {
 	if (_graphics.IsReadyToPlay())
-		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL);
 	Ship::TYPES ship;
 	switch (_mainForm.lstShipArea->currentRow())
 	{
@@ -294,7 +294,7 @@ tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() 
 		ship = Ship::TYPES::VEDETTE;
 		break;
 	default:
-		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL);
 	}
 	Ship::ROTATE rotate;
 	switch (_mainForm.lstDirection->currentRow())
@@ -306,51 +306,25 @@ tuple<Ship::TYPES, Ship::ROTATE, QListWidgetItem*> SeaBattle::GetSelectedShip() 
 		rotate = Ship::ROTATE::STARTDOWN;
 		break;
 	default:
-		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL, nullptr);
+		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL);
 	}
-	return make_tuple(ship, rotate, _mainForm.lstShipArea->item(_mainForm.lstShipArea->currentRow()));
+	return make_tuple(ship, rotate);
 }
 
 void SeaBattle::AddShip()
 {
-	const auto selShip = GetSelectedShip();
-	if (get<0>(selShip) == Ship::TYPES::EMPTY)
-		return;
-	switch (_graphics.AddShip(get<0>(selShip), get<1>(selShip)))
-	{
-	case Graphics::SHIPADDITION::OK:
+	if (const auto selShip = GetSelectedShip();
+		get<0>(selShip) != Ship::TYPES::EMPTY &&
+		_graphics.AddShip(get<0>(selShip), get<1>(selShip)) == Graphics::SHIPADDITION::OK)
 		RenewShipCount();
-		return;
-	case Graphics::SHIPADDITION::MANY:
-		Message("Таких кораблей поставлено достаточно.", "Невозможно поставить корабль.");
-		return;
-	case Graphics::SHIPADDITION::NOCOORD:
-	case Graphics::SHIPADDITION::NOTFREE:
-		return;
-	case Graphics::SHIPADDITION::INCORRECTMODE:
-		Message("Неверный режим.", "Корабли добавлять или удалять можно только до начала игры.");
-		return;
-	default:
-		throw exception(__func__);
-	}
 }
 
 void SeaBattle::RemoveShip()
 {
-	switch (_graphics.RemoveShip())
-	{
-	case Graphics::SHIPADDITION::OK:
-		RenewShipCount();
-		update();
+	if (_graphics.RemoveShip() != Graphics::SHIPADDITION::OK)
 		return;
-	case Graphics::SHIPADDITION::NOCOORD:
-		return;
-	case Graphics::SHIPADDITION::INCORRECTMODE:
-		Message("Неверный режим.", "Добавлять или удалять корабли можно только до начала игры.");
-		return;
-	default:
-		throw exception(__func__);
-	}
+	RenewShipCount();
+	update();
 }
 
 void SeaBattle::RenewShipCount() const
