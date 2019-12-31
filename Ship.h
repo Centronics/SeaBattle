@@ -120,14 +120,14 @@ public:
 		}
 	}
 
-	[[nodiscard]] HOLDER GetShipHolder() const noexcept
+	[[nodiscard]] HOLDER GetHolder() const noexcept
 	{
 		return static_cast<HOLDER>((_currentState & 0xC0u) >> 6u);
 	}
 
 	[[nodiscard]] bool GetHolding(const HOLDING holding) const
 	{
-		const HOLDER h = GetShipHolder();
+		const HOLDER h = GetHolder();
 		if ((h == HOLDER::BOTH || h == HOLDER::ME) && holding == HOLDING::ME)
 			return true;
 		if ((h == HOLDER::BOTH || h == HOLDER::RIVAL) && holding == HOLDING::RIVAL)
@@ -137,7 +137,7 @@ public:
 
 	void ClearRivalHolding()
 	{
-		switch (GetShipHolder())
+		switch (GetHolder())
 		{
 		case HOLDER::NIL:
 		case HOLDER::ME:
@@ -155,7 +155,7 @@ public:
 
 	void SetRivalHolding()
 	{
-		switch (GetShipHolder())
+		switch (GetHolder())
 		{
 		case HOLDER::NIL:
 			SetShipHolder(HOLDER::RIVAL);
@@ -234,7 +234,7 @@ public:
 
 	[[nodiscard]] TYPES GetShipType() const
 	{
-		if (GetShipHolder() == HOLDER::NIL)
+		if (GetHolder() == HOLDER::NIL)
 			return TYPES::EMPTY;
 		return static_cast<TYPES>((_currentState & 0x0Cu) >> 2u);
 	}

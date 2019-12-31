@@ -289,7 +289,7 @@ Ship Graphics::GetRivalShip(const quint8 coord, bool* coordMas, const bool isKil
 		a = move(aY);
 	res.SetShipType(a);
 	res.SetRotate(a);
-	res.SetShipHolder(s.GetShipHolder());
+	res.SetShipHolder(s.GetHolder());
 	return res;
 }
 
@@ -458,7 +458,18 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const int frameX = px + (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMargin : MarginX);
 		const int xw = x + w, yh = y + h;
 		const bool inFrame = CursorX >= frameX && CursorX < (frameX + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
-		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now) { if (now) painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W); else { xMarkCoord = x; yMarkCoord = y; wMarkCoord = w; hMarkCoord = h; } };
+		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now, const int hw = -1, const int hh = -1)
+		{
+			if (now)
+			{
+				painter.drawRect(x - BetweenObjects, y - BetweenObjects, w + W, h + W);
+				return;
+			}
+			xMarkCoord = x;
+			yMarkCoord = y;
+			wMarkCoord = hw > 0 ? hw : w;
+			hMarkCoord = hh > 0 ? hh : h;
+		};
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX); yMarkCoord = y; };
 
@@ -492,13 +503,29 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 		if (!IsRivalMove && inFrame)
 		{
-			if (!inShip || s.GetShipType() == Ship::TYPES::EMPTY)
+			if (!inShip || /*s.GetShipType() == Ship::TYPES::EMPTY &&*/ !s.GetHolding(Ship::HOLDING::ME)) //(ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL) /* || s.GetHolding(Ship::HOLDING::ME) || s.GetRotate() == Ship::ROTATE::NIL*/)
 			{
 				grey();
 				drawShip(false);
+				/*switch (rotate)
+				{
+				case Ship::ROTATE::STARTDOWN:
+					drawShip(false, ObjectWidth, Ship::GetFloors(ship)*ObjectWidth);
+					break;
+				case Ship::ROTATE::STARTRIGHT:
+					drawShip(false, Ship::GetFloors(ship)*ObjectWidth, ObjectWidth);
+					break;
+				}*/
 			}
 			else
+			{
 				drawMark();
+				auto w1 = s.GetFloors();
+				auto w2 = s.GetBit();
+				auto w3 = s.GetRotate();
+				auto w4 = s.GetHolder();
+				auto w5 = s.GetShipType();
+			}
 		}
 
 		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && inFrame)
@@ -573,25 +600,22 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 	for (int mx = 0, x = 0; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
-		{
-			const Ship& s = _screenObjects[(my * 10) + mx];
-			const Ship::ROTATE r = s.GetRotate();
-			switch (const int floors = s.GetFloors() * ObjectWidth; r)
+			switch (const Ship& s = _screenObjects[(my * 10) + mx]; s.GetRotate())
 			{
 			case Ship::ROTATE::STARTRIGHT:
-				draw(x, y, mx, my, floors, ObjectWidth, s, false);
+				draw(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::STARTDOWN:
-				draw(x, y, mx, my, ObjectWidth, floors, s, false);
+				draw(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::NIL:
-				switch (const int fls = Ship::GetFloors(ship) * ObjectWidth; rotate)
+				switch (rotate)
 				{
 				case Ship::ROTATE::STARTRIGHT:
-					drawShipAndFrame(x, y, mx, my, fls, ObjectWidth, s, false);
+					drawShipAndFrame(x, y, mx, my, Ship::GetFloors(ship) * ObjectWidth, ObjectWidth, s, false);
 					continue;
 				case Ship::ROTATE::STARTDOWN:
-					drawShipAndFrame(x, y, mx, my, ObjectWidth, fls, s, false);
+					drawShipAndFrame(x, y, mx, my, ObjectWidth, Ship::GetFloors(ship) * ObjectWidth, s, false);
 					continue;
 				case Ship::ROTATE::NIL:
 					drawShipAndFrame(x, y, mx, my, ObjectWidth, ObjectWidth, s, false);
@@ -602,7 +626,6 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			default:
 				throw exception(__func__);
 			}
-		}
 
 	if (const bool dc = ConnectionStatus == CONNECTIONSTATUS::CONNECTED; (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && dr) || dc)
 	{
@@ -611,21 +634,18 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 
 		for (int mx = 0, x = Margin; mx < 10; ++mx, x += ObjectWidth)
 			for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
-			{
-				const Ship s = GetRivalShip((my * 10) + mx, shipCoords, dc);
-				switch (const int floors = s.GetFloors() * ObjectWidth; s.GetRotate())
+				switch (const Ship s = GetRivalShip((my * 10) + mx, shipCoords, dc); s.GetRotate())
 				{
 				case Ship::ROTATE::STARTRIGHT:
-					drawShipAndFrame(x, y, mx, my, floors, ObjectWidth, s, true);
+					drawShipAndFrame(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, true);
 					continue;
 				case Ship::ROTATE::STARTDOWN:
-					drawShipAndFrame(x, y, mx, my, ObjectWidth, floors, s, true);
+					drawShipAndFrame(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, true);
 				case Ship::ROTATE::NIL:
 					continue;
 				default:
 					throw exception(__func__);
 				}
-			}
 	}
 
 	marking();
@@ -717,6 +737,8 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 	if (_screenObjects.size() != 100 || startX < 0 || startX > 9 || startY < 0 || startY > 9)
 		throw exception(__func__);
 
+	ClearBitShips();
+
 	int i = (startY * 10) + startX;
 
 	const auto test = [this, ship, rotate, startX, startY, i](const int coord, int& floors, SHIPADDITION& sa)
@@ -766,7 +788,7 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 	case Ship::ROTATE::STARTDOWN:
 		if (SHIPADDITION sa; !test(startY, floors, sa))
 			return sa;
-		for (int k = 0; k < floors; ++k, i += 10u)
+		for (int k = 0; k < floors; ++k, i += 10)
 			item(!k);
 		return SHIPADDITION::OK;
 	default:
