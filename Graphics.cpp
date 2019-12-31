@@ -391,19 +391,19 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			}
 		}
 
-		const QPen red(ConnectionStatus == CONNECTIONSTATUS::CONNECTED || dr ? QColor(206, 96, 45) : QColor(216, 216, 216), BetweenObjects);
-		drawMarkingX(BigMargin, 30, red);
-		drawMarkingY(BigMargin - 25, 50, red);
+		const QPen pen(ConnectionStatus == CONNECTIONSTATUS::CONNECTED || dr ? QColor(206, 96, 45) : QColor(216, 216, 216), BetweenObjects);
+		drawMarkingX(BigMargin, 30, pen);
+		drawMarkingY(BigMargin - 25, 50, pen);
 
 		for (int x = 0, yc = MarginY, xc = BigMargin + (10 * ObjectWidth); x < 11; ++x)
 		{
-			proc(BigMargin, yc, xc, yc, red);
+			proc(BigMargin, yc, xc, yc, pen);
 			yc += ObjectWidth;
 		}
 
 		for (int y = 0, xc = BigMargin, yc = MarginY + (10 * ObjectWidth); y < 11; ++y)
 		{
-			proc(xc, MarginY, xc, yc, red);
+			proc(xc, MarginY, xc, yc, pen);
 			xc += ObjectWidth;
 		}
 	};
@@ -458,7 +458,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const int frameX = px + (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED ? BigMargin : MarginX);
 		const int xw = x + w, yh = y + h;
 		const bool inFrame = CursorX >= frameX && CursorX < (frameX + ObjectWidth) && CursorY >= y && CursorY < (y + ObjectWidth);
-		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now, const int hw = -1, const int hh = -1)
+		const auto drawShip = [x, y, w, h, &xMarkCoord, &yMarkCoord, &wMarkCoord, &hMarkCoord, &painter](const bool now)
 		{
 			if (now)
 			{
@@ -467,8 +467,8 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			}
 			xMarkCoord = x;
 			yMarkCoord = y;
-			wMarkCoord = hw > 0 ? hw : w;
-			hMarkCoord = hh > 0 ? hh : h;
+			wMarkCoord = w;
+			hMarkCoord = h;
 		};
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX); yMarkCoord = y; };
@@ -518,14 +518,14 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 				}*/
 			}
 			else
-			{
+			//{
 				drawMark();
-				auto w1 = s.GetFloors();
+				/*auto w1 = s.GetFloors();
 				auto w2 = s.GetBit();
 				auto w3 = s.GetRotate();
 				auto w4 = s.GetHolder();
 				auto w5 = s.GetShipType();
-			}
+			}*/
 		}
 
 		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && inFrame)
@@ -586,11 +586,11 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		}
 	};
 
-	const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s, const bool drawRival)
+	/*const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s, const bool drawRival)
 	{
 		if (s.GetHolding(Ship::HOLDING::ME))
 			drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
-	};
+	};*/
 
 	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
@@ -603,10 +603,14 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			switch (const Ship& s = _screenObjects[(my * 10) + mx]; s.GetRotate())
 			{
 			case Ship::ROTATE::STARTRIGHT:
-				draw(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
+				//draw(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
+				if (s.GetHolding(Ship::HOLDING::ME))
+			drawShipAndFrame(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::STARTDOWN:
-				draw(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
+				//draw(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
+				if (s.GetHolding(Ship::HOLDING::ME))
+					drawShipAndFrame(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::NIL:
 				switch (rotate)
@@ -649,12 +653,6 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 	}
 
 	marking();
-
-	if (ConnectionStatus != CONNECTIONSTATUS::CONNECTED)
-	{
-		_lastHitMy = 255;
-		_lastHitRival = 255;
-	}
 
 	if (dWarnX < 0 || dWarnY < 0)
 		return;
@@ -810,6 +808,8 @@ void Graphics::ClearBitShips()
 	for (auto& obj : _screenObjects)
 		obj.SetBit(Ship::BIT::NIL);
 	_isDrawRivals = false;
+	_lastHitMy = 255;
+	_lastHitRival = 255;
 }
 
 void Graphics::DrawRivals()

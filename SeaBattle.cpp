@@ -480,8 +480,8 @@ QMessageBox::StandardButton SeaBattle::Message(const QString& situation, const Q
 
 void SeaBattle::SlotMessage(const QString situation, const QString question, const qint32 icon, const bool clearBit)
 {
-	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
 	ExitGame(clearBit);
+	Message(situation, question, static_cast<QMessageBox::Icon>(icon));
 }
 
 void SeaBattle::SlotGrab()
