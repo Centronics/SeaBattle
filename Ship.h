@@ -6,19 +6,19 @@ class Ship
 
 public:
 
-	enum class BEAT
+	enum class BEAT : quint8
 	{
 		ME,
 		RIVAL
 	};
 
-	enum class HOLDING
+	enum class HOLDING : quint8
 	{
 		ME,
 		RIVAL
 	};
 
-	enum class HOLDER : unsigned char
+	enum class HOLDER : quint8// unsigned char
 	{
 		NIL,
 		ME,
@@ -26,7 +26,7 @@ public:
 		BOTH
 	};
 
-	enum class BIT : unsigned char
+	enum class BIT : quint8 //unsigned char
 	{
 		NIL,
 		ME,
@@ -34,7 +34,7 @@ public:
 		BOTH
 	};
 
-	enum class TYPES : unsigned char
+	enum class TYPES : quint8 //unsigned char
 	{
 		LINKOR,
 		CRUISER,
@@ -43,7 +43,7 @@ public:
 		EMPTY
 	};
 
-	enum class ROTATE : unsigned char
+	enum class ROTATE : quint8 //unsigned char
 	{
 		NIL,
 		STARTRIGHT,

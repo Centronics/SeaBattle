@@ -61,26 +61,26 @@ void Graphics::DrawMoveQuad(QPainter& painter)
 	painter.drawRect(827, 246, 140, 100);
 }
 
-Graphics::SHIPADDITION Graphics::AddShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
+Graphics::SHIPADDITION Graphics::AddMyShip(const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
 	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
-	if (IsReadyToPlay(ship))
+	if (IsIamReadyToPlay(ship))
 		return SHIPADDITION::MANY;
 	const auto xs = GetMassiveCoords();
 	if (!get<0>(xs))
 		return SHIPADDITION::NOCOORD;
-	return AddOrRemove(get<1>(xs), get<2>(xs), ship, rotate);
+	return AddOrRemoveMyShip(get<1>(xs), get<2>(xs), ship, rotate);
 }
 
-Graphics::SHIPADDITION Graphics::RemoveShip()
+Graphics::SHIPADDITION Graphics::RemoveMyShip()
 {
 	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
-	const auto xd = GetShipCoords();
+	const auto xd = GetMyShipCoords();
 	if (!get<0>(xd))
 		return SHIPADDITION::NOCOORD;
-	if (AddOrRemove(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
+	if (AddOrRemoveMyShip(get<1>(xd), get<2>(xd), Ship::TYPES::EMPTY, get<3>(xd)) != SHIPADDITION::OK)
 		throw exception(__func__);
 	return SHIPADDITION::OK;
 }
@@ -111,14 +111,14 @@ Graphics::HITSTATUS Graphics::MyHit(const quint8 coord)
 	return ship.GetHolding(Ship::HOLDING::RIVAL) ? HITSTATUS::OK : HITSTATUS::FAIL;
 }
 
-bool Graphics::IsReadyToPlay(const Ship::TYPES ship) const
+bool Graphics::IsIamReadyToPlay(const Ship::TYPES ship) const
 {
 	if (ship == Ship::TYPES::EMPTY)
-		return Ship::GetMaxShipCount(Ship::TYPES::CRUISER) == GetShipCount(Ship::TYPES::CRUISER) &&
-		Ship::GetMaxShipCount(Ship::TYPES::ESMINEC) == GetShipCount(Ship::TYPES::ESMINEC) &&
-		Ship::GetMaxShipCount(Ship::TYPES::LINKOR) == GetShipCount(Ship::TYPES::LINKOR) &&
-		Ship::GetMaxShipCount(Ship::TYPES::VEDETTE) == GetShipCount(Ship::TYPES::VEDETTE);
-	return Ship::GetMaxShipCount(ship) == GetShipCount(ship);
+		return GetMyShipCount(Ship::TYPES::CRUISER) == Ship::GetMaxShipCount(Ship::TYPES::CRUISER) &&
+		GetMyShipCount(Ship::TYPES::ESMINEC) == Ship::GetMaxShipCount(Ship::TYPES::ESMINEC) &&
+		GetMyShipCount(Ship::TYPES::LINKOR) == Ship::GetMaxShipCount(Ship::TYPES::LINKOR) &&
+		GetMyShipCount(Ship::TYPES::VEDETTE) == Ship::GetMaxShipCount(Ship::TYPES::VEDETTE);
+	return GetMyShipCount(ship) == Ship::GetMaxShipCount(ship);
 }
 
 Graphics::BROKEN Graphics::GetBroken() const
@@ -159,13 +159,13 @@ tuple<bool, int, int> Graphics::GetMassiveCoords()
 		make_tuple(false, -1, -1);
 }
 
-tuple<bool, int, int, Ship::ROTATE> Graphics::GetShipCoords() const
+tuple<bool, int, int, Ship::ROTATE> Graphics::GetMyShipCoords() const
 {
 	const optional<quint8> mas = GetCoord();
 	if (!mas)
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const Ship& ship = _screenObjects[*mas];
-	if (ship.GetShipType() == Ship::TYPES::EMPTY)
+	if (ship.GetShipType() == Ship::TYPES::EMPTY || !ship.GetHolding(Ship::HOLDING::ME))
 		return make_tuple(false, -1, -1, Ship::ROTATE::NIL);
 	const quint8 mx = *mas % 10, my = *mas / 10;
 	if (const Ship::ROTATE r = ship.GetRotate(); r != Ship::ROTATE::NIL)
@@ -473,65 +473,48 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		const bool inShip = CursorX >= x && CursorX < xw && CursorY >= y && CursorY < yh;
 		const auto drawMark = [px, y, &xMarkCoord, &yMarkCoord] { xMarkCoord = px + (ConnectionStatus == CONNECTIONSTATUS::CONNECTED ? BigMargin : MarginX); yMarkCoord = y; };
 
-		const auto drawS = [&painter, &s, drawRival, &isShipBeat, &drawShip, &drawMark, inShip, inFrame, mx, my](const bool dMrk)
+		const auto drawShipNow = [&painter, &s, drawRival, &isShipBeat, &drawShip, &drawMark, inShip, inFrame, mx, my](const bool dMrk)
 		{
-			if (s.GetRotate() != Ship::ROTATE::NIL)
-			{
-				const QColor color = s.GetColor();
-				painter.setPen(QPen(color, BetweenObjects));
-				painter.setBrush(QBrush(color, drawRival ? Qt::NoBrush : (isShipBeat(mx, my) ? Qt::NoBrush : Qt::Dense6Pattern)));
-				drawShip(true);
-				if (dMrk && ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inShip && inFrame)
-					drawMark();
-			}
+			if (s.GetRotate() == Ship::ROTATE::NIL)
+				return;
+			const QColor color = s.GetColor();
+			painter.setPen(QPen(color, BetweenObjects));
+			painter.setBrush(QBrush(color, drawRival ? Qt::NoBrush : (isShipBeat(mx, my) ? Qt::NoBrush : Qt::Dense6Pattern)));
+			drawShip(true);
+			if (dMrk && ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inShip && inFrame)
+				drawMark();
 		};
 
 		if ((xw > MaxCoordX || yh > MaxCoordY) && inShip && inFrame)
 		{
 			if (px > 0 && ConnectionStatus != CONNECTIONSTATUS::CONNECTED && s.GetRotate() != Ship::ROTATE::NIL)
 			{
-				drawS(false);
+				drawShipNow(false);
 				return;
 			}
 			drawMark();
-			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL)
+			if (ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL && !s.GetHolding(Ship::HOLDING::ME))
 				drawWarning();
 			return;
 		}
 
-		drawS(true);
+		drawShipNow(true);
 
 		if (!IsRivalMove && inFrame)
 		{
-			if (!inShip || /*s.GetShipType() == Ship::TYPES::EMPTY &&*/ !s.GetHolding(Ship::HOLDING::ME)) //(ship != Ship::TYPES::EMPTY && rotate != Ship::ROTATE::NIL) /* || s.GetHolding(Ship::HOLDING::ME) || s.GetRotate() == Ship::ROTATE::NIL*/)
+			if (!inShip || !s.GetHolding(Ship::HOLDING::ME))
 			{
 				grey();
 				drawShip(false);
-				/*switch (rotate)
-				{
-				case Ship::ROTATE::STARTDOWN:
-					drawShip(false, ObjectWidth, Ship::GetFloors(ship)*ObjectWidth);
-					break;
-				case Ship::ROTATE::STARTRIGHT:
-					drawShip(false, Ship::GetFloors(ship)*ObjectWidth, ObjectWidth);
-					break;
-				}*/
 			}
 			else
-			//{
 				drawMark();
-				/*auto w1 = s.GetFloors();
-				auto w2 = s.GetBit();
-				auto w3 = s.GetRotate();
-				auto w4 = s.GetHolder();
-				auto w5 = s.GetShipType();
-			}*/
 		}
 
 		if (ConnectionStatus == CONNECTIONSTATUS::CONNECTED && !IsRivalMove && inFrame)
 			drawMark();
 
-		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inFrame && IsBusy(mx, my, ship, rotate))
+		if (ConnectionStatus == CONNECTIONSTATUS::DISCONNECTED && inFrame && !s.GetHolding(Ship::HOLDING::ME) && IsBusy(mx, my, ship, rotate))
 			drawWarning();
 	};
 
@@ -575,7 +558,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			if (isDeny)
 				drawBall(dx, y, Qt::blue);
 			else
-				if (dr && !s.GetBeat(Ship::BEAT::ME) && s.GetHolding(Ship::HOLDING::RIVAL))
+				if (dr && s.GetHolding(Ship::HOLDING::RIVAL))
 					drawX(dx, y, Qt::black);
 		if (const QColor c = _lastHitRival == masNumber ? Qt::red : WeakHitCol; s.GetBeat(Ship::BEAT::RIVAL))
 		{
@@ -605,7 +588,7 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			case Ship::ROTATE::STARTRIGHT:
 				//draw(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				if (s.GetHolding(Ship::HOLDING::ME))
-			drawShipAndFrame(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
+					drawShipAndFrame(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::STARTDOWN:
 				//draw(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
@@ -727,7 +710,7 @@ bool Graphics::IsBusy(const int startX, const int startY, const Ship::TYPES ship
 	}
 }
 
-Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
+Graphics::SHIPADDITION Graphics::AddOrRemoveMyShip(const int startX, const int startY, const Ship::TYPES ship, const Ship::ROTATE rotate)
 {
 	if (ConnectionStatus != CONNECTIONSTATUS::DISCONNECTED)
 		return SHIPADDITION::INCORRECTMODE;
@@ -754,12 +737,7 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 			return !b;
 		}
 		sa = SHIPADDITION::OK;
-		if (const int c = _screenObjects[i].GetFloors(); c != 0)
-		{
-			floors = c;
-			return true;
-		}
-		return false;
+		return (floors = _screenObjects[i].GetFloors()) != 0;
 	};
 
 	const auto item = [this, ship, &i, rotate](const bool start)
@@ -794,7 +772,7 @@ Graphics::SHIPADDITION Graphics::AddOrRemove(const int startX, const int startY,
 	}
 }
 
-int Graphics::GetShipCount(const Ship::TYPES ship) const
+int Graphics::GetMyShipCount(const Ship::TYPES ship) const
 {
 	int result = 0;
 	for (const auto& obj : _screenObjects)

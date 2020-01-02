@@ -44,9 +44,9 @@ protected:
 	[[nodiscard]] Ship GetRivalShip(quint8 coord, bool* coordMas, bool isKilled) const;
 	[[nodiscard]] bool IsDenyNearBeat(quint8 coord) const;
 	void DrawShips(QPainter& painter, Ship::TYPES ship, Ship::ROTATE rotate, const QColor& neutralColor) const;
-	[[nodiscard]] SHIPADDITION AddOrRemove(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
+	[[nodiscard]] SHIPADDITION AddOrRemoveMyShip(int startX, int startY, Ship::TYPES ship, Ship::ROTATE rotate);
 	[[nodiscard]] static std::tuple<bool, int, int> GetMassiveCoords();
-	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetShipCoords() const;
+	[[nodiscard]] std::tuple<bool, int, int, Ship::ROTATE> GetMyShipCoords() const;
 
 public:
 
@@ -69,11 +69,11 @@ public:
 
 	static void DrawMoveQuad(QPainter& painter);
 
-	[[nodiscard]] SHIPADDITION RemoveShip();
-	[[nodiscard]] SHIPADDITION AddShip(Ship::TYPES ship, Ship::ROTATE rotate);
-	[[nodiscard]] bool IsReadyToPlay(Ship::TYPES ship = Ship::TYPES::EMPTY) const;
+	[[nodiscard]] SHIPADDITION RemoveMyShip();
+	[[nodiscard]] SHIPADDITION AddMyShip(Ship::TYPES ship, Ship::ROTATE rotate);
+	[[nodiscard]] bool IsIamReadyToPlay(Ship::TYPES ship = Ship::TYPES::EMPTY) const;
 	[[nodiscard]] BROKEN GetBroken() const;
-	[[nodiscard]] int GetShipCount(Ship::TYPES ship) const;
+	[[nodiscard]] int GetMyShipCount(Ship::TYPES ship) const;
 	[[nodiscard]] std::optional<quint8> GetCoord() const;
 	[[nodiscard]] std::vector<Ship>& GetData();
 	void ClearBitShips();

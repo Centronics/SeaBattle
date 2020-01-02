@@ -31,7 +31,7 @@ protected:
 	bool CheckGameReady();
 	void AddShip();
 	void RemoveShip();
-	void RenewShipCount() const;
+	void UpdateShipCount() const;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;

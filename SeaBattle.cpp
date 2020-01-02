@@ -216,7 +216,7 @@ void SeaBattle::OffButtons(const bool off) const
 
 bool SeaBattle::CheckGameReady()
 {
-	if (_graphics.IsReadyToPlay())
+	if (_graphics.IsIamReadyToPlay())
 		return true;
 	Message(QString{}, "Необходимо расставить все корабли.");
 	return false;
@@ -276,7 +276,7 @@ void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* statu
 
 tuple<Ship::TYPES, Ship::ROTATE> SeaBattle::GetSelectedShip() const
 {
-	if (_graphics.IsReadyToPlay())
+	if (_graphics.IsIamReadyToPlay())
 		return make_tuple(Ship::TYPES::EMPTY, Ship::ROTATE::NIL);
 	Ship::TYPES ship;
 	switch (_mainForm.lstShipArea->currentRow())
@@ -315,74 +315,44 @@ void SeaBattle::AddShip()
 {
 	if (const auto selShip = GetSelectedShip();
 		get<0>(selShip) != Ship::TYPES::EMPTY &&
-		_graphics.AddShip(get<0>(selShip), get<1>(selShip)) == Graphics::SHIPADDITION::OK)
-		RenewShipCount();
+		_graphics.AddMyShip(get<0>(selShip), get<1>(selShip)) == Graphics::SHIPADDITION::OK)
+		UpdateShipCount();
 }
 
 void SeaBattle::RemoveShip()
 {
-	if (_graphics.RemoveShip() != Graphics::SHIPADDITION::OK)
+	if (_graphics.RemoveMyShip() != Graphics::SHIPADDITION::OK)
 		return;
-	RenewShipCount();
+	UpdateShipCount();
 	update();
 }
 
-void SeaBattle::RenewShipCount() const
+void SeaBattle::UpdateShipCount() const
 {
-	const auto f = [this](const Ship::TYPES shipType, QListWidgetItem* const item, const int n, const int maxCount)
+	const auto updateShipCount = [this](const Ship::TYPES shipType, const int n)
 	{
+		QListWidgetItem* item = _mainForm.lstShipArea->item(static_cast<int>(shipType));
 		QString str = item->text();
-		const int shipCount = _graphics.GetShipCount(shipType);
-		str[n] = QString::number(shipCount)[0];
+		str[n] = QString::number(_graphics.GetMyShipCount(shipType))[0];
 		item->setText(str);
-		if (shipCount < maxCount)
-			return;
-		const int r = _mainForm.lstShipArea->currentRow();
-		if (_graphics.GetShipCount(Ship::TYPES::LINKOR) == Ship::GetMaxShipCount(Ship::TYPES::LINKOR) &&
-			_graphics.GetShipCount(Ship::TYPES::CRUISER) == Ship::GetMaxShipCount(Ship::TYPES::CRUISER) &&
-			_graphics.GetShipCount(Ship::TYPES::ESMINEC) == Ship::GetMaxShipCount(Ship::TYPES::ESMINEC) &&
-			_graphics.GetShipCount(Ship::TYPES::VEDETTE) == Ship::GetMaxShipCount(Ship::TYPES::VEDETTE))
-			return;
-		switch (shipType)
-		{
-		case Ship::TYPES::LINKOR:
-			if (r != 0)
-				return;
-			break;
-		case Ship::TYPES::CRUISER:
-			if (r != 1)
-				return;
-			break;
-		case Ship::TYPES::ESMINEC:
-			if (r != 2)
-				return;
-			break;
-		case Ship::TYPES::VEDETTE:
-			if (_graphics.GetShipCount(Ship::TYPES::LINKOR) < Ship::GetMaxShipCount(Ship::TYPES::LINKOR))
-				_mainForm.lstShipArea->setCurrentRow(0);
-			else
-				if (_graphics.GetShipCount(Ship::TYPES::CRUISER) < Ship::GetMaxShipCount(Ship::TYPES::CRUISER))
-					_mainForm.lstShipArea->setCurrentRow(1);
-				else
-					if (_graphics.GetShipCount(Ship::TYPES::ESMINEC) < Ship::GetMaxShipCount(Ship::TYPES::ESMINEC))
-						_mainForm.lstShipArea->setCurrentRow(2);
-					else
-						if (_graphics.GetShipCount(Ship::TYPES::VEDETTE) < Ship::GetMaxShipCount(Ship::TYPES::VEDETTE))
-							_mainForm.lstShipArea->setCurrentRow(3);
-			return;
-		case Ship::TYPES::EMPTY:
-			return;
-		default:
-			throw exception("RenewShipCount");
-		}
-		if ((r >= 0) && r < (_mainForm.lstShipArea->count() - 1))
-			_mainForm.lstShipArea->setCurrentRow(r + 1);
 	};
 
-	f(Ship::TYPES::LINKOR, _mainForm.lstShipArea->item(0), 41, Ship::GetMaxShipCount(Ship::TYPES::LINKOR));
-	f(Ship::TYPES::CRUISER, _mainForm.lstShipArea->item(1), 45, Ship::GetMaxShipCount(Ship::TYPES::CRUISER));
-	f(Ship::TYPES::ESMINEC, _mainForm.lstShipArea->item(2), 44, Ship::GetMaxShipCount(Ship::TYPES::ESMINEC));
-	f(Ship::TYPES::VEDETTE, _mainForm.lstShipArea->item(3), 35, Ship::GetMaxShipCount(Ship::TYPES::VEDETTE));
+	updateShipCount(Ship::TYPES::LINKOR, 41);
+	updateShipCount(Ship::TYPES::CRUISER, 45);
+	updateShipCount(Ship::TYPES::ESMINEC, 44);
+	updateShipCount(Ship::TYPES::VEDETTE, 35);
+
+	if (_graphics.GetMyShipCount(Ship::TYPES::LINKOR) < Ship::GetMaxShipCount(Ship::TYPES::LINKOR))
+		_mainForm.lstShipArea->setCurrentRow(0);
+	else
+		if (_graphics.GetMyShipCount(Ship::TYPES::CRUISER) < Ship::GetMaxShipCount(Ship::TYPES::CRUISER))
+			_mainForm.lstShipArea->setCurrentRow(1);
+		else
+			if (_graphics.GetMyShipCount(Ship::TYPES::ESMINEC) < Ship::GetMaxShipCount(Ship::TYPES::ESMINEC))
+				_mainForm.lstShipArea->setCurrentRow(2);
+			else
+				if (_graphics.GetMyShipCount(Ship::TYPES::VEDETTE) < Ship::GetMaxShipCount(Ship::TYPES::VEDETTE))
+					_mainForm.lstShipArea->setCurrentRow(3);
 }
 
 void SeaBattle::mouseMoveEvent(QMouseEvent* event)
