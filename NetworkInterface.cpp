@@ -146,7 +146,7 @@ optional<Packet> NetworkInterface::CreateHitPacket()
 	case Graphics::HITSTATUS::BUSY:
 		return Packet("По этому месту уже был удар.");
 	case Graphics::HITSTATUS::NONEFFECTIVE:
-		return Packet("По этому месту бить не имеет смысла, т.к. рядом с потопленным кораблём не может быть других вражеских кораблей.");
+		return Packet("Бить по этому месту не имеет смысла, т.к. рядом с потопленным кораблём не может быть других кораблей соперника.");
 	default:
 		return Packet("Неизвестная ошибка (CreateHitPacket).");
 	}
@@ -161,10 +161,10 @@ void NetworkInterface::run()
 	}
 	catch (exception& ex)
 	{
-		emit SignalReceive(Packet(ex.what()), nullptr);
+		emit SigReceive(Packet(ex.what()), nullptr);
 	}
 	catch (...)
 	{
-		emit SignalReceive(Packet("Unknown exception in NetworkInterface."), nullptr);
+		emit SigReceive(Packet("Unknown exception in NetworkInterface."), nullptr);
 	}
 }

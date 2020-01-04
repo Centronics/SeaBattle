@@ -295,17 +295,16 @@ Ship Graphics::GetRivalShip(const quint8 coord, bool* coordMas, const bool isKil
 
 bool Graphics::IsDenyNearBeat(const quint8 coord) const
 {
-	const quint8 cX = coord % 10, cY = coord / 10;
-
-	const auto inRange = [](const quint8 curFX, const quint8 curMX, const quint8 floors)
+	const auto inRange = [](const quint8 v, const quint8 cv, const quint8 floors)
 	{
-		const int sX = curFX > 0 ? curFX - 1 : 0;
-		const int fX = curFX + floors;
+		const int sX = v > 0 ? v - 1 : 0;
+		const int fX = v + floors;
 		const int mX = fX < 10 ? fX : 9;
-		return curMX >= sX && curMX <= mX;
+		return cv >= sX && cv <= mX;
 	};
 
 	bool shipCoords[100] = { false };
+	const quint8 cX = coord % 10, cY = coord / 10;
 
 	for (quint8 k = 0; k < 100; ++k)
 	{
@@ -316,7 +315,7 @@ bool Graphics::IsDenyNearBeat(const quint8 coord) const
 		case Ship::ROTATE::STARTRIGHT:
 			if (!shipCoords[coord] && (inRange(x, cX, s.GetFloors()) && inRange(y, cY, 1)))
 				return true;
-			break;
+			continue;
 		case Ship::ROTATE::STARTDOWN:
 			if (!shipCoords[coord] && (inRange(x, cX, 1) && inRange(y, cY, s.GetFloors())))
 				return true;
@@ -569,12 +568,6 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 		}
 	};
 
-	/*const auto draw = [&drawShipAndFrame](const int x, const int y, const int mx, const int my, const int w, const int h, const Ship& s, const bool drawRival)
-	{
-		if (s.GetHolding(Ship::HOLDING::ME))
-			drawShipAndFrame(x, y, mx, my, w, h, s, drawRival);
-	};*/
-
 	for (int mx = 0, x = MarginX; mx < 10; ++mx, x += ObjectWidth)
 		for (int my = 0, y = MarginY; my < 10; ++my, y += ObjectWidth)
 			mBeat(x, y, (my * 10) + mx);
@@ -586,12 +579,10 @@ void Graphics::DrawShips(QPainter& painter, const Ship::TYPES ship, const Ship::
 			switch (const Ship& s = _screenObjects[(my * 10) + mx]; s.GetRotate())
 			{
 			case Ship::ROTATE::STARTRIGHT:
-				//draw(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				if (s.GetHolding(Ship::HOLDING::ME))
 					drawShipAndFrame(x, y, mx, my, s.GetFloors() * ObjectWidth, ObjectWidth, s, false);
 				continue;
 			case Ship::ROTATE::STARTDOWN:
-				//draw(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
 				if (s.GetHolding(Ship::HOLDING::ME))
 					drawShipAndFrame(x, y, mx, my, ObjectWidth, s.GetFloors() * ObjectWidth, s, false);
 				continue;

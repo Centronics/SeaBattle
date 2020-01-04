@@ -9,7 +9,7 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 	STATUS status = STATUS::NOTHING;
 	if (!packet)
 	{
-		emit SignalReceive(move(packet), &status);
+		emit SigReceive(move(packet), &status);
 		return status;
 	}
 
@@ -25,17 +25,17 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 	case STATE::WAITMAP:
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
-			emit SignalReceive(Packet("WAITMAP error."), &status);
+			emit SigReceive(Packet("WAITMAP error."), &status);
 			return status;
 		}
 		_currentState = STATE::HIT;
-		emit SignalReceive(Packet(Packet::STATE::CONNECTED), &status);
+		emit SigReceive(Packet(Packet::STATE::CONNECTED), &status);
 		return status;
 	case STATE::WAITHIT:
 		quint8 coord;
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
-			emit SignalReceive(Packet("HIT error."), &status);
+			emit SigReceive(Packet("HIT error."), &status);
 			return status;
 		}
 		if (!_graphics.RivalHit(coord))
@@ -43,8 +43,8 @@ std::variant<Packet, NetworkInterface::STATUS> Client::IncomingProc(Packet packe
 			_currentState = STATE::HIT;
 			Graphics::IsRivalMove = false;
 		}
-		emit Update();
-		emit SignalReceive(move(packet), &status);
+		emit SigUpdate();
+		emit SigReceive(move(packet), &status);
 		return status;
 	case STATE::HIT:
 		return status;

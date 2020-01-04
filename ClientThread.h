@@ -69,12 +69,6 @@ private slots:
 			_creator->EventHandler(sendMe, *qobject_cast<QTcpSocket*>(sender()));
 	}
 
-signals:
-
-	void SigError(std::optional<QAbstractSocket::SocketError>);
-	void SigConnected(std::variant<Packet, NetworkInterface::STATUS>*);
-	void SigReadServer(std::variant<Packet, NetworkInterface::STATUS>*);
-
 public slots:
 
 	void SlotClose()
@@ -82,4 +76,10 @@ public slots:
 		_raiseEvents = false;
 		close();
 	}
+
+signals:
+
+	void SigError(std::optional<QAbstractSocket::SocketError>);
+	void SigConnected(std::variant<Packet, NetworkInterface::STATUS>*);
+	void SigReadServer(std::variant<Packet, NetworkInterface::STATUS>*);
 };

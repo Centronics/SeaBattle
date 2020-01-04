@@ -18,7 +18,7 @@ public:
 		RIVAL
 	};
 
-	enum class HOLDER : quint8// unsigned char
+	enum class HOLDER : quint8
 	{
 		NIL,
 		ME,
@@ -26,7 +26,7 @@ public:
 		BOTH
 	};
 
-	enum class BIT : quint8 //unsigned char
+	enum class BIT : quint8
 	{
 		NIL,
 		ME,
@@ -34,7 +34,7 @@ public:
 		BOTH
 	};
 
-	enum class TYPES : quint8 //unsigned char
+	enum class TYPES : quint8
 	{
 		LINKOR,
 		CRUISER,
@@ -43,7 +43,7 @@ public:
 		EMPTY
 	};
 
-	enum class ROTATE : quint8 //unsigned char
+	enum class ROTATE : quint8
 	{
 		NIL,
 		STARTRIGHT,

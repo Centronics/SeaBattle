@@ -5,7 +5,7 @@ class HelpForm : public QDialog
 {
 	Q_OBJECT
 
-	Ui::Help _helpForm;
+	Ui::Help _helpForm{};
 
 public:
 

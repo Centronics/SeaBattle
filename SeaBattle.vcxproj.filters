@@ -122,4 +122,7 @@
       <Filter>Help Files</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="SeaBattle.ico" />
+  </ItemGroup>
 </Project>

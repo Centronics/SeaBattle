@@ -9,7 +9,7 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 	STATUS status = STATUS::NOTHING;
 	if (!packet)
 	{
-		emit SignalReceive(move(packet), &status);
+		emit SigReceive(move(packet), &status);
 		return status;
 	}
 	switch (_currentState)
@@ -19,13 +19,13 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		if (!packet.ReadRivals(_graphics.GetData()))
 		{
 			_currentState = STATE::WAITMAP;
-			emit SignalReceive(Packet("WAITMAP error."), &status);
+			emit SigReceive(Packet("WAITMAP error."), &status);
 			return status;
 		}
 		Packet out;
 		out.WriteData(_graphics.GetData());
 		_currentState = STATE::WAITHIT;
-		emit SignalReceive(Packet(Packet::STATE::CONNECTED), nullptr);
+		emit SigReceive(Packet(Packet::STATE::CONNECTED), nullptr);
 		return out;
 	}
 	case STATE::WAITHIT:
@@ -33,7 +33,7 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 		if (Packet::DOIT doit; !packet.ReadData(doit, coord) || doit != Packet::DOIT::HIT)
 		{
 			_currentState = STATE::WAITMAP;
-			emit SignalReceive(Packet("HIT error."), &status);
+			emit SigReceive(Packet("HIT error."), &status);
 			return status;
 		}
 		if (!_graphics.RivalHit(coord))
@@ -41,8 +41,8 @@ std::variant<Packet, NetworkInterface::STATUS> Server::IncomingProc(Packet packe
 			_currentState = STATE::HIT;
 			Graphics::IsRivalMove = false;
 		}
-		emit Update();
-		emit SignalReceive(move(packet), &status);
+		emit SigUpdate();
+		emit SigReceive(move(packet), &status);
 		return status;
 	case STATE::HIT:
 		return status;
@@ -64,7 +64,7 @@ void Server::Run()
 	Q_UNUSED(connect(this, SIGNAL(SigClose()), _server, SLOT(SlotClose())));
 
 	if (!_server->listen(QHostAddress::Any, _port))
-		emit SignalReceive(Packet(_server->errorString()), nullptr);
+		emit SigReceive(Packet(_server->errorString()), nullptr);
 }
 
 void Server::Listen(const quint16 port)

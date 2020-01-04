@@ -240,7 +240,7 @@ void SeaBattle::ExitGame(const bool clearBit)
 		_graphics.DrawRivals();
 }
 
-void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* status)  // NOLINT(performance-unnecessary-value-param)
+void SeaBattle::SlotReceive(const Packet packet, NetworkInterface::STATUS* status)
 {
 	NetworkInterface::STATUS s;
 	switch (QString errStr; packet.GetState(&errStr))

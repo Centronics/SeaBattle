@@ -8,7 +8,7 @@ class SeaBattle : public QWidget
 {
 	Q_OBJECT
 
-		Ui::SeaBattleForm _mainForm{};
+	Ui::SeaBattleForm _mainForm{};
 	HelpForm _helpForm{ this };
 	Graphics _graphics;
 	NetworkInterface* _clientServer = nullptr;
@@ -49,20 +49,20 @@ protected:
 	{
 		_clientServer->Close();
 		T* const result = new T(_graphics, this, &_clientServer);
-		Q_UNUSED(connect(result, SIGNAL(SignalReceive(Packet, NetworkInterface::STATUS*)), SLOT(SlotReceive(Packet, NetworkInterface::STATUS*))));
-		Q_UNUSED(connect(result, SIGNAL(Update()), SLOT(update())));
+		Q_UNUSED(connect(result, SIGNAL(SigReceive(Packet, NetworkInterface::STATUS*)), SLOT(SlotReceive(Packet, NetworkInterface::STATUS*))));
+		Q_UNUSED(connect(result, SIGNAL(SigUpdate()), SLOT(update())));
 		_clientServer = result;
 		return reinterpret_cast<T*>(_clientServer);
 	}
 
 private slots:
 
-	void SlotLstChange(int);
+	void SlotLstChange(int currentRow);
 	void SlotBtnHelpClicked();
 	void SlotBtnConnectClicked();
 	void SlotBtnServerStartClicked();
 	void SlotBtnDisconnectClicked();
-	void SlotReceive(Packet packet, NetworkInterface::STATUS*);
+	void SlotReceive(Packet packet, NetworkInterface::STATUS* status);
 	void SlotMessage(QString situation, QString question, qint32 icon, bool clearBit);
 	void SlotGrab();
 

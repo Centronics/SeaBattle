@@ -260,6 +260,8 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <FixedBaseAddress>false</FixedBaseAddress>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <Version>
+      </Version>
     </Link>
     <QtMoc>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
@@ -339,6 +341,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Help.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="SeaBattle.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

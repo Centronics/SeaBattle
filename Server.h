@@ -21,10 +21,10 @@ public:
 private:
 
 	QTcpServer* _server = nullptr;
-
+	quint16 _port = 0;
+	
 	std::variant<Packet, STATUS> IncomingProc(Packet packet);
 	void Run() override;
-	quint16 _port = 0;
 
 protected:
 
